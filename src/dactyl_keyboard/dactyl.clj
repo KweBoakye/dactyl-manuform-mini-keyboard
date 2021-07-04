@@ -1708,10 +1708,11 @@
        (key-place 0 (dec cornerrow) web-post-bl)
        (key-place 0 cornerrow web-post-tr)
        (key-place 1 cornerrow web-post-bl))
-      (hull
-       (key-place 0 (dec cornerrow) web-post-bl)
-       (key-place 1 cornerrow web-post-bl)
-       (minithumb-tl-place minithumb-post-tl))
+     ;removed so it doesnt clash with the trackball
+     ; (hull
+     ;  (key-place 0 (dec cornerrow) web-post-bl)
+     ;  (key-place 1 cornerrow web-post-bl)
+     ;  (minithumb-tl-place minithumb-post-tl))
                             )))))
 
 (def default-thumb-wall
@@ -1797,7 +1798,7 @@
            (union
      ; Thumb to rest of case
             (bottom-hull
-             (bottom 25 (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
+             (bottom 45 (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
       ;             (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
              (minithumb-bl-place web-post-tr)
              (minithumb-bl-place web-post-tl)))
@@ -1808,52 +1809,56 @@
 
 (def thumb-to-left-wall
    ; clunky bit on the top left minithumb connection  (normal connectors don't work well)
-  (color [0.5 1 0 1](union 
-    (bottom-hull
-     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
-     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
-     (minithumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
-     (minithumb-bl-place (translate (wall-locate3 -3 1) web-post-tr)))
-   (hull
+  (union 
+    (color [0 0 0 1](bottom-hull
+            (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
+            (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
+            (minithumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
+            (minithumb-bl-place (translate (wall-locate3 -3 1) web-post-tr))))
+   (color [0.1 0.2 0.3 1](hull
     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
     (minithumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
     (minithumb-bl-place (translate (wall-locate3 -2 1) web-post-tr))
-    (minithumb-tl-place web-post-tl))
-   (hull
+    (minithumb-tl-place web-post-tl)))
+  (color [0.9 0.9 0.6 1] (hull
     (left-key-place (- cornerrow innercol-offset) -1 web-post)
     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate1 -1 0) web-post))
     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
-    (minithumb-tl-place web-post-tl))
-   (hull
+    (minithumb-tl-place web-post-tl)))
+   (color [1 1 1 1](hull
     (left-key-place (- cornerrow innercol-offset) -1 web-post)
     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate1 -1 0) web-post))
     (key-place 0 (- cornerrow innercol-offset) web-post-bl)
-    (minithumb-tl-place web-post-tl))
-   (hull
+    (minithumb-tl-place web-post-tl)))
+  (color [0.5 0.5 0.5 1] (hull
     (minithumb-bl-place web-post-tr)
     (minithumb-bl-place (translate (wall-locate1 -0.3 1) web-post-tr))
     (minithumb-bl-place (translate (wall-locate2 -0.3 1) web-post-tr))
     (minithumb-bl-place (translate (wall-locate3 -0.3 1) web-post-tr))
-    (minithumb-tl-place web-post-tl))
+    (minithumb-tl-place web-post-tl)))
    ; Tiny little piece leading to the left
      (wall-brace minithumb-bl-place  0  1 web-post-tr minithumb-bl-place  0  1 web-post-tl)
-   )))
+    ;(wall-brace minithumb-br-place  0  1 web-post-tl minithumb-br-place  0  1 web-post-tr)
+   ))
 
 (def trackball-to-case (difference (union
                         ; Trackball mount to left outside of case
                                     (color [1 0 0 1] (hull
-                                     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) big-boi-web-post))
+                                     (left-key-place (- lastrow innercol-offset) -0 (translate (wall-locate3 -1 0) big-boi-web-post))
                                      case-filler-cup))
                         ; Gap between trackball mount and top key
-                                    (color [0.5 1 0 1](hull
+                                    (hull
+                                     (color [0.5 1 0 1](key-place 0 (- cornerrow innercol-offset) web-post-bl))
                                      (key-place 0 (- cornerrow innercol-offset) web-post-bl)
-                                     (key-place 0 (- cornerrow innercol-offset) web-post-br)
-                                     (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) big-boi-web-post))))
+                                     (color [0.2 1 0.5 1](key-place 0 (- lastrow innercol-offset) web-post-br)
+                                      ;(key-place 0 (- cornerrow innercol-offset) web-post-r)
+                                     (left-key-place (- lastrow innercol-offset) 0 (translate (wall-locate2 -1 0) big-boi-web-post))
+                                     (left-key-place (- lastrow innercol-offset) 0 (translate (wall-locate3 -1 0) big-boi-web-post))))
                         ; Between the trackball and the outside of the case near the bottom, to ensure a nice seal
                                     ( color [0 0.5 1 1](hull
-                                     (bottom 25 (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
+                                     (bottom 45 (left-key-place (- lastrow innercol-offset) 0 (translate (wall-locate3 -1 0) big-boi-web-post)))
                                      (translate trackball-origin (trackball-mount-rotate cup)))))
                                    (translate trackball-origin rotated-dowells)
                                    (translate trackball-origin rotated-bottom-trim)))
@@ -1933,6 +1938,8 @@
                             ; Right before the start of the thumb
                         (wall-brace minithumb-tr-place  0 -1 minithumb-post-br (partial key-place 3 lastrow)  0 -1 web-post-bl)
                         ))
+  
+   
 
 (def case-walls
   (union
@@ -1950,6 +1957,8 @@
    (if trackball-enabled nil thumb-to-left-wall)
    back-convex-thumb-wall-0
    ))
+
+
 
 ; Offsets for the controller/trrs holder cutout
 (def holder-offset
@@ -1973,6 +1982,14 @@
 (def usb-holder-notch  (translate (map + usb-holder-position [-1.5 (+ 4.4 notch-offset) 2.9]) (cube 31.366 1.3 12.4)))
 (def trrs-notch        (translate (map + usb-holder-position [-10.33 (+ 3.6 notch-offset) 6.6]) (cube 8.4 2.4 19.8)))
 
+; code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
+(def aviator-start (map + [0 -3  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
+(def aviator-position [(first aviator-start) (second aviator-start) 12])
+(def aviator-hole (translate aviator-position
+                             (rotate (deg2rad 90) [1 0 0]
+                                     ;(rotate (deg2rad 45) [0 1 0]
+                                             (translate [4 0 0]
+                                                        (cylinder (/ 16.1 2) 20)))))
 ; Screw insert definition & position
 (defn screw-insert-shape [bottom-radius top-radius height]
   (union
@@ -2050,6 +2067,31 @@
 ; Wall Thickness W:\t1.65
 (def screw-insert-outers (screw-insert-all-shapes (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1)))
 (def screw-insert-screw-holes  (screw-insert-all-shapes 1.7 1.7 350))
+ 
+ (defn screw-insert-top-fn [bottom-radius top-radius height]
+   (union
+    (screw-insert 0 0 bottom-radius top-radius height [3 -5 93])
+    (screw-insert 0 lastrow bottom-radius top-radius height [-3 19 90])
+    (screw-insert lastcol lastrow bottom-radius top-radius height [-27 16 15])
+    (screw-insert lastcol 0         bottom-radius top-radius height [-13 4 30])
+    (screw-insert (+ 1 innercol-offset) lastrow bottom-radius top-radius height [10 6 52]) ;thumb
+    ))
+
+ (def screw-insert-top-obj (screw-insert-top-fn (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1.5)))
+(def screw-insert-top-holes (screw-insert-top-fn 1.7 1.7 350))
+(def screw-insert-top
+  (difference screw-insert-top-obj
+              screw-insert-top-holes))
+
+(defn OLED [posx posy posz]
+  (translate [posx posy posz]
+             (rotate (/ π -6)  [0 1 0]
+                     (rotate (/ π 2) [0 0 1]
+                             (union
+                              (cube 39.5 13.5 3)
+                              (translate [1 0 2] (cube 26 12 4)) ;5 0 2
+                              (translate [18 0 -4] (cube 3.5 10 8)) ;36 0 6
+                              )))))
 
 ; Connectors between outer column and right wall when 1.5u keys are used
 (def pinky-connectors
@@ -2155,16 +2197,18 @@
                    inner-connectors
                    thumb-type
                    thumb-connector-type
+                   ;(OLED -65 -6 99)
                    (difference (union case-walls
                                       screw-insert-outers)
                                ; Leave room to insert the ball
                 (if trackball-enabled (translate trackball-origin trackball-insertion-cyl) nil)
                                ;(translate palm-hole-origin (palm-rest-hole-rotate palm-buckle-holes))
-                               usb-holder-space
-                               trrs-notch
-                               usb-holder-notch
+                              ; usb-holder-space
+                              ; trrs-notch
+                              ; usb-holder-notch
                                screw-insert-holes))
                   (if trackball-enabled (translate trackball-origin (dowell-angle raised-trackball)) nil)
+                  aviator-hole
                   (translate [0 0 -20] (cube 350 350 40))))
 
 (spit "things/right.scad"
@@ -2182,7 +2226,7 @@
                   (difference
                   (union
                    (if trackball-enabled trackball-mount-translated-to-model nil)
-                   (translate [0 0 (/ bottom-plate-thickness -2)] plate-attempt)
+                   ;(translate [0 0 (/ bottom-plate-thickness -2)] plate-attempt)
                    ;key-holes
                    ;key-holes-inner
                    ;pinky-connectors
