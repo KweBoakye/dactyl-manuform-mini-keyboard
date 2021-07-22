@@ -20,10 +20,10 @@ Build log: https://www.beekeeb.com/dactyl-manuform-mini-mechanical-keyboard-buil
 - One key in the thumb cluster has been removed. Other thumb keys are also adjusted.
 - The total height is reduced and wire posts are removed. This results in a
   higher printing speed and a lower cost.
-- A GX16 Mount is used instead of TRRS, code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
-- A micro USB mount is used. A breakout board, or an extension cable can be used.
 - Screw posts are moved inside. The holes are designed for TRISERT® thread inserts 145m3.
-- The pro micro holder has been modified. Dupont cables can be used.
+
+- A GX16 Mount is used instead of TRRS, code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
+- Vertical Elite C holder from https://github.com/darrenph1/dactyl-keyboard
 
 ## Generate OpenSCAD and STL models
 

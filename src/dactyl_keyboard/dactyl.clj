@@ -8,6 +8,46 @@
 (defn deg2rad [degrees]
   (* (/ degrees 180) pi))
 
+(def is-preview false)
+
+(defn rx [radians shape] (rotate radians [1 0 0] shape))
+(defn ry [radians shape] (rotate radians [0 1 0] shape))
+(defn rz [radians shape] (rotate radians [0 0 1] shape))
+
+
+(defn rdx [degrees shape] (rx (deg2rad degrees) shape))
+(defn rdy [degrees shape] (ry (deg2rad degrees) shape))
+(defn rdz [degrees shape] (rz (deg2rad degrees) shape))
+
+
+(defn rd [x y z shape] (->> shape
+                            (rdx x)
+                            (rdy y)
+                            (rdz z)))
+
+(defn rcylinder [radius height]
+  (if is-preview
+    (cylinder radius height)
+    (->>
+     (hull
+      (translate [0 0 (- (/ height 2) (/ radius 2))] (sphere (/ radius 2)))
+      (translate [0 0 (+ (/ height -2) (/ radius 2))] (sphere (/ radius 2))))
+     (with-fn 20))))
+
+(defn add-vec  [& args]
+  "Add two or more vectors together"
+  (when  (seq args)
+    (apply mapv + args)))
+
+(defn sub-vec  [& args]
+  "Subtract two or more vectors together"
+  (when  (seq args)
+    (apply mapv - args)))
+
+(defn div-vec  [& args]
+  "Divide two or more vectors together"
+  (when  (seq args)
+    (apply mapv / args)))
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Shape parameters ;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -16,7 +56,8 @@
 (def ncols 7)
 
 (def trackball-enabled true)
-(def printed-hotswap? true) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
+(def joystick-enabled false)
+(def printed-hotswap? false) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
 
 (def α (/ π 12))                        ; curvature of the columns
 (def β (/ π 36))                        ; curvature of the rows
@@ -54,6 +95,7 @@
 (def wall-z-offset -8)                 ; original=-15 length of the first downward-sloping part of the wall (negative)
 (def wall-xy-offset 5)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
 (def wall-thickness 3)                  ; wall thickness parameter; originally 5
+(def wall-xy-offset-thin 1)
 
 ;; Settings for column-style == :fixed
 ;; The defaults roughly match Maltron settings
@@ -68,7 +110,7 @@
 ; If you use Cherry MX or Gateron switches, this can be turned on.
 ; If you use other switches such as Kailh, you should set this as false
 (def create-side-nubs? false)
-
+(def round-case true)
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; General variables ;;
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -78,6 +120,10 @@
 (def lastcol (dec ncols))
 (def extra-cornerrow (if extra-row lastrow cornerrow))
 (def innercol-offset (if inner-column 1 0))
+
+
+
+(def rounding-radius (if round-case 1 0))
 
 ;;;;;;;;;;;;;;;;;
 ;; Switch Hole ;;
@@ -306,19 +352,122 @@
                   (key-place 0 row))))
     :else))
 
+(defn add-vec  [& args]
+ ; "Add two or more vectors together"
+  (when  (seq args)
+    (apply mapv + args)))
+
+;from https://github.com/oysteinkrog/dactyl-manuform-mini-keyboard
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; OLED screen holder ;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def oled-pcb-size [27.35 28.3 (- plate-thickness 1)])
+(def oled-screen-offset [0 -0.5 0])
+(def oled-screen-size [24.65 16.65 (- plate-thickness 1)])
+(def oled-viewport-size [24.0 13.0 (+ 0.1 plate-thickness)])
+(def oled-viewport-offset [0 1.0 0])
+(def oled-mount-size [23.1 23.75 0.5])
+(def oled-holder-width (+ 3 (nth oled-pcb-size 0)))
+(def oled-holder-height (+ 3 (nth oled-pcb-size 1)))
+(def oled-holder-thickness plate-thickness)
+(def oled-holder-size [oled-holder-width oled-holder-height oled-holder-thickness])
+(def oled-mount-rotation-x-old (deg2rad 20))
+(def oled-mount-rotation-z-old (deg2rad -3))
+(def oled-x-position -2.6)
+(def oled-y-position 0)
+(def oled-z-position -4)
+
+(def oled-mount-width 12.5)  ; whole OLED width
+(def oled-mount-height 39.0)  ; whole OLED length
+(def oled-mount-rim 2.0)
+(def oled-mount-depth 7.0)
+(def oled-mount-cut_depth 20.0)
+(def oled-mount-location-x -78.0)
+(def oled-mount-location-y 20.0)
+(def oled-mount-location-z 62.0)
+(def oled-mount-rotation-x  12.0)
+(def oled-mount-rotation-y  0.0)
+(def oled-mount-rotation-z -6.0)
+(def oled-left-wall-x-offset-override 24.0)
+(def oled-left-wall-z-offset-override 0.0)
+(def oled-thickness 4.2)  ; thickness of OLED, )plus clearance.  Must include components
+(def oled-mount-bezel-thickness 3.5)  ; z thick)ness of clip bezel
+(def oled-mount-bezel-chamfer 2.0)  ; depth of )the 45 degree chamfer
+(def oled-mount-connector-hole 6.0)
+(def oled-screen-start-from-conn-end 6.5)
+(def oled-screen-length 24.5)
+(def oled-screen-width 10.5)
+(def oled-clip-thickness 1.5)
+(def oled-clip-width 6.0)
+(def oled-clip-overhang 1.0)
+(def oled-clip-extension 5.0)
+(def oled-clip-width-clearance 0.5)
+(def oled-clip-undercut 0.5)
+(def oled-clip-undercut-thickness 2.5)
+(def oled-clip-y-gap 0.2)
+(def oled-clip-z-gap 0.2)
+(def oled-clip-mount-external-width (+ oled-mount-width (* 2 oled-mount-rim)))
+(def oled-clip-mount-external-height (+ oled-mount-height (* oled-clip-thickness 2) (* oled-clip-undercut 2) ( * oled-clip-overhang 2) (* oled-mount-rim 2)) )
+(def oled-clip-mount-slot (cube (+ oled-clip-width (* 2 oled-clip-width-clearance)) 
+                                (+ oled-mount-height (* 2 oled-clip-thickness) (* 2 oled-clip-overhang))
+                                (+ oled-mount-depth 0.1) :center true))
+(def oled-clip-mount-undercut (translate [0 0 oled-clip-undercut-thickness] 
+                                         (cube (+ oled-clip-width (* 2 oled-clip-width-clearance))
+                                                  (+ oled-mount-height (* 2 oled-clip-thickness) (* 2 oled-clip-overhang) (* 2  oled-clip-undercut))
+                                                  (+ oled-mount-depth 0.1)
+                                               :center true)))
+
+(def oled-clip-mount-plate (translate [0 0 (/ (- oled-thickness) 2)]
+                            (cube (+ oled-mount-width 0.1)
+                                  (- oled-mount-height (* oled-mount-connector-hole 2)) 
+                                  (- oled-mount-depth oled-thickness) 
+                                  :center true)))
+
+(def oled-clip-mount-frame-hole
+  (translate [oled-mount-location-x oled-mount-location-y oled-mount-location-z] 
+             (rotate [oled-mount-rotation-x oled-mount-rotation-y oled-mount-rotation-z]
+             (cube oled-clip-mount-external-width oled-clip-mount-external-height (+ oled-mount-cut_depth 0.1) :center true)
+             )) 
+  )
+
+(def oled-clip-mount-frame-shape
+  (translate [oled-mount-location-x oled-mount-location-y oled-mount-location-z]
+             (rotate [oled-mount-rotation-x oled-mount-rotation-y oled-mount-rotation-z]
+                     (union 
+                    oled-clip-mount-plate                    
+                      (difference
+                       oled-clip-mount-undercut
+                       oled-clip-mount-slot
+                       (cube oled-clip-mount-external-width oled-clip-mount-external-height (+ oled-mount-depth 0.1) :center true)
+                         (cube oled-clip-mount-external-width oled-clip-mount-external-height oled-mount-depth :center true)  
+                        )
+                      ))))
+
+(def oled-clip-mount-frame (union oled-clip-mount-frame-hole oled-clip-mount-frame-shape ))
+
 ;;;;;;;;;;;;;;;;;;;;
 ;; Web Connectors ;;
 ;;;;;;;;;;;;;;;;;;;;
 
 (def web-thickness 4.5)
 (def post-size 0.1)
+(def new-post-size (if (= rounding-radius 0) 1 rounding-radius))
 (def web-post (->> (cube post-size post-size web-thickness)
                    (translate [0 0 (+ (/ web-thickness -2)
                                       plate-thickness)])))
 
+(defn web-post-shape [height]
+  (if (= new-post-size 0)
+    (cube post-size post-size height)
+    (rcylinder post-size height)))
+
 (def big-boi-web-post (->> (cube post-size (+ post-size 30) 10)
                            (translate [0 0 (- (+ (/ 10 -2)
                                                  plate-thickness) 1)])))
+
+(def oled-post (->> (web-post-shape oled-holder-thickness)
+                    (translate [0 0 (+ (/ oled-holder-thickness -2) plate-thickness)])))
 
 (def post-adj (/ post-size 2))
 (def web-post-tr (translate [(- (/ mount-width 1.95) post-adj) (- (/ mount-height 1.95) post-adj) 0] web-post))
@@ -636,7 +785,7 @@
 (def trackball-middle-translate [-6.5 6 -0.5])
 (def minithumb-tip-offset [-35 -16 -6.5])
 (def minithumb-tip-origin (map + thumborigin minithumb-tip-offset))
-(def tl-minithumb-loc (map + minithumb-tip-offset (if trackball-enabled trackball-middle-translate [0 0 0])))
+(def tl-minithumb-loc (map + minithumb-tip-offset (if (or trackball-enabled joystick-enabled) trackball-middle-translate [0 0 0])))
 (defn minithumb-tl-place [shape]
   (->> shape
            (rotate (deg2rad  -12) [1 0 0])
@@ -645,7 +794,7 @@
            (translate thumborigin)
            (translate tl-minithumb-loc))) ; original 1.5u (translate [-32 -15 -2])))
 
-(def mr-minithumb-loc (map + [-23.5 -36.5 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
+(def mr-minithumb-loc (map + [-23.5 -36.5 -2] (if (or trackball-enabled joystick-enabled) trackball-middle-translate [0 0 0])))
 
 (defn minithumb-mr-place [shape]
   (->> shape
@@ -654,7 +803,7 @@
        (rotate (deg2rad  35) [0 0 1])
        (translate thumborigin)
        (translate mr-minithumb-loc)))
-(def br-minithumb-loc (map + [-34.5 -44 -20] (if trackball-enabled [2 -12 2] [0 0 0])))
+(def br-minithumb-loc (map + [-34.5 -44 -20] (if (or trackball-enabled joystick-enabled) [2 -12 2] [0 0 0])))
 
 (defn minithumb-br-place [shape]
   (->> shape
@@ -664,7 +813,7 @@
        (translate thumborigin)
        (translate br-minithumb-loc)))
 
-(def bl-minithumb-loc (map + [-44 -23 -24] (if trackball-enabled [2 -12 2] [0 0 0])))
+(def bl-minithumb-loc (map + [-44 -23 -24] (if (or trackball-enabled joystick-enabled) [2 -12 2] [0 0 0])))
 (defn minithumb-bl-place [shape]
   (->> shape
        (rotate (deg2rad   -18) [1 0 0])
@@ -673,11 +822,18 @@
        (translate thumborigin)
        (translate bl-minithumb-loc))) ;        (translate [-51 -25 -12])))
 
+(def tm-minithumb-loc (map + [-36.0 -9 3.2] (if (or trackball-enabled joystick-enabled) trackball-middle-translate [0 0 0])))
+(defn minithumb-tm-place [shape]
+  (->> shape
+       (rd 6 -5 12)
+       (translate thumborigin)
+       (translate tm-minithumb-loc))) ; original 1.5u (translate [-32 -15 -2])))
+
 (defn minithumb-1x-layout [shape]
   (union
    (minithumb-mr-place shape)
    (minithumb-br-place shape)
-  (if trackball-enabled nil(minithumb-tl-place shape))
+  (if (or trackball-enabled joystick-enabled) nil(minithumb-tl-place shape))
    (minithumb-bl-place shape)))
 
 (defn minithumb-15x-layout [shape]
@@ -705,7 +861,7 @@
 (def minithumb-post-br (translate [(- (/ mount-width 2) post-adj)  (+ (/ mount-height -2) post-adj) 0] web-post))
 
 (def minithumb-connectors
-  (if trackball-enabled
+  (if (or trackball-enabled joystick-enabled)
     (union
      ; top right vertical
      (triangle-hulls
@@ -1321,11 +1477,11 @@
                                                                                                                    (not= row lastrow))]
                                                                                                      (->> hotswap
                                                                                                           (key-place column row))))
-                                                                                            (thumb-mr-place (if trackball-enabled bottom-hotswap hotswap))
-                                                                                            (thumb-br-place hotswap)
-                                                                                            (if trackball-enabled nil (thumb-tl-place bottom-hotswap))
-                                                                                            (thumb-bl-place bottom-hotswap)
-                                                                                            (thumb-tr-place bottom-hotswap))))
+                                                                                            (minithumb-mr-place (if trackball-enabled bottom-hotswap hotswap))
+                                                                                            (minithumb-br-place hotswap)
+                                                                                            (if trackball-enabled nil (minithumb-tl-place bottom-hotswap))
+                                                                                            (minithumb-bl-place bottom-hotswap)
+                                                                                            (minithumb-tr-place bottom-hotswap))))
 
 (def hotswap-holes (hotswap-place buckle-holes-on-key))
 
@@ -1510,6 +1666,41 @@
 (def raised-trackball (translate [0 0 trackball-raise] (sphere (+ (/ trackball-width 2) 0.5))))
 (def trackball-origin (map + minithumb-tip-origin [-8.5 10 -5]))
 
+(def oled-holder-cut
+  (->>
+   (union
+      ; cut for oled pcb
+    (difference
+     (translate [0 0 1] (apply cube (add-vec [0.5 0.5 0.1] oled-pcb-size)))
+     (for [x [-2 2] y [-2 2]]
+       (translate (div-vec oled-mount-size [x y 1])
+                  (cylinder 2.5 (- oled-holder-thickness 2.5)))))
+      ; cut for oled screen
+    (translate oled-screen-offset (apply cube oled-screen-size))
+      ; cut for oled screen viewport
+    (translate oled-viewport-offset (apply cube oled-viewport-size))
+      ; cutout for oled cable
+    (->> (cube 10 2 10)
+         (translate oled-screen-offset)
+         (translate [0 (- (+ (/ (nth oled-screen-size 1) 2) 1)) (+ plate-thickness 1.0)]))
+    (for [x [-2 2] y [-2 2]]
+      (translate (div-vec oled-mount-size [x y 1]) (cylinder (/ 2.5 2) 10))))
+   (rdy 180)
+   (translate [0 0 (/ oled-holder-thickness 2)])))
+
+(def oled-holder
+  (->>
+    ; main body
+   (apply cube oled-holder-size)
+   (rdy 180)
+   (translate [0 0 (/ oled-holder-thickness 2)])))
+
+(def oled-holder-block
+  (->>
+  ; main body
+ (apply cube oled-holder-size)
+ (rdy 180)
+ (translate [0 0 -2])))
 
 ;;;;;;;;;;
 ;; Case ;;
@@ -1525,21 +1716,72 @@
        (extrude-linear {:height height :twist 0 :convexity 0})
        (translate [0 0 (- (/ height 2) 10)])))
 
+
 (defn bottom-hull [& p]
   (hull p (bottom 0.001 p)))
 
-(def left-wall-x-offset 5)
+(def left-wall-x-offset 33.2)
+(def left-wall-x-offset-trackball 0)
+(def left-wall-x-offset-oled -5)
 (def left-wall-z-offset 3)
 
 (defn left-key-position [row direction]
   (map - (key-position 0 row [(* mount-width -0.5) (* direction mount-height 0.5) 0]) [left-wall-x-offset 0 left-wall-z-offset]) )
 
+(defn left-key-position-oled [row direction]
+  (map - (key-position 0 row [(*  mount-width -0.5) (* direction  mount-height 0.5) 0])
+       [left-wall-x-offset 0 left-wall-z-offset]
+       (key-position 0 row [(*  oled-holder-width -0.5) (* direction oled-holder-height 0.5) 0])))
+
 (defn left-key-place [row direction shape]
   (translate (left-key-position row direction) shape))
+
+(defn left-key-position-narrow [row direction]
+  (map - (key-position 0 row [(* mount-width -0.5) (* direction mount-height 0.5) 0]) [left-wall-x-offset-trackball 0 left-wall-z-offset]))
+
+(defn left-key-place-narrow [row direction shape]
+  (translate (left-key-position-narrow row direction) shape))
+
+(defn left-wall-plate-position [xdir ydir]
+  (->>
+   (add-vec
+    [left-wall-x-offset-oled 0 (- left-wall-z-offset 2)]
+    (key-position 0 0 [0 0 0])
+    [(* mount-width -0.5) (* mount-width 0.5) 0]
+    [(* oled-holder-width -0.5) (* oled-holder-height -0.5) 0]
+    [(* xdir oled-holder-width 0.5) (* ydir oled-holder-height 0.5) 0]
+    [-3 7 -7])))
+
+
+(defn left-wall-plate-place [xdir ydir shape]
+  (->> shape
+       (translate (left-wall-plate-position xdir ydir))
+       (rotate oled-mount-rotation-x-old [1 0 0])
+       (rotate oled-mount-rotation-z-old [0 0 1])))
 
 (defn wall-locate1 [dx dy] [(* dx wall-thickness) (* dy wall-thickness) -1])
 (defn wall-locate2 [dx dy] [(* dx wall-xy-offset) (* dy wall-xy-offset) wall-z-offset])
 (defn wall-locate3 [dx dy] [(* dx (+ wall-xy-offset wall-thickness)) (* dy (+ wall-xy-offset wall-thickness)) wall-z-offset])
+
+(defn wall-locate2-xy [dx dy xy] [(* dx xy) (* dy xy) wall-z-offset])
+(defn wall-locate3-xy [dx dy xy] [(* dx (+ xy wall-thickness)) (* dy (+ xy wall-thickness)) wall-z-offset])
+
+(defn wall-brace-xy [place1 dx1 dy1 post1 place2 dx2 dy2 post2 xy1 xy2]
+  (union
+   (hull
+    (place1 post1)
+    (place1 (translate (wall-locate1 dx1 dy1) post1))
+    (place1 (translate (wall-locate2-xy dx1 dy1 xy1) post1))
+    (place1 (translate (wall-locate3-xy dx1 dy1 xy1) post1))
+    (place2 post2)
+    (place2 (translate (wall-locate1 dx2 dy2) post2))
+    (place2 (translate (wall-locate2-xy dx2 dy2 xy2) post2))
+    (place2 (translate (wall-locate3-xy dx2 dy2 xy2) post2)))
+   (bottom-hull
+    (place1 (translate (wall-locate2-xy dx1 dy1 xy1) post1))
+    (place1 (translate (wall-locate3-xy dx1 dy1 xy1) post1))
+    (place2 (translate (wall-locate2-xy dx2 dy2 xy2) post2))
+    (place2 (translate (wall-locate3-xy dx2 dy2 xy2) post2)))))
 
 (defn wall-brace [place1 dx1 dy1 post1 place2 dx2 dy2 post2]
   (union
@@ -1673,7 +1915,7 @@
 (def mini-thumb-wall
   (union
    ; thumb walls
-  ; (wall-brace minithumb-mr-place  0 -1 web-post-br minithumb-tr-place  0 -1 minithumb-post-br)
+   ;(wall-brace minithumb-mr-place  0 -1 web-post-br minithumb-tr-place  0 -1 minithumb-post-br)
    ;(wall-brace minithumb-mr-place  0 -1 web-post-br minithumb-mr-place  0 -1 web-post-bl)
    (color [0.1 0.4 0.5 1](wall-brace minithumb-bl-place -1  0 web-post-bl minithumb-br-place -1  0 web-post-tl)
    (wall-brace minithumb-br-place  0 -1 web-post-br minithumb-br-place  0 -1 web-post-bl)
@@ -1681,15 +1923,15 @@
    (wall-brace minithumb-bl-place -1  0 web-post-tl minithumb-bl-place -1  0 web-post-bl)
 )
    ( color [0.8 0.2 0.5 1] (wall-brace minithumb-br-place  0 -1 web-post-br minithumb-br-place  0 -1 web-post-bl))
-   ;(color [0.2 0.9 0.4 1](wall-brace minithumb-bl-place  0  1 web-post-tr minithumb-bl-place  0  1 web-post-tl))
+  (if (or trackball-enabled joystick-enabled) nil (wall-brace minithumb-bl-place  0  1 web-post-tr minithumb-bl-place  0  1 web-post-tl))
    (color [0.5 0.1 0.8 0.8](wall-brace minithumb-br-place -1  0 web-post-tl minithumb-br-place -1  0 web-post-bl))
    (color [0.3 0.5 0.7 1](wall-brace minithumb-bl-place -1  0 web-post-tl minithumb-bl-place -1  0 web-post-bl))
 ;
    ; minithumb corners
    (wall-brace minithumb-br-place -1  0 web-post-bl minithumb-br-place  0 -1 web-post-bl)
-   ;(wall-brace minithumb-bl-place -1  0 web-post-tl minithumb-bl-place  0  1 web-post-tl)
+   (color [1 0 0 1](wall-brace minithumb-bl-place -1  0 web-post-tl minithumb-bl-place  0  1 web-post-tl))
    ; minithumb tweeners
-   ;(wall-brace minithumb-mr-place  0 -1 web-post-bl minithumb-br-place  0 -1 web-post-br)
+  
    (wall-brace minithumb-bl-place -1  0 web-post-bl minithumb-br-place -1  0 web-post-tl)
    (wall-brace minithumb-tr-place  0 -1 minithumb-post-br (partial key-place (+ innercol-offset 3) lastrow)  0 -1 web-post-bl)   
     
@@ -1709,10 +1951,15 @@
        (key-place 0 cornerrow web-post-tr)
        (key-place 1 cornerrow web-post-bl))
      ;removed so it doesnt clash with the trackball
-     ; (hull
-     ;  (key-place 0 (dec cornerrow) web-post-bl)
-     ;  (key-place 1 cornerrow web-post-bl)
-     ;  (minithumb-tl-place minithumb-post-tl))
+     (if (or trackball-enabled joystick-enabled) nil (hull
+       (key-place 1 lastrow web-post-tl)
+       (key-place 1 cornerrow web-post-bl)
+       (minithumb-tl-place minithumb-post-tl)))
+                            
+       (triangle-hulls
+         (key-place 0 (dec cornerrow) web-post-bl)
+         (key-place 1 cornerrow web-post-bl)
+         (key-place 0 cornerrow web-post-bl))               
                             )))))
 
 (def default-thumb-wall
@@ -1791,15 +2038,16 @@
     "mini" mini-thumb-wall))
 
 (def trackball-walls
-  (color [0 0 1 1](union
+  (color [0 1 1 1](union
    ; clunky bit on the top left thumb connection  (normal connectors don't work well)
    ; merging with hulls to the trackball mount
           (difference
            (union
      ; Thumb to rest of case
             (bottom-hull
-             (bottom 45 (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
-      ;             (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
+             (bottom 25 (left-key-place-narrow cornerrow -1 (translate (wall-locate3 -1 2) big-boi-web-post)))
+             ;     (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
+             ;small wall at bottom between thumb and trackball
              (minithumb-bl-place web-post-tr)
              (minithumb-bl-place web-post-tl)))
            key-clearance
@@ -1807,59 +2055,77 @@
            (translate trackball-origin rotated-bottom-trim)
            (translate trackball-origin rotated-dowells)))))
 
-(def thumb-to-left-wall
-   ; clunky bit on the top left minithumb connection  (normal connectors don't work well)
-  (union 
-    (color [0 0 0 1](bottom-hull
-            (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
-            (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
-            (minithumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
-            (minithumb-bl-place (translate (wall-locate3 -3 1) web-post-tr))))
-   (color [0.1 0.2 0.3 1](hull
-    (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
-    (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
-    (minithumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
-    (minithumb-bl-place (translate (wall-locate3 -2 1) web-post-tr))
-    (minithumb-tl-place web-post-tl)))
-  (color [0.9 0.9 0.6 1] (hull
-    (left-key-place (- cornerrow innercol-offset) -1 web-post)
-    (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate1 -1 0) web-post))
-    (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
-    (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
-    (minithumb-tl-place web-post-tl)))
-   (color [1 1 1 1](hull
-    (left-key-place (- cornerrow innercol-offset) -1 web-post)
-    (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate1 -1 0) web-post))
-    (key-place 0 (- cornerrow innercol-offset) web-post-bl)
-    (minithumb-tl-place web-post-tl)))
-  (color [0.5 0.5 0.5 1] (hull
-    (minithumb-bl-place web-post-tr)
-    (minithumb-bl-place (translate (wall-locate1 -0.3 1) web-post-tr))
-    (minithumb-bl-place (translate (wall-locate2 -0.3 1) web-post-tr))
-    (minithumb-bl-place (translate (wall-locate3 -0.3 1) web-post-tr))
-    (minithumb-tl-place web-post-tl)))
-   ; Tiny little piece leading to the left
-     (wall-brace minithumb-bl-place  0  1 web-post-tr minithumb-bl-place  0  1 web-post-tl)
-    ;(wall-brace minithumb-br-place  0  1 web-post-tl minithumb-br-place  0  1 web-post-tr)
-   ))
+(def thumb-to-left-wall (union
+                         (hull
+                          (minithumb-bl-place  web-post-tr)
+                          (minithumb-bl-place (translate (wall-locate3 0 1) web-post-tl))
+                          (key-place 1 cornerrow web-post-bl)
+                          )
+                         ;(wall-brace-xy (partial left-key-place 2 -1) -1 0 oled-post  (partial key-place 0 (- lastrow innercol-offset)) -2 1  web-post-bl wall-xy-offset-thin wall-xy-offset-thin)
+                         ;(wall-brace (partial key-place 0 (- lastrow innercol-offset)) -1 0   web-post-bl (partial key-place 0 (- lastrow innercol-offset)) 0 0 web-post-br)
+                        ; clunky bit on the top left thumb connection  (normal connectors don't work well)
+                        ;(bottom-hull
+                        ; (left-key-place 0 (- cornerrow innercol-offset)  web-post-bl)
+                        ; (left-key-place 0 (- cornerrow innercol-offset)  web-post-bl)
+                        ; (thumb-bl-place  web-post-tr)
+                        ; (thumb-bl-place  web-post-tr))
+                         ;(hull
+                         ; (bottom 10 (key-place  0 2 web-post-bl)  )
+                         ; (key-place 0 2 web-post-br)
+                         ;   (minithumb-bl-place )
+                         ; 
+                         ; )
+                        ; (hull
+                        ; (left-key-place (- lastrow innercol-offset) -1 (translate (wall-locate2 7 0) web-post))
+                        ; (left-key-place (- lastrow innercol-offset) -1 (translate (wall-locate3 7 0) web-post))
+                        ; ;(minithumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
+                        ; ;(minithumb-bl-place (translate (wall-locate3 -2 1) web-post-tr))
+                        ; (minithumb-tl-place web-post-tl))
+                         ;(hull
+                         ; (left-key-place (- cornerrow innercol-offset) -1 web-post)
+                         ; (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate1 -1 0) web-post))
+                         ; (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate2 -1 0) web-post))
+                         ; (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate3 -1 0) web-post))
+                         ; (thumb-tl-place web-post-tl))
+                         ;(hull
+                         ; (left-key-place (- cornerrow innercol-offset) -1 web-post)
+                         ; (left-key-place (- cornerrow innercol-offset) -1 (translate (wall-locate1 -1 0) web-post))
+                         ; (key-place 0 (- cornerrow innercol-offset) web-post-bl)
+                         ; (thumb-tl-place web-post-tl))
+                         ;(hull
+                         ; (thumb-bl-place web-post-tr)
+                         ; (thumb-bl-place (translate (wall-locate1 -0.3 1) web-post-tr))
+                         ; (thumb-bl-place (translate (wall-locate2 -0.3 1) web-post-tr))
+                         ; (thumb-bl-place (translate (wall-locate3 -0.3 1) web-post-tr))
+                         ; (thumb-tl-place web-post-tl))
+                         ; Tiny little piece leading to the left
+                         ;(wall-brace thumb-bl-place  0  1 web-post-tr thumb-bl-place  0  1 web-post-tl)
+                         ))
 
 (def trackball-to-case (difference (union
                         ; Trackball mount to left outside of case
                                     (color [1 0 0 1] (hull
-                                     (left-key-place (- lastrow innercol-offset) -0 (translate (wall-locate3 -1 0) big-boi-web-post))
+                                     (left-key-place-narrow cornerrow -1 (translate (wall-locate3 -1 1) big-boi-web-post))
                                      case-filler-cup))
                         ; Gap between trackball mount and top key
-                                    (hull
-                                     (color [0.5 1 0 1](key-place 0 (- cornerrow innercol-offset) web-post-bl))
-                                     (key-place 0 (- cornerrow innercol-offset) web-post-bl)
-                                     (color [0.2 1 0.5 1](key-place 0 (- lastrow innercol-offset) web-post-br)
+                                   ; (hull
+                                   ;  (key-place 0 cornerrow web-post-bl)
+                                   ;  (key-place 0 cornerrow web-post-br)
+                                   ;  (key-place 0 cornerrow web-post-tl)
+                         ;(left-key-place-narrow  cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post))
+                                     ;(color [0.5 0 1 1](key-place 0 (- lastrow innercol-offset) big-boi-web-post))
+                                     ;(key-place 0 (- lastrow innercol-offset) web-post-bl)
+                                     ;(color [1 1 0.5 1](key-place 0 (- lastrow innercol-offset) big-boi-web-post))
+                                      ;(wall-brace (partial key-place 0 cornerrow) 0 0 web-post-bl (partial key-place 0 cornerrow) 0 0 web-post-bl) 
                                       ;(key-place 0 (- cornerrow innercol-offset) web-post-r)
-                                     (left-key-place (- lastrow innercol-offset) 0 (translate (wall-locate2 -1 0) big-boi-web-post))
-                                     (left-key-place (- lastrow innercol-offset) 0 (translate (wall-locate3 -1 0) big-boi-web-post))))
+                                     ;(left-key-place-narrow (- lastrow innercol-offset) 0 (translate (wall-locate2 -1 0) big-boi-web-post))
+                                     ;(left-key-place-narrow (- lastrow innercol-offset) 0 (translate (wall-locate3 -1 0) big-boi-web-post))
+                                     ;       )
                         ; Between the trackball and the outside of the case near the bottom, to ensure a nice seal
-                                    ( color [0 0.5 1 1](hull
-                                     (bottom 45 (left-key-place (- lastrow innercol-offset) 0 (translate (wall-locate3 -1 0) big-boi-web-post)))
-                                     (translate trackball-origin (trackball-mount-rotate cup)))))
+                                    ( color [0 1 0 1](hull
+                                     (bottom 25 (left-key-place-narrow cornerrow -1 (translate (wall-locate3 -1 2)  big-boi-web-post)))
+                                     (translate trackball-origin (trackball-mount-rotate cup))))
+                                    )
                                    (translate trackball-origin rotated-dowells)
                                    (translate trackball-origin rotated-bottom-trim)))
 
@@ -1868,12 +2134,12 @@
 (def trackball-tweeners (union
                          (wall-brace minithumb-mr-place  0 (- wall-multiplier) web-post-br minithumb-br-place  0 -1 web-post-br)))
 (def back-convex-thumb-wall-0 ; thumb tweeners
-  (if trackball-enabled
+  (if (or trackball-enabled joystick-enabled)
     trackball-tweeners
     (union
      (wall-brace minithumb-mr-place  0 (- wall-multiplier) web-post-bl minithumb-br-place  0 -1 web-post-br))))
 (def back-convex-thumb-wall-1 (wall-brace minithumb-mr-place  0 (- wall-multiplier) web-post-br minithumb-tr-place 0 (- wall-multiplier) minithumb-post-br))
-(def back-convex-thumb-wall-2 (if trackball-enabled
+(def back-convex-thumb-wall-2 (if (or trackball-enabled joystick-enabled)
                                 ; Back right thumb to the middle one
                                 (triangle-hulls
                                  (minithumb-mr-place web-post-br)
@@ -1891,7 +2157,7 @@
 (def thumb-corners ; thumb corners
   (union
    (wall-brace minithumb-br-place -1  0 web-post-bl minithumb-br-place  0 -1 web-post-bl)
-   (if trackball-enabled nil (wall-brace minithumb-bl-place -1  0 web-post-tl minithumb-bl-place  0  1 web-post-tl))))
+   (if (or trackball-enabled joystick-enabled) nil (wall-brace minithumb-bl-place -1  0 web-post-tl minithumb-bl-place  0  1 web-post-tl))))
 
 (def pro-micro-wall (union
                      (for [x (range 0 ncols)] (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr))
@@ -1900,27 +2166,200 @@
 
 
 (def back-wall
-  ( union 
+  (color [1 0 0 1]( union 
   (for [x (range 0 ncols)] (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr))
  (for [x (range 1 ncols)] (key-wall-brace x 0 0 1 web-post-tl (dec x) 0 0 1 web-post-tr))
-  ))
+  )))
 
 (def left-wall
+ (difference 
 ( union
- (for [y (range 0 (- lastrow innercol-offset))] (union (wall-brace (partial left-key-place y 1) -1 0 web-post (partial left-key-place y -1) -1 0 web-post)
-                                                         (hull (key-place 0 y web-post-tl)
-                                                               (key-place 0 y web-post-bl)
-                                                               (left-key-place y  1 web-post)
-                                                               (left-key-place y -1 web-post)))) 
-   (for [y (range 1 (- lastrow innercol-offset))] (union
-                                                   (wall-brace (partial left-key-place (dec y) -1) -1 0 web-post (partial left-key-place y  1) -1 0 web-post)
-                                                   (hull (key-place 0 y       web-post-tl)
-                                                         (key-place 0 (dec y) web-post-bl)
-                                                         (left-key-place y        1 web-post)
-                                                         (left-key-place (dec y) -1 web-post))))
-   (wall-brace (partial key-place 0 0) 0 1 web-post-tl (partial left-key-place 0 1) 0 1 web-post)
-   (wall-brace (partial left-key-place 0 1) 0 1 web-post (partial left-key-place 0 1) -1 0 web-post)
-  ))
+  
+(left-wall-plate-place 0 0 oled-holder)
+ ;(left-wall-plate-place oled-x-position oled-y-position oled-holder-block)
+
+(wall-brace-xy (partial key-place 0 0) 0 1 web-post-tl  (partial left-wall-plate-place 1 1) 0 1 oled-post wall-xy-offset wall-xy-offset-thin)
+(wall-brace-xy  (partial left-wall-plate-place 1 1) 0 1 oled-post  (partial left-wall-plate-place -1 1) 0 1 oled-post wall-xy-offset-thin wall-xy-offset-thin)
+(wall-brace-xy  (partial left-wall-plate-place -1 1) 0 1 oled-post  (partial left-wall-plate-place -1 1) -1 0 oled-post wall-xy-offset-thin wall-xy-offset-thin)
+(wall-brace-xy  (partial left-wall-plate-place -1 1) -1 0 oled-post  (partial left-wall-plate-place -1 -1) -1 -1 oled-post wall-xy-offset-thin wall-xy-offset-thin)
+;(wall-brace-xy (partial left-wall-plate-place -1 -1) -1 -1 oled-post  (partial key-place 0 (- lastrow innercol-offset)) 0 0 web-post-tl wall-xy-offset-thin wall-xy-offset-thin)
+(wall-brace-xy (partial left-wall-plate-place -1 -1) -1 -1 oled-post  (partial left-key-place 2 -1) -1 0 oled-post wall-xy-offset-thin wall-xy-offset-thin)
+(color [1 0 0 1](wall-brace-xy (partial left-key-place 2 -1) -1 0 oled-post  (partial key-place 0 (- lastrow innercol-offset)) 0 1  web-post-bl wall-xy-offset-thin wall-xy-offset-thin)) 
+ (if (or trackball-enabled joystick-enabled) nil (color [0 1 0 1](wall-brace-xy (partial key-place 0 (- lastrow innercol-offset)) -2 1   web-post-bl (partial key-place 0 (- lastrow innercol-offset)) 0 0 web-post-br wall-xy-offset-thin wall-xy-offset-thin)))
+     ;(if trackball-enabled nil (wall-brace-xy (partial key-place 0 (- lastrow innercol-offset)) 0 0 web-post-br (partial key-place 0 (- lastrow innercol-offset) ) 0 0 minithumb-post-bl wall-xy-offset-thin wall-xy-offset-thin) )
+ ;(if trackball-enabled nil (color [1 0 0 1](wall-brace-xy (partial key-place 0 (- lastrow innercol-offset)) 0 0 web-post-bl (partial key-place 0 cornerrow ) 0 0 minithumb-post-tl wall-xy-offset-thin wall-xy-offset-thin)))
+ ;(wall-brace (partial key-place 0 cornerrow) 0 0 minithumb-post-tl minithumb-bl-place  0  1 web-post-tl)
+ (if (or trackball-enabled joystick-enabled) nil(wall-brace (partial key-place 1 cornerrow) -1 0 web-post-bl (partial key-place 1 lastrow )1 1 web-post-tl))
+ ;(wall-brace-xy  minithumb-tl-place -1 0 web-post-tl minithumb-tl-place -1 0 web-post-bl wall-xy-offset wall-xy-offset)
+;  (for [y (range 1.7 (+ (- lastrow innercol-offset ) 0/6))] (union (wall-brace (partial left-key-place y 1) -1 0 web-post (partial left-key-place y -1) -1 0 web-post)
+;                                                        (hull (key-place 0 y web-post-tl)
+;                                                              (key-place 0 y web-post-bl)
+;                                                              (left-key-place y  1 web-post)
+;                                                              (left-key-place y -1 web-post))))
+;(for [y (range 2.7 (+ (- lastrow innercol-offset) 0.6))] (union
+;                                                (wall-brace (partial left-key-place (dec y) -1) -1 0 web-post (partial left-key-place y  1) -1 0 web-post)
+;                                                (hull (key-place 0 y       web-post-tl)
+;                                                      (key-place 0 (dec y) web-post-bl)
+;                                                      (left-key-place y        1 web-post)
+;                                                      (left-key-place (dec y) -1 web-post))))
+;(wall-brace (partial key-place 0 0) 0 1 web-post-tl (partial left-key-place 0 1) -0 1 web-post)
+;(wall-brace (partial left-key-place 0 1) -0 1 web-post thumb-tl-place -1 0 web-post)
+
+  )
+ 
+  ;(left-wall-plate-place oled-x-position oled-y-position (translate [0 0 -6] (cube (first oled-pcb-size) (second oled-pcb-size) 4 :center true) ))
+  )
+  )
+
+  (def joystick (import "../things/joystick hole.stl"))
+  (def joycon-joystick-case-mount (import "../things/Billiam_joy_case_mount.stl"))
+  (def joystick-cutout (color [0 0 1] (translate [0 0 6] (cylinder (/ 33.6 2) 3.5))))
+  (defn joystick-position [shape]
+   (->> shape 
+        (rotate (deg2rad 60) [0 1 0] )
+       (rotate (deg2rad -35)[0 0 1])
+       (translate [64 -35 36] ))
+  )
+
+  (def joystick-wall 
+      (difference
+       (union
+      ;(wall-brace-xy (partial key-place 0 (- lastrow innercol-offset)) 0 1  web-post-bl (partial key-place 1 lastrow )1 1 web-post-tr wall-xy-offset-thin wall-xy-offset-thin)
+      ; (wall-brace minithumb-bl-place  0  1 web-post-tl (partial key-place 0 cornerrow) 0 1 web-post-bl )
+      ; (hull 
+      ;  (key-place 1 cornerrow web-post-bl)
+      ;  (minithumb-bl-place web-post-tl)
+      ;  (minithumb-tl-place web-post)
+      ; 
+      ;  )
+       (color [0 1 0 1] (triangle-hulls
+                         (minithumb-tl-place web-post-tl)
+                         (minithumb-bl-place minithumb-post-tl)
+                         (minithumb-bl-place minithumb-post-tr)))
+
+       (color [0 0 1 1] (triangle-hulls
+                         (minithumb-mr-place minithumb-post-tl)
+                         (minithumb-bl-place minithumb-post-tr)
+                         (minithumb-tr-place minithumb-post-tl)))
+
+       (color [0 1 1 1](triangle-hulls
+        (minithumb-tr-place minithumb-post-tl)
+        (minithumb-bl-place minithumb-post-tr)
+        (key-place 1 cornerrow web-post-bl )
+        ))
+       
+      (triangle-hulls
+         (color [1 1 0 1](key-place 1 cornerrow web-post-bl)
+        (minithumb-bl-place minithumb-post-tr)
+        (minithumb-tl-place web-post-tl))
+       
+       (color [0.3 0.4 0 1](minithumb-tl-place web-post-bl)
+
+              (minithumb-bl-place web-post-tl)
+              (minithumb-bl-place minithumb-post-tr))
+       
+     ;(color [1 0 1 1](minithumb-tr-place web-post-tl)
+     ;       (minithumb-tl-place web-post-tl)
+     ;       (minithumb-bl-place minithumb-post-tr))
+       )
+
+       ;(hull
+       ; (minithumb-tl-place  web-post-br)
+       ;  (key-place 0 cornerrow web-post-br)
+       ; (minithumb-bl-place minithumb-post-tl)
+       ; (minithumb-tl-place minithumb-post-tl)
+       ; (minithumb-bl-place web-post-tl)
+       ; (key-place 0 cornerrow web-post-bl)
+       ; )
+      ;
+       
+       (hull
+        (minithumb-bl-place minithumb-post-tl)
+        (minithumb-bl-place web-post-tl)
+        (minithumb-tr-place minithumb-post-tl)
+        (minithumb-tl-place web-post-tl)
+        (wall-brace-xy minithumb-bl-place 0  0 minithumb-post-tl minithumb-tl-place 0 0 web-post-tr  wall-xy-offset-thin wall-xy-offset-thin)        
+        )
+       (wall-brace-xy minithumb-tl-place  -2 0 web-post-tr (partial key-place 0 cornerrow) -2 0 web-post-br wall-xy-offset-thin wall-xy-offset-thin)
+       (wall-brace-xy  (partial key-place 0 cornerrow) 0 0 web-post-br (partial key-place 0 cornerrow) 0 0 web-post-bl wall-xy-offset-thin wall-xy-offset-thin)
+      
+
+        ;(wall-brace minithumb-tl-place 0 0 web-post-br (partial key-place 0 cornerrow) 0 0 web-post-br )
+        
+
+      ;(triangle-hulls
+      ; (minithumb-mr-place web-post-tl)
+      ; (minithumb-tl-place web-post-bl)
+      ; (minithumb-tl-place web-post-tl)
+      ; )
+       )
+       joystick-cutout)
+    
+    )
+
+  (def left-section
+    (union
+     ;(oled-place oled-holder)
+     (triangle-hulls
+     (color [1 0 0 1] (left-wall-plate-place 1 1 oled-post)
+      (key-place 0 0 web-post-tl)
+      (key-place 0 0 web-post-bl))
+
+      (key-place 0 0 web-post-bl)
+      (left-wall-plate-place 1 1 oled-post)
+      (left-wall-plate-place 1 -1 oled-post)
+
+     (left-wall-plate-place 1 -1 oled-post)
+     (key-place 0 1 web-post-tl)
+     (key-place 0 2 web-post-tl)
+
+     (key-place  0 2  web-post-bl)
+     (key-place 0 2 web-post-tl)
+     (left-wall-plate-place -1 -1 oled-post)
+
+     (left-wall-plate-place -1 -1 oled-post)
+     (left-wall-plate-place 1 -1 oled-post)
+     (key-place 0 (- cornerrow innercol-offset) web-post-bl)
+
+      (key-place 0 (- cornerrow innercol-offset) web-post-bl)
+      (left-wall-plate-place -1 -1 oled-post)
+      (left-key-place 2 -1  oled-post)
+      
+      (key-place 0 (- cornerrow innercol-offset) web-post-bl)
+      (key-place 0 (- lastrow innercol-offset) web-post-bl)
+      (left-key-place 2 -1 oled-post)
+
+
+     ;(left-wall-plate-place 1 -1 oled-post)
+     ;(left-wall-plate-place -1 -1 oled-post)
+     ;(minithumb-bl-place web-post-tl)
+;
+     ; (minithumb-bl-place web-post-tl)
+     ; (left-wall-plate-place -1 -1 oled-post)
+     ; (left-wall-plate-place 1 -1 oled-post)
+;
+    
+;
+     ; (key-place 0 1 web-post-bl)
+     ; (left-wall-plate-place 1 -1 oled-post)
+     ; (minithumb-tl-place web-post-tl)
+;
+     ; (key-place 0 1 web-post-bl)
+     ; (key-place 0 2 web-post-tl)
+     ; (minithumb-bl-place web-post-bl)
+;
+     ; (minithumb-tl-place web-post-tl)
+     ; (minithumb-tl-place web-post-tr)
+     ; (key-place 0 2 web-post-tl)
+;
+     ; (key-place 0 2 web-post-tl)
+     ; (key-place 0 2 web-post-bl)
+     ; (minithumb-tl-place web-post-tr)
+;
+     ; (minithumb-tl-place web-post-tr)
+     ; (key-place 0 2 web-post-bl)
+     ; (minithumb-tl-place web-post-tl)
+      )))
 
   (def front-wall
    ( color [0.4 0.2 0.7 1] ( union
@@ -1932,11 +2371,12 @@
   
   (def non-thumb-walls (union
                         left-wall
+                       ; back-wall
                             ; front wall
                         front-wall
 ;                            (for [x (range 5 ncols)] (key-wall-brace x cornerrow 0 -1 web-post-bl (dec x) cornerrow 0 -1 web-post-br))
                             ; Right before the start of the thumb
-                        (wall-brace minithumb-tr-place  0 -1 minithumb-post-br (partial key-place 3 lastrow)  0 -1 web-post-bl)
+                        ;(color [ 0 0 1 1] (wall-brace minithumb-tr-place  0 -1 minithumb-post-br (partial key-place 3 (- lastrow innercol-offset))  0 -1 web-post-bl))
                         ))
   
    
@@ -1946,15 +2386,17 @@
    thumb-wall-type
    right-wall
    back-wall
-   left-wall
-  front-wall
-   pro-micro-wall
+   ;left-wall
+   ;front-wall
+   left-section
+   non-thumb-walls
+   ;pro-micro-wall
 
    back-convex-thumb-wall-0
    back-convex-thumb-wall-1
    back-convex-thumb-wall-2
    thumb-corners
-   (if trackball-enabled nil thumb-to-left-wall)
+   (if (or trackball-enabled joystick-enabled) nil thumb-to-left-wall)
    back-convex-thumb-wall-0
    ))
 
@@ -1977,19 +2419,90 @@
 
 ; Cutout for controller/trrs jack holder
 (def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
-(def usb-holder-position (map + [(+ 18.8 holder-offset) 18.7 1.3] [(first usb-holder-ref) (second usb-holder-ref) 2]))
-(def usb-holder-space  (translate (map + usb-holder-position [-1.5 (* -1 wall-thickness) 2.9]) (cube 28.666 30 12.4)))
-(def usb-holder-notch  (translate (map + usb-holder-position [-1.5 (+ 4.4 notch-offset) 2.9]) (cube 31.366 1.3 12.4)))
-(def trrs-notch        (translate (map + usb-holder-position [-10.33 (+ 3.6 notch-offset) 6.6]) (cube 8.4 2.4 19.8)))
+;(def usb-holder-position (map + [(+ 18.8 holder-offset) 18.7 1.3] [(first usb-holder-ref) (second usb-holder-ref) 2]))
+;(def usb-holder-space  (rotate (deg2rad 90) [1 0 0](translate (map + usb-holder-position [-1.5 (* -1 wall-thickness) 2.9]) (cube 28.666 30 12.4))))
+;(def usb-holder-notch  (translate (map + usb-holder-position [-1.5 (+ 4.4 notch-offset) 2.9]) (cube 31.366 1.3 12.4)))
+;(def trrs-notch        (translate (map + usb-holder-position [-10.33 (+ 3.6 notch-offset) 6.6]) (cube 8.4 2.4 19.8)))
 
 ; code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
-(def aviator-start (map + [0 -3  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
+(def aviator-start (map + [-32 -12  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
 (def aviator-position [(first aviator-start) (second aviator-start) 12])
+(def aviator-diameter 16.2)
 (def aviator-hole (translate aviator-position
                              (rotate (deg2rad 90) [1 0 0]
                                      ;(rotate (deg2rad 45) [0 1 0]
-                                             (translate [4 0 0]
-                                                        (cylinder (/ 16.1 2) 20)))))
+                                             (translate [3 0 0]
+                                                        (cylinder (/  aviator-diameter 2) 20)))))
+
+(def resetswitch-start (map + [0 -3  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
+(def resetswitch-position [(first resetswitch-start) (second resetswitch-start) 12])
+(def resetswitch-diameter 8.5)
+
+(def reset-hole
+  (union
+  ; (->> (union (binding [*fn* 36] (cylinder [(/ resetswitch-diameter 2) (/ resetswitch-diameter 2)] 10)))
+  ;      (rotate (/ π 2) [1 0 0])
+  ;      (translate [(+ 4  (first aviator-start)) (- (second aviator-start) 1) (/ (+ 44 aviator-diameter 0) 2)]))
+  ;    ; thinner wall
+   (->> (union (binding [*fn* 36] (cylinder [(/ resetswitch-diameter 2) (/ resetswitch-diameter 2)] 20))) ;; depth here matters; has been eyeballed
+        (rotate (/ π 2) [1 0 0])
+        (translate [(+ 32 (first resetswitch-start)) (- (second resetswitch-start) 2) (/ (+ 8 aviator-diameter 0) 2)]))))
+
+(def resetswitch-hole (translate aviator-position
+                             (rotate (deg2rad 90) [1 0 0]
+                                     ;(rotate (deg2rad 45) [0 1 0]
+                                     (translate [4 0 0]
+                                                (cylinder (/  resetswitch-diameter 2) 20)))))
+
+(def usb-holder-position (key-position 1 1 (map + (wall-locate1 -2 (- 4.9 (* 0.2 nrows))) [0 (/ mount-height 2) 0])))
+
+;(def usb-holder-size [19 33.65 5.5]);[5.5 33.65 19])	;;5.5 33.34 18.4
+;(def usb-hole-size [19 33.65 9.5]);[9.5 33.65 19]) ;;9.5 33.34 18.4
+;(def usb-hole-size-left [8.0 35.6 9.5]);[9.5 35.6 8.0]) ;;9.5 35.6 8.0
+;(def usb-hole-size-right [10.0 35.6 6]);[6 35.6 10.0]) ;;6 35.6 10.0
+
+(def usb-holder-size [5.5 33.65 19])	;;5.5 33.34 18.4
+(def usb-hole-size [9.5 33.65 19]) ;;9.5 33.34 18.4
+(def usb-hole-size-left [9.5 35.6 8.0]) ;;9.5 35.6 8.0
+(def usb-hole-size-right [6 35.6 10.0]) ;;6 35.6 10.0
+(def usb-holder-thickness 5)
+(def usb-holder
+  (->> 
+   (difference
+
+        (cube (+ (first usb-holder-size) usb-holder-thickness) (+ (second usb-holder-size) usb-holder-thickness) (+ (last usb-holder-size) usb-holder-thickness))
+
+	; (cube 5 5 5)
+) ; (apply cube usb-hole-size))
+
+
+       (translate [(first usb-holder-position) (second usb-holder-position) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)])
+       
+		; (rotate -0.6 [0 0 1])
+		;( translate [(- (first usb-holder-position) 10) (+ (second usb-holder-position) 4) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)])
+       ))
+
+
+
+(def usb-holder-hole
+  (->>
+   (union
+    (->> (apply cube usb-hole-size)
+         (translate [(+ (first usb-holder-position) 2) (second usb-holder-position) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)]))
+    (->> (apply cube usb-hole-size-left)
+         (translate [(+ (first usb-holder-position) 2) (- (second usb-holder-position) 10) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)]))
+    (->> (apply cube usb-hole-size-right)
+         (translate [(+ (first usb-holder-position) 2) (+ (second usb-holder-position) 10) (/ (+ (last usb-holder-size) usb-holder-thickness) 2)])))))
+
+(def encoder-pos (add-vec (left-wall-plate-position 0 -1.75) [0 -13 0]))
+(def encoder-rot-x oled-mount-rotation-x-old)
+(def encoder-rot-z oled-mount-rotation-z-old)
+(def encoder-cutout-shape (cylinder (/ 6.5 2) 1000))
+(def encoder-cutout (->> encoder-cutout-shape
+                         (rx encoder-rot-x)
+                         (rz encoder-rot-z)
+                         (translate encoder-pos)))
+
 ; Screw insert definition & position
 (defn screw-insert-shape [bottom-radius top-radius height]
   (union
@@ -2049,12 +2562,12 @@
   (def screw-offset-bm [8 -1 0]))
 
  (defn screw-insert-all-shapes [bottom-radius top-radius height]
-   (union (screw-insert 0 0         bottom-radius top-radius height [8 10.5 0])
-          (screw-insert 0 lastrow   bottom-radius top-radius height screw-offset-bl)
+   (union (screw-insert 0 1         bottom-radius top-radius height [8 21.5 0])
+          (screw-insert 0 cornerrow   bottom-radius top-radius height (map + [-8 8 0] screw-offset-bl))
           (screw-insert lastcol lastrow  bottom-radius top-radius height screw-offset-br)
           (screw-insert lastcol 0         bottom-radius top-radius height screw-offset-tr)
-          (screw-insert (+ 2 innercol-offset) 0         bottom-radius top-radius height screw-offset-tm)
-          (screw-insert (+ 1 innercol-offset) lastrow         bottom-radius top-radius height screw-offset-bm)))
+          (screw-insert (+ 2 innercol-offset) 0         bottom-radius top-radius height  screw-offset-tm)
+          (screw-insert (+ 1 innercol-offset) lastrow         bottom-radius top-radius height (map + [-6 0 0] screw-offset-bm))))
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 6)
@@ -2152,20 +2665,91 @@
 (def bottom-plate-thickness 2)
 
 (def plate-attempt (difference
+                     (extrude-linear {:height bottom-plate-thickness}
                  (union
                                      ; pro micro wall
-                                     (for [x (range 0 (- ncols 1))] (hull  (cut (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr)) (translate (key-position x lastrow [0 0 0]) (square (+ keyswitch-width 15) keyswitch-height))))
+                                     (for [x (range 0 (- ncols 1))] (hull  (cut (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr)) (translate (key-position x (- lastrow innercol-offset) [0 0 0]) (square (+ keyswitch-width 15) keyswitch-height))))
                                      (for [x (range 1 ncols)] (hull (cut (key-wall-brace x 0 0 1 web-post-tl (dec x) 0 0 1 web-post-tr)) (translate (key-position x 2 [0 0 0]) (square 1 1))))
-                                     ;(hull (cut right-wall) (translate (key-position lastcol 0 [0 0 0]) (square keyswitch-width keyswitch-height)))
+                                     (hull (cut right-wall) (translate (key-position lastcol 0 [0 0 0]) (square keyswitch-width keyswitch-height)))
                                      (hull (cut mini-thumb-wall) (translate bl-minithumb-loc (square 1 1)))
                                      right-wall-plate
                                      (hull (cut back-convex-thumb-wall-0) (translate bl-minithumb-loc (square 1 1)))
                                      (hull (cut back-convex-thumb-wall-1) (translate bl-minithumb-loc (square 1 1)))
                                      (hull (cut back-convex-thumb-wall-2) (translate bl-minithumb-loc (square 1 1)))
                                      (hull (cut thumb-corners))
-                                     (hull (cut thumb-to-left-wall) (translate (key-position (- lastcol 1) (- lastrow 1) [0 0 0]) (square 1 1)))
-                                     (hull (cut non-thumb-walls))
-                                    (translate [0 0 -10] screw-insert-screw-holes))))
+                                     (if (or trackball-enabled joystick-enabled) nil (hull (cut thumb-to-left-wall) (translate (key-position (- lastcol 1) (- lastrow 1) [0 0 0]) (square 1 1))))
+                                     (hull (cut non-thumb-walls)) 
+                  ))
+                     (translate [0 0 -10] screw-insert-screw-holes)
+                    ))
+
+(def hand-on-test
+  (translate [-5 -60 92]
+             (rotate (deg2rad -27) [1 0 0]
+                     (rotate (deg2rad 12) [0 0 1]
+                             (rotate (+ tenting-angle (deg2rad 5)) [0 1 0]
+                                     (rotate
+                                      (deg2rad -90) [1 0 0]
+                                      (mirror [0 1 0] hand)))))))
+
+(def tent-ball-rad 7)
+(def tent-stand-rad 5)
+(def crank-rad 1.5)
+(def crank-len 20)
+(def tent-stand-thread-height 25)
+(def tent-stand-thread-lead 1.25)
+(def tent-thread ( call-module "thread" tent-stand-rad tent-stand-thread-height tent-stand-thread-lead))
+(def tent-stand (union
+                 tent-thread
+                 (translate [0 0 (- tent-stand-rad)] (sphere tent-ball-rad))))
+
+
+(def tent-foot-width 25)
+(def tent-foot-height 30)
+(def tent-foot-thickness 2)
+(def tent-ball-holder-thickness 4)
+(def hook-angle 40)
+
+; Some convoluted logic to create a little hook to hold the ball in
+(defn ball-hook [with-hook?]
+  (let
+   [hook-height (if with-hook? tent-ball-rad (/ tent-ball-rad 1.5))]
+    (rotate (deg2rad 90) [1 0 0]
+            (union
+             (translate [0 (/ hook-height 2) 0]
+                        (rotate (deg2rad 90) [1 0 0] (cube tent-ball-holder-thickness tent-ball-holder-thickness hook-height)))
+             (if with-hook? (translate [(- (+ tent-ball-rad (/ tent-ball-holder-thickness 2))) tent-ball-rad 0]
+                                       (extrude-rotate {:angle hook-angle :convexity 10} (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0]
+                                                                                                    (square tent-ball-holder-thickness tent-ball-holder-thickness)))) nil)))))
+
+(defn rotated-ball-hook [angle with-hook?]
+  (rotate (deg2rad angle) [0 0 1] (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0 (/ tent-foot-thickness 2)] (ball-hook with-hook?))))
+
+(def tent-foot (union
+                (cube tent-foot-width tent-foot-height tent-foot-thickness)
+                (rotated-ball-hook 0 true)
+                (rotated-ball-hook 90 true)
+                (rotated-ball-hook 180 true)
+                (rotated-ball-hook 270 false)))
+
+(def thumb-tent-origin (map + [-52 -74 -1] (if trackball-enabled [3 -12 0] [0 0 0])))
+(def index-tent-origin [-104 27 -1])
+
+(def tent-nut-height 6)
+(def tent-thread
+  (translate [0 0 tent-nut-height] (rotate (deg2rad 180) [0 1 0]
+                                           (call-module "thread" (+ tent-stand-rad 0.5) (+ tent-nut-height bottom-plate-thickness) tent-stand-thread-lead))))
+(def tent-nut (difference
+               (translate [0 0 (/ tent-nut-height 2)] (cylinder (+ tent-stand-rad 1.5) tent-nut-height))
+               tent-thread))
+
+(def key-trackball-clearance 
+                                              (translate [0 0 (- plate-thickness)](hull
+                              (key-place 1 cornerrow web-post-tl)
+                              (key-place 1 cornerrow web-post-tr)
+                              (key-place 1 cornerrow web-post-bl)
+                              (key-place 1 cornerrow web-post-br)
+                              )))
 
 (def trackball-subtract (union
                          ; Subtract out the actual trackball
@@ -2174,6 +2758,7 @@
                          (translate trackball-origin (sphere (/ trackball-width-plus-bearing 2)))
                          ; Just... double check that we have the full dowell negative
                          (translate trackball-origin rotated-dowells)
+                         ;key-trackball-clearance
                          hotswap-clearance))
 
 (def trackball-mount-translated-to-model (difference
@@ -2185,9 +2770,12 @@
                                           key-clearance
                                           thumb-key-clearance
                                           (translate trackball-origin trackball-insertion-cyl)
-                                          (translate [0 0 -20] (cube 350 350 40))))
+                                          ))
+
+
 
 (def model-right (difference
+                   ;oled-clip-mount-frame-hole
                   (union
                    key-holes
                    key-holes-inner
@@ -2197,35 +2785,89 @@
                    inner-connectors
                    thumb-type
                    thumb-connector-type
+                   ;(color [1 0 0 1] key-trackball-clearance)
+                   (if joystick-enabled joystick-wall nil)
+                   
+                   ;(color [1 0 0 1]oled-clip-mount-frame-shape)
                    ;(OLED -65 -6 99)
                    (difference (union case-walls
-                                      screw-insert-outers)
+                                      usb-holder
+                                      screw-insert-outers
+                                      )
+                               (if trackball-enabled trackball-walls nil)
                                ; Leave room to insert the ball
                 (if trackball-enabled (translate trackball-origin trackball-insertion-cyl) nil)
+                               
                                ;(translate palm-hole-origin (palm-rest-hole-rotate palm-buckle-holes))
-                              ; usb-holder-space
+                               ;usb-holder-space
                               ; trrs-notch
-                              ; usb-holder-notch
-                               screw-insert-holes))
+                               ;usb-holder-notch
+                               screw-insert-holes
+                               
+                               ))
+                  ;(println str "this is " (first usb-holder-position))
                   (if trackball-enabled (translate trackball-origin (dowell-angle raised-trackball)) nil)
-                  aviator-hole
+                  
+                    usb-holder-hole
+                    usb-holder
+                    aviator-hole
+                    reset-hole
+                  encoder-cutout
+                  (left-wall-plate-place 0 0 oled-holder-cut)
+                  
+
+                  
+                  
+                   ;( translate [0 0 (- (- oled-holder-thickness) 0.1)]
+                   ; (left-wall-plate-place oled-x-position oled-y-position oled-holder-cut))
                   (translate [0 0 -20] (cube 350 350 40))))
 
 (spit "things/right.scad"
+       ;(include "../nutsnbolts/cyl_head_bolt.scad")
       (write-scad model-right))
 
-(spit "things/left.scad"
-      (write-scad (mirror [-1 0 0] model-right)))
+;(spit "things/left.scad"
+;      (write-scad (union (mirror [-1 0 0] model-right)
+;                         ;(joystick-position joystick)
+;                         ;(joystick-position joystick-cutout)
+;                         (translate [ 0 35 0 ] (rotate (deg2rad -160) [0 0 1] joycon-joystick-case-mount))
+;                        )))
+;
+;(spit "things/right-test.scad"
+;      (write-scad (union model-right
+;                         thumbcaps-type
+;                         caps)))
 
-(spit "things/right-test.scad"
-      (write-scad (union model-right
-                         thumbcaps-type
-                         caps)))
+(def cf-right-plate 
+  (extrude-linear
+          {:height 2.6 :center false}
+          (project
+            (difference
+              (union
+                key-holes
+                key-holes-inner
+                pinky-connectors
+                extra-connectors
+                connectors
+                inner-connectors
+                thumb-type
+                thumb-connector-type
+                case-walls
+                thumbcaps-fill-type
+                caps-fill
+                screw-insert-outers)
+              (translate [0 0 -10] screw-insert-screw-holes)))))
 
 (def right-plate 
                   (difference
+                   
+                   ;(translate [0.75 -0.75 -2] usb-holder)
+                   ;(translate [4.5 -0.75 1.5] usb-holder)
                   (union
                    (if trackball-enabled trackball-mount-translated-to-model nil)
+                    (translate thumb-tent-origin tent-nut)
+                    (translate index-tent-origin tent-nut)
+                   cf-right-plate
                    ;(translate [0 0 (/ bottom-plate-thickness -2)] plate-attempt)
                    ;key-holes
                    ;key-holes-inner
@@ -2239,12 +2881,26 @@
                    ;thumbcaps-fill-type
                    ;caps-fill
                    ;screw-insert-outers
-                   model-right
+                    ;(translate [0 0 -10] screw-insert-screw-holes)
+                   
+                  
                    )
+                 
+                  (translate thumb-tent-origin tent-thread)
+                  (translate index-tent-origin tent-thread)
+                  (translate [0 0 -20] (cube 350 350 40))
+                 ; mini-thumb-wall
+                  (union 
+                   (translate [-0.75 -0.75 -2] usb-holder)
+                   (translate [0.75 -0.75 -2] usb-holder)
+                   (translate [4.5 -0.75 2] usb-holder))
+                  ; model-right
                   ))
 
 (spit "things/right-plate.scad"
-      (write-scad right-plate))
+      (write-scad 
+       (include "../nutsnbolts/cyl_head_bolt.scad")
+       right-plate))
 
 ;(spit "things/right-plate.scad"
 ;      (write-scad
@@ -2269,13 +2925,13 @@
 ;            model-right)
 ;          (translate [0 0 -10] screw-insert-screw-holes))))))
 
-(spit "things/right-plate-laser.scad"
-      (write-scad
-       (cut
-        (translate [0 0 -0.1]
-                   (difference (union case-walls
-                                      screw-insert-outers)
-                               (translate [0 0 -10] screw-insert-screw-holes))))))
+;(spit "things/right-plate-laser.scad"
+;      (write-scad
+;       (cut
+;        (translate [0 0 -0.1]
+;                   (difference (union case-walls
+;                                      screw-insert-outers)
+;                               (translate [0 0 -10] screw-insert-screw-holes))))))
 
 ;(spit "things/test.scad"
  ;     (write-scad
