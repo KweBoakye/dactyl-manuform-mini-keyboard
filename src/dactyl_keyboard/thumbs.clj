@@ -402,7 +402,7 @@
       (minithumb-tl-place web-post-bl)
       (minithumb-tl-place web-post-br)
       (minithumb-mr-place web-post-tr))
-     (triangle-hulls    ; top two to the main keyboard, starting on the left
+    (color [0 1 0 1] (triangle-hulls    ; top two to the main keyboard, starting on the left
       ;(minithumb-tl-place web-post-tl)
       ;(key-place (+ innercol-offset 0) cornerrow web-post-bl)
       ;(minithumb-tl-place web-post-tr)
@@ -412,7 +412,7 @@
       (key-place (+ innercol-offset 1) cornerrow web-post-bl)
       (minithumb-tr-place minithumb-post-tr)
       (key-place (+ innercol-offset 1) cornerrow web-post-br)
-      (key-place (+ innercol-offset 2) lastrow web-post-tl)
+      (key-place (+ innercol-offset 1) lastrow web-post-br)
       (key-place (+ innercol-offset 2) lastrow web-post-bl)
       (minithumb-tr-place minithumb-post-tr)
       (key-place (+ innercol-offset 2) lastrow web-post-bl)
@@ -423,14 +423,14 @@
       (key-place (+ innercol-offset 3) lastrow web-post-tl)
       (key-place (+ innercol-offset 3) cornerrow web-post-bl)
       (key-place (+ innercol-offset 3) lastrow web-post-tr)
-      (key-place (+ innercol-offset 3) cornerrow web-post-br))
-     (triangle-hulls
+      (key-place (+ innercol-offset 3) cornerrow web-post-br)))
+     (color [1 0 0 1](triangle-hulls
       (key-place (+ innercol-offset 1) cornerrow web-post-br)
       (key-place (+ innercol-offset 2) lastrow web-post-tl)
       (key-place (+ innercol-offset 2) cornerrow web-post-bl)
       (key-place (+ innercol-offset 2) lastrow web-post-tr)
       (key-place (+ innercol-offset 2) cornerrow web-post-br)
-      (key-place (+ innercol-offset 3) cornerrow web-post-bl))
+      (key-place (+ innercol-offset 3) cornerrow web-post-bl)))
      (if extra-row
        (union
         (triangle-hulls

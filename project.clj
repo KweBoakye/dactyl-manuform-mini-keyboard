@@ -5,11 +5,17 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-auto "0.1.3"]
-            [lein-exec "0.3.7"]]
+            [lein-exec "0.3.7"]
+            [lein-git-deps "0.0.2-SNAPSHOT"]]
   :aliases {"generate" ["exec" "-p" "src/dactyl_keyboard/dactyl.clj"]
-            "generate-led-holder" ["exec" "-p" "src/dactyl_keyboard/3528-led-holder.clj"]}
+            "generate-low" ["exec" "-p" "src/dactyl_keyboard/low/dactyl_low.clj"]}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [unicode-math "0.2.0"]
-                 [scad-clj "0.5.3"]])
+                 [uncomplicate/neanderthal "0.44.0"]
+                 ;[scad-clj "0.5.4-SNAPSHOT"] 
+                 [org.bytedeco/mkl-platform-redist "2022.0-1.5.7"]
+                 ]
+  :git-dependencies [["https://github.com/farrellm/scad-clj.git"]]
+  )
 
 

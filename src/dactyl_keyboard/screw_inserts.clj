@@ -70,11 +70,11 @@
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height]
   (union (screw-insert 0 1         bottom-radius top-radius height [6 21.5 0])
-         (screw-insert 0 cornerrow   bottom-radius top-radius height (map + [-11 4 0] screw-offset-bl))
+         (screw-insert 0 cornerrow   bottom-radius top-radius height (map + [-7 0 0] screw-offset-bl))
          (screw-insert lastcol lastrow  bottom-radius top-radius height screw-offset-br)
          (screw-insert lastcol 0         bottom-radius top-radius height screw-offset-tr)
          (screw-insert (+ 2 innercol-offset) 0         bottom-radius top-radius height  (map + [-6 3 0] screw-offset-tm))
-         (screw-insert (+ 1 innercol-offset) lastrow         bottom-radius top-radius height (map + [-7 -3 0] screw-offset-bm))))
+         (screw-insert (+ 1 innercol-offset) lastrow         bottom-radius top-radius height (map + [-5 -3 0] screw-offset-bm))))
 
 
 

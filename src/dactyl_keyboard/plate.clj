@@ -15,6 +15,8 @@
             [dactyl-keyboard.screw-inserts :refer :all]
             [unicode-math.core :refer :all]))
 
+(def bottom-plate-thickness 2.6)
+
 (def right-wall-plate
   (let [tr (if (true? pinky-15u) wide-post-tr web-post-tr)
         br (if (true? pinky-15u) wide-post-br web-post-br)
@@ -24,7 +26,6 @@
            (for [y (range 1 lastrow)] (hull (cut (key-wall-brace lastcol (dec y) 1 0 br lastcol y 1 0 tr)) hull-with))
            (hull (cut (key-wall-brace lastcol cornerrow 0 -1 br lastcol cornerrow 1 0 br)) hull-with))))
 
-(def bottom-plate-thickness 2.5)
 
 (def plate-attempt (difference
                     (extrude-linear {:height bottom-plate-thickness}
@@ -53,6 +54,12 @@
                          (translate trackball-origin rotated-dowells)
                          ;key-trackball-clearance
                          hotswap-clearance))
+
+(def plate-trackball-hole-healer 
+  (->>
+   (cube 50 40 bottom-plate-thickness)
+   (rotate (deg2rad 30 ) [0 0 1])
+   (translate [-55 -40 (/ bottom-plate-thickness 2)])))
 
 (def trackball-mount-translated-to-model (difference
                                           (union

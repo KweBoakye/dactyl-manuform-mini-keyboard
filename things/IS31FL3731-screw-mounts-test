@@ -1,0 +1,39 @@
+union () {
+  translate ([0, 0, 1.3]) {
+    cube ([30, 50, 2.6], center=true);
+  }
+  union () {
+    translate ([0, 0, 0]) {
+      difference () {
+        cylinder ($fn=36, h=6, r=5/2, center=true);
+        translate ([0, 0, -0.1]) {
+          cylinder ($fn=36, h=6.3, r=3/2, center=true);
+        }
+      }
+    }
+    translate ([26.15, 0, 0]) {
+      difference () {
+        cylinder ($fn=36, h=6, r=5/2, center=true);
+        translate ([0, 0, -0.1]) {
+          cylinder ($fn=36, h=6.3, r=3/2, center=true);
+        }
+      }
+    }
+    translate ([0, 41.45, 0]) {
+      difference () {
+        cylinder ($fn=36, h=6, r=5/2, center=true);
+        translate ([0, 0, -0.1]) {
+          cylinder ($fn=36, h=6.3, r=3/2, center=true);
+        }
+      }
+    }
+    translate ([26.15, 41.45, 0]) {
+      difference () {
+        cylinder ($fn=36, h=6, r=5/2, center=true);
+        translate ([0, 0, -0.1]) {
+          cylinder ($fn=36, h=6.3, r=3/2, center=true);
+        }
+      }
+    }
+  }
+}

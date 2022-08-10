@@ -23,7 +23,16 @@ Build log: https://www.beekeeb.com/dactyl-manuform-mini-mechanical-keyboard-buil
 - Screw posts are moved inside. The holes are designed for TRISERT® thread inserts 145m3.
 
 - A GX16 Mount is used instead of TRRS, code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
-- Vertical Elite C holder from https://github.com/darrenph1/dactyl-keyboard
+- Blackpill f411 holder adapted from https://github.com/darrenph1/dactyl-keyboard
+- oled slot and mounting area (left-section) adapted from https://github.com/oysteinkrog/dactyl-manuform-mini-keyboard
+- encoder hole from https://github.com/oysteinkrog/dactyl-manuform-mini-keyboard
+- Thumb trackball and thumb area adapted from https://github.com/noahprince22/tractyl-manuform-keyboard
+- Tenting stand and palm rest from https://github.com/noahprince22/tractyl-manuform-keyboard
+- Adafruit IS31FL3731 screw mounts
+- Joycon Joystick mounting (designed for the left hand so has to be mirrored)
+- Cirque TM040040 Mount
+- Mounting for Toggle Switch with Cover (Example https://thepihut.com/products/illuminated-toggle-switch-with-cover-red)
+
 
 ## Generate OpenSCAD and STL models
 

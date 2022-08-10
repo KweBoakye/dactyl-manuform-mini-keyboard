@@ -107,5 +107,6 @@
     bottom-left-led-wire-cutout
     top-right-led-wire-cutout
     bottom-right-led-wire-cutout
-    left-side-cutout
-    right-side-cutout)))
+    ;left-side-cutout
+    right-side-cutout
+    )))

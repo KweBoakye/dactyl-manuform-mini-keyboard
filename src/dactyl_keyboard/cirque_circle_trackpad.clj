@@ -1,14 +1,14 @@
 (ns dactyl-keyboard.cirque-circle-trackpad
-   (:refer-clojure :exclude [use import])
+  (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
-             [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
-            [dactyl-keyboard.placement-functions :refer :all]
-            [dactyl-keyboard.web-connecters :refer :all]
-            [dactyl-keyboard.case :refer :all]
+            ;[dactyl-keyboard.placement-functions :refer :all]
+            ;[dactyl-keyboard.web-connecters :refer :all]
+           ; [dactyl-keyboard.case :refer :all]
             [unicode-math.core :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -17,6 +17,8 @@
 
 (def cirque-circle-trackpad-diameter 23.20)
 (def cirque-circle-trackpad-TM040040-diameter 40)
+(def cirque-circle-trackpad-TM040040-curved-overlay-diameter 40)
+(def cirque-circle-trackpad-TM040040-curved-overlay-gap 2)
 (def cirque-circle-trackpad-hole-diameter (+ cirque-circle-trackpad-diameter 0.8))
 (def cirque-circle-trackpad-hole-radius (/ cirque-circle-trackpad-hole-diameter 2))
 (def cirque-circle-trackpad-TM040040-hole-radius (/ cirque-circle-trackpad-TM040040-diameter 2))
@@ -38,18 +40,19 @@
 (def cirque
   (cylinder (/ 23.5 2) cirque-circle-trackpad-depth-to-asic-plus-tolerance :center false))
 
+
 (def cirque-TM040040
-  (cylinder (+ cirque-circle-trackpad-TM040040-hole-radius 0.3) cirque-circle-trackpad-depth-to-asic-plus-tolerance :center false))
+  (binding [*fn* 36] (cylinder (+ cirque-circle-trackpad-TM040040-hole-radius 0.3) cirque-circle-trackpad-depth-to-asic-plus-tolerance :center false)))
 
 
 (def cirque-clearance
   (binding [*fn* 36] (cylinder cirque-circle-trackpad-hole-radius 5 :center false)))
 
 (def cirque-TM040040-clearance
-  (binding [*fn* 36] (cylinder cirque-circle-trackpad-TM040040-hole-radius 16 :center false)))
+  (binding [*fn* 36] (cylinder (+ cirque-circle-trackpad-TM040040-hole-radius 0.3) 16 :center false)))
 
 (def cirque-TM040040-under-clearance
-  (binding [*fn* 36] (cylinder (- cirque-circle-trackpad-TM040040-hole-radius 6) 10 :center false)))
+  (binding [*fn* 36] (cylinder (- cirque-circle-trackpad-TM040040-hole-radius 0) 14 :center false)))
 
 (def cirque-connector-clearance
   (->>
@@ -77,16 +80,8 @@
   (->> (cube (+ cirque-circle-trackpad-hole-diameter 3) (+ cirque-circle-trackpad-hole-diameter 3) (* cirque-circle-trackpad-depth-to-asic-plus-tolerance 2))
        (translate [0 0 -0.1])))
 
-(defn cirque-place [shape]
-  (->> shape
-       (translate [-1 0.5 2.8])
-       (key-place 0 2)))
 
-(def cirque-circle-trackpad-notch-holders
-  (union
-   (cirque-place  cirque-circle-trackpad-first-notch)
-   (cirque-place cirque-circle-trackpad-second-notch)
-   (cirque-place cirque-circle-trackpad-third-notch)))
+
 
 (def cirque-test
   (union
@@ -100,28 +95,26 @@
 ;cirque-circle-trackpad-third-notch
    ))
 
+(def asic-cutout
+  (->>
+   (cube asic-width asic-length asic-depth)
+   (translate [0
+               (+ cirque-circle-trackpad-TM040040-hole-radius (- cirque-circle-trackpad-horizontal-distance-from-top-of-pad-to-bottom-of-asic) (/ asic-length 2))
+               (- (+ cirque-circle-trackpad-depth-to-asic-plus-tolerance 0.15)  (/ asic-depth 2))])))
+
 (def cirque-TM040040-mount
   (difference
-   (binding [*fn* 36] (cylinder (+ cirque-circle-trackpad-TM040040-hole-radius 2) (* cirque-circle-trackpad-depth-to-asic-plus-tolerance 2) :center false))
-   (translate [0 0 (+ cirque-circle-trackpad-depth-to-asic-plus-tolerance 0.1)] cirque-TM040040)
+   (binding [*fn* 36] (cylinder (+ cirque-circle-trackpad-TM040040-hole-radius 2) (+ (* cirque-circle-trackpad-depth-to-asic-plus-tolerance 2) 0.7) :center false))
+   asic-cutout
+   (translate [0 0 -0.2] asic-cutout)
+   (translate [0 0 (+ cirque-circle-trackpad-depth-to-asic-plus-tolerance 2)] cirque-TM040040)
    (translate [0 0 (+ cirque-circle-trackpad-depth-to-asic-plus-tolerance 0.1 asic-depth)] cirque-TM040040)))
 
 (def cirque-TM040040-mount-height 10)
 
-(def cirque-TM040040-mount-walls-mask
-  (union
-   key-holes-inner
-   inner-connectors
-   (key-place 0 2 keyhole-fill)
-   left-section
-   inner-column-bottom-section))
 
-(def cirque-TM040040-mount-walls-mask-block
-  (union
-   (translate [0 0 (- plate-thickness)] cirque-TM040040-mount-walls-mask)
-   (translate [0 0 (- (* 2 plate-thickness))] cirque-TM040040-mount-walls-mask)
-   (translate [0 0 (- (* 3 plate-thickness))] cirque-TM040040-mount-walls-mask)
-   (translate [0 0 (- (* 4 plate-thickness))] cirque-TM040040-mount-walls-mask)))
+
+
 
 (def cirque-TM040040-mount-walls
   (->>
@@ -130,15 +123,6 @@
     (translate [0 0 -0.1] (binding [*fn* 36] (cylinder cirque-circle-trackpad-TM040040-hole-radius (+ cirque-TM040040-mount-height 0.2 2) :center false))))
    (translate [0 0 (- (+ cirque-TM040040-mount-height 2))])))
 
-(def asic-cutout
-  (->>
-   (cube asic-width asic-length asic-depth)
-   (translate [0 (+ cirque-circle-trackpad-TM040040-hole-radius (- cirque-circle-trackpad-horizontal-distance-from-top-of-pad-to-bottom-of-asic) (/ asic-length 2)) (- (+ cirque-circle-trackpad-depth-to-asic-plus-tolerance 0.15)  (/ asic-depth 2))])))
 
-(defn cirque-TM040040-place [shape]
-  (->> shape
-       (rotate (deg2rad -10) [0 1 0])
-       (rotate (deg2rad 0) [1 0  0])
-       (key-place 0 2)
-       (translate [-6 -10 cirque-TM040040-mount-height])))
+
 

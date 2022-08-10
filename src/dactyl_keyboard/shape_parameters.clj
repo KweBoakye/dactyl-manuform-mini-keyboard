@@ -13,9 +13,9 @@
 (def nrows 5)
 (def ncols 7)
 
-(def trackball-enabled false)
+(def trackball-enabled true)
 (def joystick-enabled false)
-(def joycon-joystick-enabled true)
+(def joycon-joystick-enabled false)
 (def printed-hotswap? false) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
 
 

@@ -18,6 +18,10 @@
 ;; Case ;;
 ;;;;;;;;;;
 
+(def oled-post (->> (web-post-shape oled-holder-thickness )
+                    (translate [0 0 (+ (/ oled-holder-thickness -2) plate-thickness)])))
+
+
 (def case-filler-cup (difference (translate trackball-origin filler-half-circle)
                                  key-clearance
                                  thumb-key-clearance
@@ -958,7 +962,8 @@
     back-convex-thumb-wall-0)
    (if joycon-joystick-enabled (joycon-joystick-place (translate [0,0,-1] joycon-joystick-top-right-screw-mount-clearance)))
    (if joycon-joystick-enabled (joycon-joystick-place joycon-joystick-case))
-   (if joycon-joystick-enabled (joycon-joystick-place joycon-joystick-case-clearance))))
+   (if joycon-joystick-enabled (joycon-joystick-place joycon-joystick-case-clearance))
+   ))
    ;(joycon-joystick-place joycon-joystick-test-cut)
 
 ; Connectors between outer column and right wall when 1.5u keys are used
