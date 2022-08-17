@@ -25,6 +25,11 @@
             [dactyl-keyboard.vybronics-vl91022 :refer :all]
             [dactyl-keyboard.drv2605l-standoffs :refer :all]
             [dactyl-keyboard.RP2040-Plus :refer :all]
+            [dactyl-keyboard.six-pin-ffc-adapter-board :refer :all]
+            [dactyl-keyboard.metal-tactile-button :refer :all]
+            [dactyl-keyboard.AST1109MLTRQ :refer :all]
+            [dactyl-keyboard.dovetail :refer :all]
+
             ))  
 
 
@@ -301,55 +306,55 @@
 ;(include "../BOSL/constants.scad")
        (mirror [-1 0 0] model-right)))
 
-(spit "things-low/right-test.scad"
-      (write-scad
-       tps-65-includes
-       aviator-includes
-      ; (include "../BOSL/shapes.scad")
-;(include "../BOSL/constants.scad")
-       (difference
-        (union
-         model-right
-         ;thumbcaps-type
-         dsa-thumbcaps
-         ;caps
-         (EVQWGD001-place EVQWGD001)
-         dsa-caps
-         (aviator-place-shape 
-          (map +  [15 aviator-male-connecter-length 9.5]  aviator-position  aviator-offset) 
-          ;(translate (map +  aviator-offset [14 aviator-male-connecter-length 9.5])
-                                                 (rdy -90 gx16)
-          ;                                       )
-          )
-         )
+;; (spit "things-low/right-test.scad"
+;;       (write-scad
+;;        tps-65-includes
+;;        aviator-includes
+;;       ; (include "../BOSL/shapes.scad")
+;; ;(include "../BOSL/constants.scad")
+;;        (difference
+;;         (union
+;;          model-right
+;;          ;thumbcaps-type
+;;          dsa-thumbcaps
+;;          ;caps
+;;          (EVQWGD001-place EVQWGD001)
+;;          dsa-caps
+;;          (aviator-place-shape 
+;;           (map +  [15 aviator-plug-connecter-length 9.5]  aviator-position  aviator-offset) 
+;;           ;(translate (map +  aviator-offset [14 aviator-male-connecter-length 9.5])
+;;                                                  (rdy -90 gx16)
+;;           ;                                       )
+;;           )
+;;          )
         
-        (translate [0 0 -20] (cube 350 350 40)))))
+;;         (translate [0 0 -20] (cube 350 350 40)))))
 
 
 (def bottom-plate
   (extrude-linear
-   {:height 2.6 :center false}
+  {:height 2.6 :center false :convexity 10}
    (project
     (difference
      (union
       case-walls 
-      pinky-walls
      screw-insert-outers
      thumb-wall-type
       key-holes
-      (tps-65-place tps-65-base)
-
-      
+      (tps-65-place tps-65-base) 
 pinky-connectors
 extra-connectors
 connectors
 inner-connectors
 thumb-type
 thumb-connector-type
-case-walls
 thumbcaps-fill-type
+      (->> (cube  EVQWGD001-mount-width EVQWGD001-mount-length EVQWGD001-mount-height)
+            (translate [0 0 (/ EVQWGD001-mount-height 2)])) 
 caps-fill
-      ))
+      )
+     (translate [0 0 -10] screw-insert-screw-holes)
+     )
     
     )
    )
@@ -369,62 +374,61 @@ caps-fill
   (difference
    (union
       screen-holder
+    ;(-# (rdz 90 view-bezel))
    ; (rotate (deg2rad 0) [1 0 0] (rotate (deg2rad 90) [0 0 1] ST7789-240x240-154-holder-old))
     )
    screen-holder-cut))
 (spit "things-low/right-plate.scad"
-      (write-scad
-       
-       (difference
-        (union 
-         bottom-plate
-         )
-        (translate [0 0 -20] (cube 350 350 40))
-        )
+      (write-scad 
+         bottom-plate 
        ))
 
-(spit "things-low/test.scad"
-      (write-scad
-       (difference trrs-holder trrs-holder-hole)))
+;; (spit "things-low/test.scad"
+;;       (write-scad
+;;        (difference trrs-holder trrs-holder-hole)))
 
-(spit "things-low/tps-65-overlay.scad"
-      (write-scad tps-65-overlay))
+;; (spit "things-low/tps-65-overlay.scad"
+;;       (write-scad tps-65-overlay))
 
-(spit "things-low/tps-65-mount-cutout.scad"
-      (write-scad tps-65-mount-cutout))
+;; (spit "things-low/tps-65-mount-cutout.scad"
+;;       (write-scad tps-65-mount-cutout))
 
-(spit "things-low/tps-65-mount-test.scad"
-      (write-scad tps-65-mount-test))
+;; (spit "things-low/tps-65-mount-test.scad"
+;;       (write-scad tps-65-mount-test))
 
-(spit "things-low/tps-65-mount-test-2.scad" 
-      (write-scad 
-       tps-65-includes
-       ;(include "../BOSL/shapes.scad")
-;(include "../BOSL/constants.scad")
-       tps-65-mount))
+;; (spit "things-low/tps-65-mount-test-2.scad" 
+;;       (write-scad 
+;;        tps-65-includes
+
+;;        tps-65-mount))
 
 
 
 ;; (spit "things-low/pico-standoffs-test.scad"
 ;;       (write-scad pico-standoff-test))
 
-;; (spit "things-low/IS31FL3743A-standoff-test.scad"
-;;       (write-scad IS31FL3743A-standoff-test))
+;;  (spit "things-low/IS31FL3743A-standoff-test.scad"
+;;        (write-scad IS31FL3743A-standoff-test))
 
-;; (spit "things-low/screen-test.scad"
-;;       (write-scad screen-test))
+;;  (spit "things-low/screen-test.scad"
+;;        (write-scad screen-test))
 
-;; (spit "things-low/EVQWGD001-test.scad"
+;;  (spit "things-low/EVQWGD001-test.scad"
 ;;       (write-scad EVQWGD001-test))
 
-;; (spit "things-low/vybronics-vl91022-mount.scad"
-;;       (write-scad vybronics-vl91022-mount))
+(spit "things-low/vybronics-vl91022-mount.scad"
+      (write-scad vybronics-vl91022-mount))
 
 ;; (spit "things-low/drv2605l.scad"
 ;;       (write-scad drv2605l))
 
-;; (spit "things-low/drv2605l-standoffs-test.scad"
-;;       (write-scad drv2605l-standoffs-test)) 
+;;  (spit "things-low/drv2605l-standoffs-test.scad"
+;;        (write-scad drv2605l-standoffs-test)) 
+ 
+;;  (spit "things-low/drv2605l-standoffs-print-test.scad"
+;;        (write-scad drv2605l-standoffs-print-test)
+;;        )
+ 
 
 ;; (spit "things-low/rp2040-plus-mount-test.scad"
 ;;       (write-scad rp2040-plus-mount))
@@ -434,32 +438,77 @@ caps-fill
 
 
 
-(spit "things-low/aviator-assembly.scad"
-      (write-scad 
-       aviator-includes
-aviator-assembly
+;; (spit "things-low/aviator-assembly.scad"
+;;       (write-scad 
+       
+;; (difference
+;;  aviator-assembly
+;;  aviator-assembly-diffs
+  
+;;  )
                    
-                   ))
-(spit "things-low/back-wall-test.scad"
-      (write-scad back-wall)
-      )
+                  ;;  ))
+;; (spit "things-low/back-wall-test.scad"
+;;       (write-scad back-wall)
+;;       )
 
-(spit "things-low/left-section-test.scad"
-      (write-scad 
-       (union
-        ;(EVQWGD001-place EVQWGD001-test)
-        ;left-section
-        left-wall
-        (rp2040-plus-place rp2040-plus-mount)
-        ;back-wall
-        )
-       )
-      )
+;;  (spit "things-low/left-section-test.scad"
+;;        (write-scad 
+;;         (difference 
+;;          (union
+;;          ;(EVQWGD001-place EVQWGD001-test)
+;;          ;thumb-side-EVQWGD001-mount
+;;          left-wall
+;;           ;left-section
+;;           aviator-assembly
+;;          ;(rp2040-plus-place rp2040-plus-mount)
+;;          ;back-wall
+;;           ;;thumb-type
+;;          )
+;;           aviator-assembly-diffs
+;;         (translate [0 0 -20] (cube 350 350 40))
+;;          )
+;;         )
+;;        )
+
+;; (spit "things-low/six-pin-ffc-adapter-test.scad"
+;;       (write-scad six-pin-ffc-adapter-test)
+;;       )
+
+;; (spit "things-low/six-pin-ffc-adapter-print-test.scad"
+;;       (write-scad 
+       
+       
+;;         (union 
+;;         (translate [0 0 six-pin-ffc-adapter-board-thickness ] six-pin-ffc-adapter-standoffs)
+;;        (translate [0 -5 (/ six-pin-ffc-adapter-board-thickness 2)](cube (+ six-pin-ffc-adapter-board-width 10) 20 six-pin-ffc-adapter-board-thickness)
+;;         )))
+;;       )
+
+;; (spit "things-low/plate-arrangement-test.scad"
+;;       (write-scad
+;;        (union
+;;        ; right-wall
+;;         ;back-wall
+;;         left-wall
+;;        ; front-wall
+;;         ;thumb-wall-type
+;;         (IS31FL3743A-standoff-place IS31FL3743A-standoff-test)
+;;         (drv2605l-place drv2605l-standoffs-test)
+;;         (six-pin-ffc-adapter-place six-pin-ffc-adapter-test)
+;;         (rp2040-plus-place rp2040-plus-mount )
+;;         )
+;;        ))
 
 
+;; (spit "things-low/IS31FL3743A-standoff-print-test.scad"
+;; (write-scad IS31FL3743A-standoff-print-test))
 
+;; (spit "things-low/AST1109MLTRQ-holder-test.scad"
+;;       (write-scad AST1109MLTRQ-holder)
+;;       )
 
-
-
+(spit "things-low/dovetail-test.scad"
+      (write-scad dovetail-test))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch

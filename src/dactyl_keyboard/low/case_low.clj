@@ -88,6 +88,8 @@
 
 (defn wall-locate3-xy [dx dy xy] [(* dx (+ xy wall-thickness)) (* dy (+ xy wall-thickness)) wall-z-offset])
 
+(defn wall-locate3-xy-3d [dx dy dz xy] [(* dx (+ xy wall-thickness)) (* dy (+ xy wall-thickness)) (wall-z-offset)])
+
 
 (def fillet-s (->>
                (binding [*fn* 36] (sphere 2))
@@ -122,28 +124,88 @@
 (defn fillet-about-point [dx dy steps]
   (let [w1 (wall-locate1 dx dy)
         point1 [(first w1) (first w1) (+ (last w1) 2)]
+        w2  (wall-locate3 dx dy)
+        point2 [(* (first w2) 0.98) (* (second w2) 0.98) (+ (last w2) 0.0)]]
+   
+   (bezier-quadratic point1 [(* dx wall-xy-offset) (* dy wall-xy-offset) 0] 
+                 ;[(* dx (+ wall-xy-offset wall-thickness (/ oled-post-size 1))) (* dy (+ wall-xy-offset wall-thickness (/ oled-post-size 1))) (+ wall-z-offset (/ oled-holder-thickness 1))]
+                 point2 steps))
+  )
+
+(defn fillet-about-point-2 [dx dy steps]
+  (let [w1 [(* dx (+ wall-xy-offset wall-thickness 
+                     ;(- (/ oled-post-size 2))
+                     )) (* dy (+ wall-xy-offset wall-thickness 
+                                 ;(- (/ oled-post-size 2))
+                                 )) (+ wall-z-offset 0.0)]
+        point1 [(* (first w1) 0.98) (* (second w1) 0.98) (+ (last w1) 0.0)]
         w2 (wall-locate3 dx dy)
         point2 [(* (first w2) 0.98) (* (second w2) 0.98) (+ (last w2) 0.5)]]
-   
-   (bezier-quadratic point1 [(* dx wall-xy-offset) (* dy wall-xy-offset) -1] point2 steps))
-  )
+
+    (bezier-quadratic ;point1 
+        point1
+                     ; [(* dx (+ wall-xy-offset wall-thickness oled-post-size)) (* dy (+ wall-xy-offset wall-thickness oled-post-size)) 0]
+                      [(* dx (+ wall-xy-offset wall-thickness (+ (/ oled-post-size 2)))) (* dy (+ wall-xy-offset wall-thickness (+ (/ oled-post-size 2)))) (- wall-z-offset 1) ]
+                     [(* 0.98 (* dx (+ wall-xy-offset wall-thickness (+ (/ oled-post-size 2))))) (* 0.98 (* dy (+ wall-xy-offset wall-thickness (+ (/ oled-post-size 2))))) (+ 0.5 (- wall-z-offset (/ oled-holder-thickness  1)))]
+                       steps)))
 
 (defn fillet-about-point-xy [dx dy  xy steps]
   (let [w1 (wall-locate1 dx dy)
         point1 [(first w1) (first w1) (+ (last w1) 2)]
         w2 (wall-locate3-xy dx dy xy)
-        point2 [(* (first w2) 0.98) (* (second w2) 0.98) (+ (last w2) 0.5)]]
+        point2 [(* (first w2) 0.98) (* (second w2) 0.98) (+ (last w2) 0.0)]]
 
-    (bezier-quadratic point1 [(* dx xy) (* dy xy) -1] w2 steps)))
+    (bezier-quadratic point1 [(* dx xy) (* dy xy) 0] point2 steps)))
 
-(defn fillet-about-point-2 [dx dy steps]
-  (let [adjust 0.2
-        x (if (neg? dx) (+ dx adjust) (- dx adjust))
-        y (if (neg? dy) (+ dy adjust) (- dy adjust))
-        w1 (wall-locate3 x y)
-        point2 [(first w1) (second w1) (- (last w1) (* oled-post-size 1.2))]]
+(defn fillet-about-point-xy-2 [dx dy xy steps]
+  (let [w1 [(* dx (+ xy wall-thickness)) (* dy (+ xy wall-thickness)) (+ wall-z-offset 0.5)]
+        point1 [(* (first w1) 0.98) (* (second w1) 0.98) (+ (last w1) 0.0)] 
+        ]
+    (bezier-quadratic 
+     point1
+     [(* dx (+ xy wall-thickness (+ (/ oled-post-size 2)))) (* dy (+ xy wall-thickness (+ (/ oled-post-size 2)))) (- wall-z-offset 1)]
+     [(* 0.98 (* dx (+ xy wall-thickness (+ (/ oled-post-size 2))))) (* 0.98 (* dy (+ xy wall-thickness (+ (/ oled-post-size 2))))) (+ 0.5 (- wall-z-offset (/ oled-holder-thickness  1)))]
+     steps
+     )
+    )
+  )
 
-    (bezier-quadratic (wall-locate3 x y) [(* x (+ wall-xy-offset wall-thickness 0.5)) (* y (+ wall-xy-offset wall-thickness 0.5)) (- wall-z-offset (/ oled-post-size 2))] point2 steps)))
+(defn bezier-points-for-oled-post [dx dy ]
+  (let [shift-factor (fn [point](cond 
+                 (> point 0) (/ oled-post-size 2)
+                  (< point 0) (- (/ oled-post-size 2))
+                  :else point
+                  )) 
+  ] 
+    [ [0 0 (/ oled-holder-thickness 2)] [(shift-factor dx) (shift-factor dy) (/ oled-holder-thickness 2)]  [0 0 (- (/ oled-holder-thickness 2))]]
+
+  )
+)
+
+(defn get-oled-corner-translation-vector [oled-post-type]
+(cond
+  (identical? oled-post-type oled-post-tr) oled-post-tr-translation-vector
+  (identical? oled-post-type oled-post-tl) oled-post-tl-translation-vector
+  (identical? oled-post-type oled-post-bl) oled-post-bl-translation-vector
+  (identical? oled-post-type oled-post-br) oled-post-br-translation-vector
+   :else [0 0 0] 
+  )
+  )
+
+(defn fillet-about-point-lower [ points vector w3 oled-post-type place]
+  
+    (->>
+     
+     (mapv (fn [point]
+                       (->> (translate point (convert-to-curve-post oled-post-type))
+                            (translate oled-translation-vector)
+                            (translate vector)
+                            (translate w3)
+                            (place ))
+        ) points
+                     )))
+  
+
 
 (defn plot-and-translate-bezier-points [place bezier-points shape]
   (mapv (fn [point]
@@ -155,6 +217,19 @@
         bezier-points
         )
   )
+
+(defn wall-bezier-1 [place dx dy post]
+  (plot-and-translate-bezier-points (partial place)  (fillet-about-point dx dy 20)  (convert-to-curve-post post))
+  )
+
+(defn wall-bezier-2 [place dx dy post]
+  (plot-and-translate-bezier-points (partial place)  (fillet-about-point-2 dx dy 20)  (convert-to-curve-post post)))
+
+(defn wall-bezier-1-xy [place dx dy xy post]
+  (plot-and-translate-bezier-points (partial place)  (fillet-about-point-xy dx dy xy 20)  (convert-to-curve-post post)))
+
+(defn wall-bezier-2-xy [place dx dy xy post]
+  (plot-and-translate-bezier-points (partial place)  (fillet-about-point-xy-2 dx dy xy 20)  (convert-to-curve-post post)))
 ; dx1, dy1, dx2, dy2 = direction of the wall. '1' for front, '-1' for back, '0' for 'not in this direction'.
 ; place1, place2 = function that places an object at a location, typically refers to the center of a key position.
 ; post1, post2 = the shape that should be rendered
@@ -192,7 +267,10 @@
                     d: the result of hull and translation from wall-locate3
                     e: the result of bottom-hull translation from wall-locate2
                     f: the result of bottom-hull translation from wall-locate3"
-  (union
+  (let [
+        ] 
+   
+   (union
     
    
       
@@ -211,32 +289,41 @@
    ; 
     (place1 (translate (wall-locate1 dx1 dy1)  post1))
     (place1 (translate (wall-locate2 dx1 dy1) post1))
+  ;   (-# (plot-and-translate-bezier-points (partial place1)  (fillet-about-point-3 dx1 dy1 20)  (convert-to-curve-post post1)))
     ;(place1 (translate (wall-locate3 dx1 dy1)  post1))
+      
    ; 
     (place2 (check-post post2))
      (plot-and-translate-bezier-points (partial place2) (fillet-about-point dx2 dy2 20) (convert-to-curve-post post2))
-   ; 
-   (place2 (translate (wall-locate1 dx2 dy2)  post2))
+   ;  
+   ;(place2 (translate (wall-locate1 dx2 dy2)  post2))
    (place2 (translate (wall-locate2 dx2 dy2) post2))
-   ;(place2 (translate (wall-locate3 dx2 dy2)  post1))
+ 
+ ;(-# (plot-and-translate-bezier-points (partial place2)  (fillet-about-point-3 dx2 dy2 20)  (convert-to-curve-post post2)))  
+ ;(place2 (translate (wall-locate3 dx2 dy2)  post1))
  )
     
-   (bottom-hull
-    (place1 (translate (wall-locate2 dx1 dy1) post1))
-    (place1 (translate (wall-locate3 dx1 dy1) post1))
-    (place2 (translate (wall-locate2 dx2 dy2) post2))
-    (place2 (translate (wall-locate3 dx2 dy2) post2)))
-   ))
+(bottom-hull
+ (place1 (translate (wall-locate2 dx1 dy1) post1))
+ (plot-and-translate-bezier-points (partial place1)  (fillet-about-point-2 dx1 dy1 10)  (convert-to-curve-post post1))
+ ;(place1 (translate (wall-locate3 dx1 dy1) post1))
+  (place2 (translate (wall-locate2 dx2 dy2) post2))
+ (plot-and-translate-bezier-points (partial place2) (fillet-about-point-2 dx2 dy2 10) (convert-to-curve-post post2))
+ ;(place2 (translate (wall-locate3 dx2 dy2) post2))
+ )
+   )))
 
-(defn wall-brace-xy [place1 dx1 dy1 post1 place2 dx2 dy2 post2 xy1 xy2]
-  (union
+
+  
+
+(defn wall-brace-xy 
+  ( [place1 dx1 dy1 post1 place2 dx2 dy2 post2 xy1 xy2]
+   (wall-brace-xy place1 dx1 dy1 post1 place2 dx2 dy2 post2 xy1 xy2 true))
+  ( [place1 dx1 dy1 post1 place2 dx2 dy2 post2 xy1 xy2 bottom](union
    (hull
     
    (place1 (check-post post1))
-    ;(for [i (range 0 1 0.1)
-    ;      :let [dxv1 (* dx1 i)
-    ;            dyv1 (* dy1 i)]]
-    ;( union
+    
     (place1 (translate (wall-locate1 dx1 dy1) post1))
     (place1 (translate (wall-locate2-xy dx1 dy1 xy1) post1)) 
     (plot-and-translate-bezier-points (partial place1)  (fillet-about-point-xy dx1 dy1 xy1 20)  (convert-to-curve-post post1))
@@ -256,11 +343,41 @@
    
    
  
+   (if bottom
+     (bottom-hull
+      (place1 (translate (wall-locate2-xy dx1 dy1 xy1) post1))
+    ;(place1 (translate (wall-locate3-xy dx1 dy1 xy1) post1))
+      (plot-and-translate-bezier-points (partial place1) (fillet-about-point-xy-2 dx1 dy1 xy1 20) (convert-to-curve-post post1))
+      (place2 (translate (wall-locate2-xy dx2 dy2 xy2) post2))
+      (plot-and-translate-bezier-points (partial place2) (fillet-about-point-xy-2 dx2 dy2 xy2 20) (convert-to-curve-post post2))
+    ;(place2 (translate (wall-locate3-xy dx2 dy2 xy2) post2))
+      )
+     (hull 
+      (plot-and-translate-bezier-points (partial place1) (fillet-about-point-xy-2 dx1 dy1 xy1 20) (convert-to-curve-post post1))
+      (plot-and-translate-bezier-points (partial place2) (fillet-about-point-xy-2 dx2 dy2 xy2 20) (convert-to-curve-post post2))
+      )
+
+     )
+   )))
+
+(defn wall-brace-xy-half-top [place dx dy post xy]
+ 
+ (union 
+  (place (check-post post))
+
+  (place (translate (wall-locate1 dx dy) post))
+  (place (translate (wall-locate2-xy dx dy xy) post))
+  (plot-and-translate-bezier-points (partial place)  (fillet-about-point-xy dx dy xy 20)  (convert-to-curve-post post)))
+)
+(defn wall-brace-xy-half-bottom [place dx dy post xy] 
    (bottom-hull
-    (place1 (translate (wall-locate2-xy dx1 dy1 xy1) post1))
-    (place1 (translate (wall-locate3-xy dx1 dy1 xy1) post1))
-    (place2 (translate (wall-locate2-xy dx2 dy2 xy2) post2))
-    (place2 (translate (wall-locate3-xy dx2 dy2 xy2) post2)))
+    (place (translate (wall-locate2 dx dy) post))
+    (plot-and-translate-bezier-points (partial place)  (fillet-about-point-xy-2 dx dy xy 10)  (convert-to-curve-post post))))
+
+(defn wall-brace-xy-half [place dx dy post xy]
+  (union
+(wall-brace-xy-half-top place dx dy post xy)
+   (wall-brace-xy-half-bottom place dx dy post xy)
    ))
 
 (defn key-wall-brace [x1 y1 dx1 dy1 post1 x2 y2 dx2 dy2 post2]
@@ -409,10 +526,11 @@
        (screen-holder-place))
   )
 
+(def screen-holder-rotate-side-y -70)
 (defn screen-holder-rotate-side [shape]
   (->> shape
        (rdz -80)
-      (rdy -70)
+      (rdy screen-holder-rotate-side-y)
       (rdx -10) 
   )
 )
@@ -421,7 +539,7 @@
        (screen-holder-rotate-side)
        (translate [-6 0 0])
        ;(rdz 5)
-       (left-wall-plate-place -1.75 -3)
+       (left-wall-plate-place -2 -3)
        (translate [0 0 (- 2.5 keyboard-z-offset 3.5)])))
 
 (defn screen-holder-translate-and-place-side [x y z shape]
@@ -429,13 +547,14 @@
        (translate [x y z])
        (screen-holder-place-side)
        ))
+
 (def right-wall
   (let [tr (if (true? pinky-15u) wide-post-tr oled-post-tr)
         br (if (true? pinky-15u) wide-post-br oled-post-br)]
     (union (key-wall-brace lastcol 0 0 1 tr lastcol 0 1 0 tr)
            (for [y (range 0 lastrow)] (key-wall-brace lastcol y 1 0 tr lastcol y 1 0 br))
            (for [y (range 1 lastrow)] (key-wall-brace lastcol (dec y) 1 0 br lastcol y 1 0 tr))
-           (-# (key-wall-brace lastcol cornerrow 0 -1 br lastcol cornerrow 1 0 br))
+            (key-wall-brace lastcol cornerrow 0 -1 br lastcol cornerrow 1 0 br)
            )))
 
 (def back-wall 
@@ -454,14 +573,17 @@
     (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial key-place 0 0) 0 1 oled-post-tl (partial key-place 0 0) -1 1 oled-post-tl  wall-xy-offset wall-xy-offset))
     (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial key-place 0 0) -1 1 oled-post-tl (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-right-position tps-65-mount-corner-radius-with-offset (- tps-65-mount-corner-radius-with-offset)) 1 1 oled-post  wall-xy-offset wall-xy-offset))
     (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-right-position tps-65-mount-corner-radius-with-offset (- tps-65-mount-corner-radius-with-offset)) 1 1 oled-post (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 1 0 oled-post wall-xy-offset wall-xy-offset ))
-    (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 1 0 oled-post (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2 ) (/ (- screen-holder-width) 2) 0) -1 -1 oled-post wall-xy-offset wall-xy-offset))
-    (when (= screen-holder-mount-position "screen-holder-mount-side")  (wall-brace-xy (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2) 0) -1 -1 oled-post (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width ) 2) 0) -1 -1 oled-post wall-xy-offset wall-xy-offset))
-    (when (= screen-holder-mount-position "screen-holder-mount-side")  (wall-brace-xy (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) -1 -1 oled-post (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) 0 -1 oled-post wall-xy-offset wall-xy-offset))
-    (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) 0 -1 oled-post  (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod) tps-65-mount-corner-radius-with-offset) -1 0  oled-post wall-xy-offset wall-xy-offset-thin))
-    ;(when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) 1 -1 oled-post (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/ screen-holder-width 2) 0) 1 -1 oled-post wall-xy-offset-thin wall-xy-offset-thin))
-  
-    ;(when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/ (- screen-holder-width) 2) 0) 1 -1 oled-post  (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset) tps-65-mount-corner-radius-with-offset) -1 0  oled-post wall-xy-offset wall-xy-offset-thin)) 
-    (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod) tps-65-mount-corner-radius-with-offset) -1 0 oled-post   (partial EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left) 0 -1 oled-post wall-xy-offset-thin wall-xy-offset))
+    ;(-# (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 1 0 oled-post (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 0 oled-post wall-xy-offset wall-xy-offset)))
+
+     (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 1 0 oled-post (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 oled-post wall-xy-offset wall-xy-offset))
+     ;(when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 oled-post (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2) 0) 1 -1 oled-post wall-xy-offset wall-xy-offset-thin))
+   
+    ;(-# (when (= screen-holder-mount-position "screen-holder-mount-side")  (wall-brace-xy (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) -1 -1 oled-post (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) 0 -1 oled-post wall-xy-offset wall-xy-offset)))
+   ;(when (= screen-holder-mount-position "screen-holder-mount-side")  (wall-brace-xy (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2) 0)  1 -1 oled-post (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) -1 -1 oled-post wall-xy-offset wall-xy-offset))
+    ; (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0) 0 -1 oled-post  (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod) tps-65-mount-corner-radius-with-offset) -1 0  oled-post wall-xy-offset wall-xy-offset-thin))
+    (when (= screen-holder-mount-position "screen-holder-mount-side") (hull (bottom-hull ( screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0 oled-post))  (wall-brace-xy-half-top (partial EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left) 0 -1 oled-post wall-xy-offset)))
+    (when (= screen-holder-mount-position "screen-holder-mount-side") (hull (bottom-hull (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2) 0 oled-post))  (wall-brace-xy-half-bottom (partial EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left) 0 -1 oled-post wall-xy-offset)))
+    ;(when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod) tps-65-mount-corner-radius-with-offset) -1 0 oled-post   (partial EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left) 0 -1 oled-post wall-xy-offset-thin wall-xy-offset))
     ;(when (= screen-holder-mount-position  "screen-holder-mount-top") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  (- tps-65-mount-corner-radius) ) 0 1 oled-post  (partial screen-holder-translate-and-place (/ (- screen-holder-height) 2) (/ screen-holder-width 2)  0) 0 0 oled-post wall-xy-offset-thin wall-xy-offset-thin))
     (when (= screen-holder-mount-position  "screen-holder-mount-top") (wall-brace-xy (partial screen-holder-translate-and-place (/ (- screen-holder-height) 2) (/ screen-holder-width 2)  0) 0 1 oled-post  (partial screen-holder-translate-and-place (/ (- screen-holder-height) 2) (/ screen-holder-width 2)  0) 0 1 oled-post wall-xy-offset-thin wall-xy-offset-thin))
     ;(wall-brace-xy (partial screen-holder-place-x-y  1.5   (+ left-wall-y-modifier left-wall-y-furthest -0.25)) 0 1 oled-post  (partial screen-holder-place-x-y left-wall-x-furthest    (+ left-wall-y-modifier left-wall-y-furthest -0.5)) 0 1 oled-post wall-xy-offset-thin wall-xy-offset-thin)
@@ -475,7 +597,12 @@
     (wall-brace-xy (partial EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-right) 0 -1 oled-post (partial thumb-bl-place) -1 0 oled-post-tl wall-xy-offset wall-xy-offset)
     ;(wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset ) tps-65-mount-corner-radius-with-offset ) 0 0  oled-post  (partial thumb-bl-place) -1 0 oled-post-tl wall-xy-offset-thin wall-xy-offset)
     ;(wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position  0 tps-65-mount-corner-radius-with-offset) 0 -1  oled-post  (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset) tps-65-mount-corner-radius-with-offset) 0 -1  oled-post wall-xy-offset-thin wall-xy-offset-thin)
-    
+    ;(when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 oled-post (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2) 0) 1 -1 oled-post wall-xy-offset-thin wall-xy-offset-thin false))
+   ;(when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 oled-post (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2) 0) 1 -1 oled-post wall-xy-offset wall-xy-offset false))
+  ;;  (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy  (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2) 0) 1 -1 oled-post (partial screen-holder-translate-and-place-side (/  screen-holder-height 2) (/ (+ screen-holder-width) 2) 0) 0 0 oled-post wall-xy-offset-thin wall-xy-offset-thin false))
+  ;;   (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy  (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2) 0) 1 -1 oled-post (partial screen-holder-translate-and-place-side (/  screen-holder-height 2) (/ (- screen-holder-width) 2) 0) 0 0 oled-post wall-xy-offset-thin wall-xy-offset-thin false))
+  ;;  (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy  (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2) 0) 1 -1 oled-post (partial screen-holder-translate-and-place-side (/  (- screen-holder-height) 2) (/ (- screen-holder-width) 2) 0) 0 0 oled-post wall-xy-offset-thin wall-xy-offset-thin false))
+  ; (when (= screen-holder-mount-position "screen-holder-mount-side") (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 oled-post (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod) tps-65-mount-corner-radius-with-offset) -1 0  oled-post wall-xy-offset-thin wall-xy-offset-thin false))
    ; (-# (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset ) tps-65-mount-corner-radius-with-offset ) -1 0  oled-post  (partial EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left) 0 -2 oled-post wall-xy-offset-thin wall-xy-offset))
    ; (wall-brace-xy (partial EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left) 0 -2 oled-post (partial thumb-bl-place) -1 0 oled-post-tl wall-xy-offset wall-xy-offset)
 ;(wall-brace (partial key-place 0 0) 0 1 oled-post-tl (partial left-key-place 0 1) 0 1 oled-post)
@@ -660,7 +787,11 @@
 
 (def thumb-side-EVQWGD001-mount
   (union
-   
+   (hull 
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod) tps-65-mount-corner-radius-with-offset oled-post)
+    (EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left oled-post)
+    (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/ (- screen-holder-width) 2) 0 oled-post)
+    )
  (triangle-hulls (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod) tps-65-mount-corner-radius-with-offset oled-post)
 (EVQWGD001-translate-and-place-at-position EVQWGD001-mount-bottom-left oled-post)
 (EVQWGD001-translate-and-place-at-position EVQWGD001-mount-top-left oled-post))
@@ -739,7 +870,7 @@
     (if EVQWGD001-mount thumb-side-EVQWGD001-mount thumb-side-normal)
     )
 
-(def thumb-side-to-trackpad-mount
+(def thumb-side-to-trackpad-mount 
 (triangle-hulls
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset-mod-neg)  (- tps-65-mount-corner-radius-with-offset-mod-neg) oled-post)
@@ -749,6 +880,8 @@
    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset-mod-neg)  (- tps-65-mount-corner-radius-with-offset-mod-neg) oled-post)
    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius)  (- tps-65-mount-corner-radius) oled-post)
    )
+  
+  
   )
 
 
@@ -936,51 +1069,103 @@
 (tps-65-translate-and-place-with-radius-xyz (- (/ tps-65-width 2) tps-65-corner-radius) 0 0 tps-65-mount-corner-radius 0 oled-post)
 )
   )
+ 
+ (defn bottom-of-screen-bezier [place]
+   
+   (mapv (fn [point]
+          (->>
+           (translate point curve-post)
+           (rdx 10)
+           (rdy  screen-holder-rotate-side-y)
+           (place))
+   )
+           (fillet-about-point-xy-2 0 -1 wall-xy-offset-thin 20)
+   )
+   
+ )
  (def between-screen-and-trackpad-side 
   (union
-   
-          (triangle-hulls
-    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
-(screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post)
-(screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/  screen-holder-width 2)  0 oled-post))
-    
- (triangle-hulls
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius  tps-65-mount-corner-radius oled-post)
- (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
- (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post))
-    
-  (triangle-hulls
-   (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)  
-   (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/  screen-holder-width 2)  0 oled-post)
-   (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post))
-(triangle-hulls
-        (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
-        (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
-        (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post))
-   
- (triangle-hulls
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius  tps-65-mount-corner-radius oled-post)
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
-
-  (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post)
-  (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2)  0 oled-post)
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
-
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
-  (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post)
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
-
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius)  tps-65-mount-corner-radius oled-post)
-  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius  tps-65-mount-corner-radius oled-post)
-  )  
- (triangle-hulls
-  (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post)
-(screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2)  0 oled-post)
+   (hull
+    (wall-bezier-1-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 wall-xy-offset oled-post)
+    (wall-bezier-1-xy (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0) 0 1 wall-xy-offset-thin oled-post))
+   (hull
+    (wall-bezier-1-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 wall-xy-offset oled-post)
+    ;(wall-bezier-1-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset) 0 1 wall-xy-offset-thin oled-post)
+    ( screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0 oled-post)
+    (wall-bezier-1-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 wall-xy-offset oled-post)
 (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
-  )
-   ) 
+    )
+
+   (hull
+    (wall-bezier-2-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 wall-xy-offset oled-post)
+
+    (wall-bezier-1-xy (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0) 0 1 wall-xy-offset-thin oled-post)
+    ( screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post)
+    (bottom 0.001 (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post))
+
+    (bottom 0.001 (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset (translate (wall-locate3 0 1) oled-post))))
+
+   (hull
+    (wall-bezier-1-xy (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0) 0 1 wall-xy-offset-thin oled-post)
+    ;(wall-bezier-1-xy (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0) 0 1 wall-xy-offset-thin oled-post)
+    (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0 oled-post)
+    (screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0 oled-post))
+
+   (hull
+    (wall-bezier-2-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 0 1 wall-xy-offset oled-post)
+    (wall-bezier-1-xy (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0) 0 1 wall-xy-offset-thin oled-post)
+    ( screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0 oled-post)
+    )
+
+   (bottom-hull 
+    
+    (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post)
+    (screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post)
+;    ( screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 curve-post)
+;( screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  oled-post-size  curve-post)
+;    (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 curve-post)
+;(screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  oled-post-size  oled-)
+    )
+
+;          (triangle-hulls
+;    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
+;(screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post)
+;(screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/  screen-holder-width 2)  0  oled-post))
+
+;;  (triangle-hulls
+  ;; (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius  tps-65-mount-corner-radius oled-post)
+;;  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
+;;  (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post))
+
+  ;(triangle-hulls
+  ; (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)  
+  ; (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/  screen-holder-width 2)  0 oled-post)
+  ; (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post))
+   (triangle-hulls
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
+    (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post))
+
+   (triangle-hulls
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius  tps-65-mount-corner-radius oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
+
+    (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post)
+    (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2)  0 oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
+
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
+    (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
+
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius)  tps-65-mount-corner-radius oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius  tps-65-mount-corner-radius oled-post))
+   (triangle-hulls
+    (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  screen-holder-width 2)  0 oled-post)
+    (screen-holder-translate-and-place-side (/ screen-holder-height 2) (/  (- screen-holder-width) 2)  0 oled-post)
+    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post))) 
     
 
 
@@ -1041,7 +1226,7 @@
    ;left-side
    (when (= screen-holder-mount-position "screen-holder-mount-top") ( color [0 1 0]left-side-new))
     thumb-side
-   (-# thumb-side-to-trackpad-mount)
+   thumb-side-to-trackpad-mount
    right-side
     between-screen-and-trackpad
    top-side

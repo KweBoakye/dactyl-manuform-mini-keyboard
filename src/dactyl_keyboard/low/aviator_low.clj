@@ -9,26 +9,30 @@
              [dactyl-keyboard.low.case-low :refer :all]
              [dactyl-keyboard.low.shape-parameters-low :refer :all]
              [unicode-math.core :refer :all]
-              ;[uncomplicate.neanderthal.native :refer :all]
-              [uncomplicate.neanderthal.core :refer [mv]]
+            [dactyl-keyboard.metal-tactile-button :refer :all] 
              ))
 
 ; code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
 (def aviator-includes (map include ["../BOSL2/transforms.scad" , "../BOSL2/std.scad"] ))
-(def aviator-start (map + [-38 -11  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
+(def aviator-start (map + [-38 -6.5  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
 (def aviator-position [(first aviator-start) (second aviator-start) 12])
 (def aviator-diameter 16.2)
 (def aviator-recess-start (map + [-40 -12  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
 (def aviator-recess-position [(first aviator-recess-start) (second aviator-recess-start) 12])
 (def aviator-recess-diameter 17.6)
-(def aviator-male-connecter-ring-diameter 18.3)
-(def aviator-male-connecter-length 35.5)
-(def aviator-female-connecter-ring-diameter 21.5)
+(def aviator-plug-connecter-ring-diameter 19)
+(def aviator-plug-connecter-length 35.5)
+(def aviator-socket-connecter-ring-diameter 21.5)
 (def aviator-locking-ring-length 7.5)
 (def aviator-neck-width 3)
+;(def aviator-neck-supoort-width metal-tactile-button-neck-radius)
+(def metal-tactile-button-hole-diameter (+ metal-tactile-button-neck-radius 0.5))
+(def metal-tactile-button-hole-radius (/ metal-tactile-button-hole-diameter 2))
+(def aviator-neck-support-width (- aviator-neck-width 1))
+(def aviator-neck-support-height (+ metal-tactile-button-distance-from-top-of-ball-to-top-of-neck metal-tactile-button-neck-height))
 (def aviator-neck-bezier-width aviator-neck-width)
 
-(def aviator-neck-height 8.6)
+(def aviator-neck-height 4)
 (def aviator-offset [0 (/ aviator-neck-height 2) 0])
 (defn aviator-place-shape [position shape]
   (->> shape
@@ -72,10 +76,11 @@
 ;                                     (translate [3 0 0]
 ;                                                (cylinder (/  aviator-diameter 2) 20)))))
 
-(def aviator-hole (translate  aviator-position (aviator-place-shape  [0  0 0]  (rdx 180 (binding [*fn* 36] (cylinder (/  aviator-female-connecter-ring-diameter 2) (+ wall-xy-offset wall-thickness) :center true))))))
+(def aviator-hole (aviator-place-shape  (mapv + [0 (/ (- (+ wall-xy-offset wall-thickness)) 2) 0] aviator-position)   (rdx 180 (binding [*fn* 36] (cylinder (/  aviator-diameter 2) (+ wall-xy-offset wall-thickness) :center true)))))
 (def aviator-recess-hole (translate aviator-recess-position (aviator-place-shape  [0  0 0] (rdx 180 (binding [*fn* 36] (cylinder (/ aviator-recess-diameter 2) (+ wall-xy-offset wall-thickness) :center true))))))
-(def aviator-male-connecter-clearence-test (translate [0 10 0] (aviator-place aviator-position aviator-male-connecter-ring-diameter)))
-(def aviator-female-connecter-clearence-test (aviator-place aviator-position aviator-female-connecter-ring-diameter))
+(def cutout-for-metal-tactile-button (metal-tactile-button-main-body-cutout (+ wall-xy-offset wall-thickness) ))
+(def aviator-male-connecter-clearence-test (translate [0 10 0] (aviator-place aviator-position aviator-plug-connecter-ring-diameter)))
+(def aviator-female-connecter-clearence-test (aviator-place aviator-position aviator-socket-connecter-ring-diameter))
 (def aviator-fillet (->> 
                     
                     
@@ -111,7 +116,7 @@
 
 
 (def aviator-neck-shape
-  (let [radius (/ aviator-male-connecter-ring-diameter 2) square-width aviator-neck-width circ-rad (/ square-width 2)]
+  (let [radius (/ aviator-plug-connecter-ring-diameter 2) square-width aviator-neck-width circ-rad (/ square-width 2)]
      (binding [*fn* 36] (extrude-rotate {:convexity 10}
                                         (union
                                          (translate [radius aviator-neck-height 0] (square circ-rad circ-rad :center false))
@@ -119,7 +124,8 @@
                                          (translate [(+ radius square-width) 0 0] aviator-neck-bezier)
                                          (translate [(+ radius  circ-rad) aviator-neck-height 0]  (difference
                                                                                                    (binding [*fn* 36] (circle circ-rad))
-                                                                                                   (mirror [-1 0 0] (square circ-rad aviator-neck-height :center false)))))))
+                                                                                                   (mirror [-1 0 0] (square circ-rad aviator-neck-height :center false))))
+                                         )))
 
      )
   )
@@ -132,7 +138,7 @@
 (def aviator-assembly-neck-shape
   (->>
    (cylinder (/ aviator-neck-width 2) aviator-neck-height)
-   (translate [(/ aviator-male-connecter-ring-diameter 2) 0 0 ])
+   (translate [(/ aviator-plug-connecter-ring-diameter 2) 0 0 ])
    )
   )
 
@@ -159,36 +165,36 @@
        ) 
 )
 
-(def aviator-neck-support-bezier-points (bezier-curve [[(- aviator-neck-width 1) 0] [0.5 0] [0 0.5] [0 (- aviator-neck-height 2)]] 0.5))
+(def aviator-neck-support-bezier-points (bezier-curve [[metal-tactile-button-neck-radius 0] [0.5 0] [0 0.5] [0 aviator-neck-support-height]] 0.5))
 (def aviator-neck-support-bezier-points-with-origin (into [] (concat aviator-neck-support-bezier-points [[0 0]])))
 (def aviator-neck-support-bezier
   (difference
-   (polygon   [[(- (- aviator-neck-width 1) 0.01) 0] [0 0] [0 (- aviator-neck-height 2 0.01)]] false :convexity 10)
+   (polygon   [[(- metal-tactile-button-neck-radius 0.01) 0] [0 0] [0 (- aviator-neck-support-height 0.01)]] false :convexity 10)
    (polygon  aviator-neck-support-bezier-points false :convexity 10)))
 
 (def aviator-neck-support-shape
-  (let [radius (/ 12 2) square-width (- aviator-neck-width 1) circ-rad (/ square-width 2)] 
+  (let [radius (/ (+ metal-tactile-button-neck-radius 0.5) 2) square-width aviator-neck-support-width circ-rad (/ square-width 2)] 
      (binding [*fn* 36]
        (extrude-rotate {:convexity 10}
                        (union
-                        (translate [radius (- aviator-neck-height 2) 0] (square circ-rad circ-rad :center false))
-                         (translate [radius 0 0] (square square-width (- aviator-neck-height 2) :center false))
+                        (translate [radius aviator-neck-support-height 0] (square circ-rad circ-rad :center false))
+                         (translate [radius 0 0] (square square-width aviator-neck-support-height :center false))
                         (translate [(+ radius square-width)  0 0] aviator-neck-support-bezier)
                        
                         
-                        (translate [(+ radius circ-rad) (- aviator-neck-height 2) 0] (difference
+                        (translate [(+ radius circ-rad) aviator-neck-support-height 0] (difference
                                                                                       (binding [*fn* 36] (circle circ-rad))
-                                                                                      (mirror [-1 0 0] (square circ-rad (- aviator-neck-height 2) :center false)))))))
+                                                                                      (mirror [-1 0 0] (square circ-rad aviator-neck-support-height :center false)))))))
      )
   )
 
-(defn aviator-neck-support-place [dx shape]
-  (let [x-trans-modifier 2 x-trans (cond (neg? dx) (- dx x-trans-modifier) :else (+ dx x-trans-modifier))] 
+(defn aviator-neck-support-place ([dx shape] (aviator-neck-support-place dx shape 0 0 0))
+([dx shape x y z]  (let [x-trans-modifier 4 x-trans (cond (neg? dx) (- dx x-trans-modifier) :else (+ dx x-trans-modifier))] 
    (->> shape
    (rdx 180)
-(translate [aviator-male-connecter-ring-diameter x-trans  0])
+(translate [(+ (- aviator-plug-connecter-ring-diameter metal-tactile-button-hole-radius) y) (+ x-trans x)  z])
 (aviator-place-shape aviator-position)
-   ))
+   )))
   )
 (defn aviator-neck-support [dx]
   (aviator-neck-support-place dx aviator-neck-support-shape)
@@ -203,14 +209,14 @@
                         )
 (def aviator-assembly-neck
  (->>
- (translate [(+ (/ aviator-male-connecter-ring-diameter 2) (/ aviator-neck-width 1)) 0 0] (cylinder (/ aviator-neck-width 2) aviator-neck-height :center false))
+ (translate [(+ (/ aviator-plug-connecter-ring-diameter 2) (/ aviator-neck-width 1)) 0 0] (cylinder (/ aviator-neck-width 2) aviator-neck-height :center false))
  (rdz -90)
 
  )
   )
 
 (defn aviator-assembly-neck-bezier [side]
-  (let [x-trans (+ (/ aviator-male-connecter-ring-diameter 2) (/ aviator-neck-width 1))]
+  (let [x-trans (+ (/ aviator-plug-connecter-ring-diameter 2) (/ aviator-neck-width 1))]
     (mapv (fn [point]
       (->>
     (translate point (sphere 0.01))                                                                          
@@ -270,9 +276,9 @@
 
 (def panel-switch-diameter 12)
 (def panel-switch-radius (/ panel-switch-diameter 2))
-(def aviator-neck-support-width (- aviator-neck-width 1))
+
 (defn aviator-assembly-neck-support-bezier [side]
-  (let [x-trans (+ panel-switch-radius aviator-neck-support-width) half-d (/ aviator-diameter 2)]
+  (let [x-trans (+ metal-tactile-button-hole-radius aviator-neck-support-width) half-d (/ aviator-diameter 2)]
     (mapv 
      (fn [point](->>
                  (translate point (sphere 0.01))
@@ -318,14 +324,14 @@
    (union
    (difference
     (hull
-     (aviator-neck-place (binding [*fn* 36] (cylinder (+ (/ aviator-male-connecter-ring-diameter 2) aviator-neck-width) (+ aviator-neck-height ) :center false)))
-     (aviator-neck-support-place (/ aviator-diameter 2) (binding [*fn* 36] (cylinder (+ panel-switch-radius aviator-neck-support-width) (+ (- aviator-neck-height 2) ) :center false)))
-     (aviator-neck-support-place (- (/ aviator-diameter 2)) (binding [*fn* 36] (cylinder (+ panel-switch-radius aviator-neck-support-width) (+ (- aviator-neck-height 2) ) :center false)))
+     (aviator-neck-place (binding [*fn* 36] (cylinder (+ (/ aviator-plug-connecter-ring-diameter 2) aviator-neck-width) (+ aviator-neck-height ) :center false)))
+     (aviator-neck-support-place (/ aviator-diameter 2) (binding [*fn* 36] (cylinder (+ metal-tactile-button-hole-radius aviator-neck-support-width) (+ aviator-neck-support-height ) :center false)))
+     (aviator-neck-support-place (- (/ aviator-diameter 2)) (binding [*fn* 36] (cylinder (+ metal-tactile-button-hole-radius aviator-neck-support-width) (+ aviator-neck-support-height ) :center false)))
      )
      (union
-      (aviator-neck-place (binding [*fn* 36] (cylinder (+ (/ aviator-male-connecter-ring-diameter 2) aviator-neck-width) (+ 1 (+ aviator-neck-height (/ aviator-neck-width 2))) :center false)))
-(aviator-neck-support-place (/ aviator-diameter 2) (binding [*fn* 36] (cylinder (+ panel-switch-radius aviator-neck-support-width) (+ (+ (- aviator-neck-height 2) (/ (- aviator-neck-width 1) 2)) 4) :center false)))
-(aviator-neck-support-place (- (/ aviator-diameter 2)) (binding [*fn* 36] (cylinder (+ panel-switch-radius aviator-neck-support-width) (+ (+ (- aviator-neck-height 2) (/ (- aviator-neck-width 1) 2)) 4) :center false)))
+      (aviator-neck-place (binding [*fn* 36] (cylinder (+ (/ aviator-plug-connecter-ring-diameter 2) aviator-neck-width) (+ 1 (+ aviator-neck-height (/ aviator-neck-width 2))) :center false)))
+(aviator-neck-support-place (/ aviator-diameter 2) (binding [*fn* 36] (cylinder (+ metal-tactile-button-hole-radius aviator-neck-support-width) (+ (+ aviator-neck-support-height (/ (- aviator-neck-width 1) 2)) 4) :center false)))
+(aviator-neck-support-place (- (/ aviator-diameter 2)) (binding [*fn* 36] (cylinder (+ metal-tactile-button-hole-radius aviator-neck-support-width) (+ (+ aviator-neck-support-height (/ (- aviator-neck-width 1) 2)) 4) :center false)))
       )
     )
    ; (call-module "bezier_polyhedron"  (union aviator-assembly-neck-bezier-left aviator-assembly-neck-support-bezier-left))   
@@ -333,9 +339,9 @@
       
     ;(-# (polygon aviator-assembly-neck-bezier-left false :convexity 10))
      ;(call-module "move"  [0, 0, 0]  [0, 0, 0])
-    (-#(join-beziers  aviator-assembly-neck-bezier-left aviator-assembly-neck-support-bezier-left))
+    (join-beziers  aviator-assembly-neck-bezier-left aviator-assembly-neck-support-bezier-left)
     (join-beziers  aviator-assembly-neck-bezier-right aviator-assembly-neck-support-bezier-right)
-    (-# (join-beziers  (aviator-assembly-neck-support-bezier "top-left") (aviator-assembly-neck-support-bezier "top-right")))
+     (join-beziers  (aviator-assembly-neck-support-bezier "top-left") (aviator-assembly-neck-support-bezier "top-right"))
     
    
     ;
@@ -345,6 +351,14 @@ aviator-neck-support-left
 aviator-neck-support-right
     )
 )
+
+(def aviator-assembly-diffs
+  (union
+   aviator-hole
+(aviator-neck-support-place (/ aviator-diameter 2) cutout-for-metal-tactile-button 0 0 (- (/ (+ wall-xy-offset wall-thickness) 2) 0.1))
+(aviator-neck-support-place (- (/ aviator-diameter 2)) cutout-for-metal-tactile-button 0 0 (- (/ (+ wall-xy-offset wall-thickness) 2) 0.1))
+   )
+  )
 
 (def resetswitch-start (map + [0 -3  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
 (def resetswitch-position [(first resetswitch-start) (second resetswitch-start) 12])

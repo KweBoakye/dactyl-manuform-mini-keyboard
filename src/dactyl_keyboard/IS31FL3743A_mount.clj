@@ -68,14 +68,37 @@
    )
   )
 
+(def IS31FL3743A-fillet-standoffs
+  (multiple-standoffs
+   IS31FL3743A-standoff-inner-radius
+   IS31FL3743A-standoff-outer-radius
+  IS31FL3743A-standoff-height
+  [IS31FL3743A-upper-mounting-hole-position IS31FL3743A-bottom-mounting-hole-position] 
+   )
+  )
+
 (defn IS31FL3743A-standoff-place [shape]
-  (translate [-45 -20 0] shape)
+  (translate [-65 -20 0] shape)
   )
 
 
 (def IS31FL3743A-standoff-test
   (union
    (translate [0 0 IS31FL3743A-standoff-height] IS31FL3743A-pcb-placeholder)
-   IS31FL3743A-standoffs
+   IS31FL3743A-fillet-standoffs
    )
   )
+
+(def IS31FL3743A-standoff-print-test
+  (union 
+   (translate [0 0  IS31FL3743A-thickness] IS31FL3743A-fillet-standoffs)
+   (translate [0 0 (/ IS31FL3743A-thickness 2)] (difference
+    (->>
+    (cube IS31FL3743A-width (+ IS31FL3743A-length 8) IS31FL3743A-thickness)
+     )
+    (->>
+     (cube (- IS31FL3743A-width 4) (- IS31FL3743A-length 24) IS31FL3743A-thickness)
+     
+     )
+    ))
+   ))

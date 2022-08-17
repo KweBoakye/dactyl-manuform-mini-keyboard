@@ -69,6 +69,15 @@
     (binding [*fn* 36] (cylinder inner-radius (+ 0.2 height) :center false))
     (translate [0 0 -0.1]))))
 
+(defn multiple-standoffs [inner-radius outer-radius height positions]
+  (let [original-standoff (standoff inner-radius outer-radius height)]
+    (for [position positions]
+    (translate position original-standoff)
+      ))
+  )
+
+
+
 (def quarterrounnd
   (difference
    (translate [-1 -1 0] (square 4 4 :center false))

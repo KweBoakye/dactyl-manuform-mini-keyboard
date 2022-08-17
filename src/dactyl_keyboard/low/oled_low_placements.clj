@@ -21,20 +21,26 @@
   )
 
 (def oled-post-size 1)
+(def oled-translation-vector [0 0 (+ (/ oled-holder-thickness -2) plate-thickness)])
 
 (def oled-post (->> (web-post-shape-with-size oled-holder-thickness oled-post-size 36)
-                    (translate [0 0 (+ (/ oled-holder-thickness -2) plate-thickness)])))
+                    (translate oled-translation-vector )))
 
 (def oled-post-adj (/ oled-post-size 2))
-(def oled-post-tr (translate [(- (/ mount-width 1.95)  oled-post-adj) (- (/ mount-height 1.95) oled-post-adj) 0] oled-post))
-(def oled-post-tl (translate [(+ (/ mount-width -1.95) oled-post-adj) (- (/ mount-height 1.95) oled-post-adj) 0] oled-post))
-(def oled-post-bl (translate [(+ (/ mount-width -1.95) oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0] oled-post))
-(def oled-post-br (translate [(- (/ mount-width 1.95)  oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0] oled-post))
+(def oled-post-tr-translation-vector  [(- (/ mount-width 1.95)  oled-post-adj) (- (/ mount-height 1.95) oled-post-adj) 0] )
+(def oled-post-tl-translation-vector  [(+ (/ mount-width -1.95) oled-post-adj) (- (/ mount-height 1.95) oled-post-adj) 0] )
+(def oled-post-bl-translation-vector  [(+ (/ mount-width -1.95) oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0])
+(def oled-post-br-translation-vector  [(- (/ mount-width 1.95)  oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0])
+  
+(def oled-post-tr (translate oled-post-tr-translation-vector oled-post))
+(def oled-post-tl (translate oled-post-tl-translation-vector oled-post))
+(def oled-post-bl (translate oled-post-bl-translation-vector  oled-post))
+(def oled-post-br (translate oled-post-br-translation-vector  oled-post))
 
-(def curve-post (->> (binding [*fn* 36](sphere (/ 0.2 2)))
-                    (translate [0 0 (+ (/ (- (/ oled-holder-thickness 2) 0.4) -2) plate-thickness)])))
+(def curve-post (->> (binding [*fn* 36](sphere (/ oled-post-size 2)))
+                    (translate [0 0 (+ (/ oled-post-size -2)  plate-thickness)])))
 
-(def curve-post-adj (/ 0.1 2))
+(def curve-post-adj (/ oled-post-size 2))
 (def curve-post-tr (translate [(- (/ mount-width 1.95)  curve-post-adj) (- (/ mount-height 1.95) curve-post-adj) 0] curve-post))
 (def curve-post-tl (translate [(+ (/ mount-width -1.95) curve-post-adj) (- (/ mount-height 1.95) curve-post-adj) 0] curve-post))
 (def curve-post-bl (translate [(+ (/ mount-width -1.95) curve-post-adj) (+ (/ mount-height -1.95) curve-post-adj) 0] curve-post))
@@ -48,3 +54,10 @@
 (def sphere-post-tl (translate [(+ (/ mount-width -1.95) sphere-post-adj) (- (/ mount-height 1.95) sphere-post-adj) 0] sphere-post))
 (def sphere-post-bl (translate [(+ (/ mount-width -1.95) sphere-post-adj) (+ (/ mount-height -1.95) sphere-post-adj) 0] sphere-post))
 (def sphere-post-br (translate [(- (/ mount-width 1.95)  sphere-post-adj) (+ (/ mount-height -1.95) sphere-post-adj) 0] sphere-post))
+
+(def round-thumb-post (->> (web-post-shape-with-size web-thickness oled-post-size 36)
+                    (translate [0 0 (+ (/ web-thickness -2) plate-thickness)])))
+(def round-thumb-post-tr (translate [(- (/ mount-width 1.95)  oled-post-adj) (- (+ (/ mount-height 1.95) (/ oled-post-size 2)) oled-post-adj) 0] round-thumb-post))
+(def round-thumb-post-tl (translate [(+ (/ mount-width -1.95) oled-post-adj) (- (+ (/ mount-height 1.95) (/ oled-post-size 2)) oled-post-adj) 0] round-thumb-post))
+(def round-thumb-post-bl (translate [(+ (/ mount-width -1.95) oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0] round-thumb-post))
+(def round-thumb-post-br (translate [(- (/ mount-width 1.95)  oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0] round-thumb-post))

@@ -4,7 +4,9 @@
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]))
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.dovetail :refer :all]
+            ))
 
 
 (def vybronics-vl91022-x-axis 22.7)
@@ -36,18 +38,34 @@
    (translate [0 0 (+ (/ plate-thickness 2) (- vybronics-vl91022-mount-z-axis plate-thickness))])
    ))
 
+(def vybronics-vl91022-)
+
 ;vybronics-vl91022-mount-body
 
+(def position [0 0 (/ plate-thickness -4)])
+(def dimension [vybronics-vl91022-y-axis (/ vybronics-vl91022-x-axis 2) (/ plate-thickness 2)])
+(def tooth-count 2)
+(def tooth-height 2)
+(def tooth-clearance 0.5)
+(def tooth-settings [tooth-count tooth-height tooth-clearance])
 (def vybronics-vl91022-mount 
-  (difference
+  (let [
+        ]
+    
+    (difference
    vybronics-vl91022-mount-body
+   
+    (-# (translate [(- (/ (- vybronics-vl91022-x-axis 2) -2) tooth-height) 0 0](rdz -90 (cutter position dimension tooth-settings false false))))
+     (-# (mirror [1 0 0] (-# (translate [(- (/ (- vybronics-vl91022-x-axis 2) -2) tooth-height) 0 0] (rdz -90 (cutter position dimension tooth-settings false false))))))
+    
    vybronics-vl91022-body
    top-subtraction
    (translate [0 0 (/ plate-thickness 2)] vybronics-vl91022-mount-body-subtract)
+   (translate [0 0 (- (/ plate-thickness 2))] vybronics-vl91022-mount-body-subtract)
     (translate [0 (/ vybronics-vl91022-mount-y-axis 2) 0 ] vybronics-vl91022-mount-body-subtract)
    (translate [-1 (/ (- vybronics-vl91022-mount-y-axis) 2) 0] vybronics-vl91022-mount-body-subtract)
    (translate [1 (/ (- vybronics-vl91022-mount-y-axis) 2) 0] vybronics-vl91022-mount-body-subtract)
     (translate [(/ (- vybronics-vl91022-mount-x-axis) 2) 0 0] vybronics-vl91022-mount-body-subtract)
 (translate [(/ vybronics-vl91022-mount-x-axis 2) 0 0] vybronics-vl91022-mount-body-subtract)
-   )
+   ))
   ) 

@@ -1,5 +1,5 @@
 (ns dactyl-keyboard.oled
-   (:refer-clojure :exclude [use import])
+  (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
@@ -86,6 +86,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def ST7789-240x240-154-pcb-size [33 44.5 (- plate-thickness 1)])
+(def ST7789-240x240-154-screw-size 2.5)
+(def ST7789-240x240-154-screw-countersink-length 1.6)
+(def ST7789-240x240-154-screw-head-diameter 5)
 (def ST7789-240x240-154-screen-offset [0 0 0])
 (def ST7789-240x240-154-screen-size [32 35 (- plate-thickness 1)])
 (def ST7789-240x240-154-viewport-size [28 28 (+ 0.1 plate-thickness)])
@@ -100,15 +103,44 @@
 (def ST7789-240x240-154-mount-rotation-z-old (deg2rad -3))
 
 ;(def ST7789-240x240-154-screen-cutout)
+(def countersink-chamfer
+  (->>
+   (hull 
+    (translate [0 0 ST7789-240x240-154-screw-countersink-length](cylinder (/ ST7789-240x240-154-screw-size 2) 0.001))
+   (cylinder (/ ST7789-240x240-154-screw-head-diameter 2) 0.001))
+   (translate [0 0 (- (+ (/ ST7789-240x240-154-holder-thickness 2) 0.5))])
+   (with-fn 36)
+   )
+  )
+(def view-bezel
+
+  (->>
+   (hull
+
+    (cube (+ (first ST7789-240x240-154-viewport-size) 1) (+ (second ST7789-240x240-154-viewport-size) 1) 0.001)
+    (translate [0 0 0.5]
+               (cube (first ST7789-240x240-154-viewport-size) (second ST7789-240x240-154-viewport-size) 0.001)))
+
+
+   (translate ST7789-240x240-154-viewport-offset)
+   (translate [0 0 (- (+ (/ ST7789-240x240-154-holder-thickness 2) 0))])))
+
+(def all-countersink-chamfers
+  (for [x [-2 2] y [-2 2]]
+    (translate (div-vec ST7789-240x240-154-mount-size [x y 1])
+               countersink-chamfer))
+  )
 
 (def ST7789-240x240-154-holder-cut
   (->>
    (union
+    view-bezel
+    all-countersink-chamfers
       ; cut for ST7789-240x240-154 pcb
     (difference
      (translate [0 0 1] (apply cube (add-vec [0.5 0.5 0.1] ST7789-240x240-154-pcb-size)))
      (for [x [-2 2] y [-2 2]]
-       (translate (div-vec ST7789-240x240-154-mount-size [x y 1])
+       (translate (mapv + (div-vec ST7789-240x240-154-mount-size [x y 1]) [0 0 -0.3])
                   (binding [*fn* 36] (cylinder 2.5 (- ST7789-240x240-154-holder-thickness 2.5))))))
       ; cut for ST7789-240x240-154 screen
     (translate ST7789-240x240-154-screen-offset (apply cube ST7789-240x240-154-screen-size))
@@ -124,39 +156,36 @@
    (translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)])))
 
 (def ST7789-240x240-154-holder-base
-  (->> 
-    (let [adjustment 0.5 radius 1 corner (square radius radius)] (hull
-                                            (translate [(- adjustment (/ ST7789-240x240-154-holder-width 2)) (- (/ ST7789-240x240-154-holder-height 2) adjustment) 0] corner)
-                                            (translate [(- (/ ST7789-240x240-154-holder-width 2) adjustment) (- (/ ST7789-240x240-154-holder-height 2) adjustment) 0] corner)
-                                            (translate [(- adjustment (/ ST7789-240x240-154-holder-width 2)) (- adjustment (/ ST7789-240x240-154-holder-height 2)) 0] corner)
-                                            (translate [(- (/ ST7789-240x240-154-holder-width 2) adjustment) (- adjustment (/ ST7789-240x240-154-holder-height 2)) 0] corner)))
-   (with-fn 20)
-   )
-  )
+  (->>
+   (let [adjustment 0.5 radius 1 corner (square radius radius)] (hull
+                                                                 (translate [(- adjustment (/ ST7789-240x240-154-holder-width 2)) (- (/ ST7789-240x240-154-holder-height 2) adjustment) 0] corner)
+                                                                 (translate [(- (/ ST7789-240x240-154-holder-width 2) adjustment) (- (/ ST7789-240x240-154-holder-height 2) adjustment) 0] corner)
+                                                                 (translate [(- adjustment (/ ST7789-240x240-154-holder-width 2)) (- adjustment (/ ST7789-240x240-154-holder-height 2)) 0] corner)
+                                                                 (translate [(- (/ ST7789-240x240-154-holder-width 2) adjustment) (- adjustment (/ ST7789-240x240-154-holder-height 2)) 0] corner)))
+   (with-fn 20)))
 (def ST7789-240x240-154-holder
   (->>
     ; main body
-  (hull
-   (for [i [0 0.25 0.5 0.75 1]
-         :let [y (* (Math/cos (* i 90)) ST7789-240x240-154-holder-thickness-modifier) x  (+ -0.95 (* (Math/sin (* i 90)) 1))]]
+   (hull
+    (for [i [0 0.25 0.5 0.75 1]
+          :let [y (* (Math/cos (* i 90)) ST7789-240x240-154-holder-thickness-modifier) x  (+ -0.95 (* (Math/sin (* i 90)) 1))]]
 
-     (extrude-linear {:height (+ (-  ST7789-240x240-154-holder-thickness ST7789-240x240-154-holder-thickness-modifier) y) :center false :convexity 10}
-                     (offset-delta {:delta x  :chamfer false :r false} ST7789-240x240-154-holder-base))))
-   
+      (extrude-linear {:height (+ (-  ST7789-240x240-154-holder-thickness ST7789-240x240-154-holder-thickness-modifier) y) :center false :convexity 10}
+                      (offset-delta {:delta x  :chamfer false :r false} ST7789-240x240-154-holder-base))))
+
    ;(apply cube ST7789-240x240-154-holder-size)
    ;(translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)])
    ;(rdy 180)
-   
-   (translate [0 0 0]
-              )))
+
+   (translate [0 0 0])))
 
 (def ST7789-240x240-154-holder-old
-   (->>
+  (->>
     ; main body
 
    (apply cube ST7789-240x240-154-holder-size)
    ;(translate [0 0 1])
    (rdy 180)
-    
+
    (translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)])))
 
