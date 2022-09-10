@@ -1,11 +1,11 @@
 (ns dactyl-keyboard.low.shape-parameters-low
-   (:refer-clojure :exclude [use import])
+  (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [unicode-math.core :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            ))
+            [dactyl-keyboard.switch-hole :refer :all] 
+            [dactyl-keyboard.utils :refer :all]))
 
 
 
@@ -23,14 +23,53 @@
 (def pinky-curvature (deg2rad 27.5))
 
 (defn α [column] (cond (= column 0) far-index-curvature
-                   (<= column 1) index-curvature
-                         (= column 2) middle-curvature
-                         (= column 3) ring-curvature
-                         (>= column 4) pinky-curvature
-                         :else (/ π 12)))
+                       (<= column 1) index-curvature
+                       (= column 2) middle-curvature
+                       (= column 3) ring-curvature
+                       (>= column 4) pinky-curvature
+                       :else (/ π 12)))
 
 ;(def α (/ π 12))                        ; curvature of the columns
 (def β (/ π 36))                        ; curvature of the rows
+
+(def far-index-splay  5)
+(def index-splay far-index-splay)
+(def middle-splay 0)
+(def ring-splay -2.5)
+(def pinky-splay -7.5)
+(defn γ [column]
+  (->>
+   (cond (= column 0) far-index-splay
+        (<= column 1) index-splay
+        (= column 2) middle-splay
+        (= column 3) ring-splay
+        (>= column 4) pinky-splay
+        :else 0)
+   (deg2rad)
+   ))
+
+(defn splay-angle-to-translation [splay-angle]
+  (let [x-trans (* (- splay-angle) (/ 3 5))
+        width (* (cond (neg? x-trans) (- keyswitch-width) :else keyswitch-width) 1.5)] 
+  (cond (> (abs x-trans) (* keyswitch-width 1.5)) width :else x-trans)
+    )
+  )
+
+(def far-index-post-splay-translation [(splay-angle-to-translation far-index-splay) 0 0])
+(def index-post-splay-translation [(splay-angle-to-translation index-splay) 0 0])
+(def middle-post-splay-translation [0 0 0])
+(def ring-post-splay-translation [(splay-angle-to-translation ring-splay) 0 0])
+(def pinky-post-splay-translation [(splay-angle-to-translation pinky-splay) 0 0])
+
+(defn post-splay-translation [column]
+  (cond (= column 0) far-index-post-splay-translation
+        (<= column 1) index-post-splay-translation
+        (= column 2) middle-post-splay-translation
+        (= column 3) ring-post-splay-translation
+        (>= column 4) pinky-post-splay-translation
+        :else 0)
+  )
+
 (defn centerrow [column] (cond
                            (= column 0) (- nrows 3)  ;inner index
                            (= column 1) (- nrows 3)  ;index
@@ -108,8 +147,7 @@
 (def rounding-radius (if round-case 2 0))
 
 (when (= nrows 5)
-  (def left-wall-y-modifier 0)
-  )
+  (def left-wall-y-modifier 0))
 
 (when (= nrows 4)
   (def left-wall-y-modifier 0))

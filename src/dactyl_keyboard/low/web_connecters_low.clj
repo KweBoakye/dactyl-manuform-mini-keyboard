@@ -17,10 +17,11 @@
 
 (def web-thickness 4.5)
 (def post-size 0.1)
+ (def web-post-translation-vector [0 0 (+ (/ web-thickness -2)
+                    plate-thickness)])
 (def new-post-size (if (= rounding-radius 0) 1 rounding-radius))
 (def web-post (->> (rcylinder  post-size web-thickness)
-                   (translate [0 0 (+ (/ web-thickness -2)
-                                      plate-thickness)])))
+                   (translate web-post-translation-vector)))
 
 (defn web-post-shape-with-size ([height size]
   (if (= new-post-size 0)
@@ -44,10 +45,16 @@
 
 
 (def post-adj (/ post-size 2))
-(def web-post-tr (translate [(- (/ mount-width 1.95) post-adj) (- (/ mount-height 1.95) post-adj) 0] web-post))
-(def web-post-tl (translate [(+ (/ mount-width -1.95) post-adj) (- (/ mount-height 1.95) post-adj) 0] web-post))
-(def web-post-bl (translate [(+ (/ mount-width -1.95) post-adj) (+ (/ mount-height -1.95) post-adj) 0] web-post))
-(def web-post-br (translate [(- (/ mount-width 1.95) post-adj) (+ (/ mount-height -1.95) post-adj) 0] web-post))
+(def web-post-tr-translation-vector  [(- (/ mount-width 1.95) post-adj) (- (/ mount-height 1.95) post-adj) 0] )
+(def web-post-tl-translation-vector  [(+ (/ mount-width -1.95) post-adj) (- (/ mount-height 1.95) post-adj) 0] )
+(def web-post-bl-translation-vector  [(+ (/ mount-width -1.95) post-adj) (+ (/ mount-height -1.95) post-adj) 0])
+(def web-post-br-translation-vector  [(- (/ mount-width 1.95) post-adj) (+ (/ mount-height -1.95) post-adj) 0] )
+(def web-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) post-adj) 0])
+(def web-post-tr (translate  web-post-tr-translation-vector web-post))
+(def web-post-tl (translate  web-post-tl-translation-vector web-post))
+(def web-post-bl (translate  web-post-bl-translation-vector  web-post))
+(def web-post-br (translate  web-post-br-translation-vector web-post))
+(def web-post-bm (translate  web-post-bm-translation-vector web-post))
 
 
 ; wide posts for 1.5u keys in the main cluster

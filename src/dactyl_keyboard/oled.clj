@@ -27,8 +27,8 @@
 (def oled-holder-height (+ 3 (nth oled-pcb-size 1)))
 (def oled-holder-thickness plate-thickness)
 (def oled-holder-size [oled-holder-width oled-holder-height oled-holder-thickness])
-(def oled-mount-rotation-x-old (deg2rad 20))
-(def oled-mount-rotation-z-old (deg2rad -3))
+(def oled-mount-rotation-x-old  20)
+(def oled-mount-rotation-z-old  -3)
 
 
 (def oled-holder-cut

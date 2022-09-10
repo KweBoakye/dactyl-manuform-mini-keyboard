@@ -35,47 +35,103 @@
                                    (- plate-thickness (/ web-thickness 2))]))]
     (union top-plate (mirror [0 0 0] top-plate))))
 
-(defn thumb-tr-place [shape]
-  (->> shape
-       (rotate (deg2rad  14) [1 0 0])
-       (rotate (deg2rad -15) [0 1 0])
-       (rotate (deg2rad  10) [0 0 1]) ; original 10
-       (translate thumborigin)
-       (translate [-15 -10 5]))) ; original 1.5u  (translate [-12 -16 3])
+(def thumb-tr-rotation-values {:x 14 :y -15 :z 10})
+
+(defn thumb-tr-rotate ([shape] (thumb-tr-rotate rdx rdy rdz shape))
+  ([ rotate-x-fn rotate-y-fn rotate-z-fn shape]
+  (->> shape  
+       (rotate-x-fn  (thumb-tr-rotation-values :x))
+   (rotate-y-fn -15)
+        (rotate-z-fn  10) )
+  )
+)
+
+(defn thumb-tr-place ([shape] (thumb-tr-place translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+          (rotate-x-fn  14)
+(rotate-y-fn -15)
+(rotate-z-fn  10)
+        (translate-fn thumborigin)
+       (translate-fn [-15 -10 5])))) ; original 1.5u  (translate [-12 -16 3])
+(defn thumb-tr-position [position] (thumb-tr-place (partial map +) rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees position))
 (def tl-minithumb-loc (map + minithumb-tip-offset (if cirque-TM040040-mount-thumb trackball-middle-translate [0 0 0])))
-(defn thumb-tl-place [shape]
-  (->> shape
-       (rotate (deg2rad  10) [1 0 0])
-       (rotate (deg2rad -23) [0 1 0])
-       (rotate (deg2rad  25) [0 0 1]) ; original 10
-       (translate thumborigin)
-       (translate [-35 -16 -2]))) ; original 1.5u (translate [-32 -15 -2])))
+
+(defn thumb-tl-rotate ([shape] (thumb-tl-rotate  rdx rdy rdz shape))
+  ([ rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-x-fn  10) 
+        (rotate-y-fn -23) 
+        (rotate-z-fn  25) ; original 10
+   )))
+
+(defn thumb-tl-place ([shape] (thumb-tl-place translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (thumb-tl-rotate rotate-x-fn rotate-y-fn rotate-z-fn)
+       (translate-fn thumborigin)
+       (translate-fn [-35 -16 -2])))) ; original 1.5u (translate [-32 -15 -2])))
 
 (def mr-minithumb-loc (map + [-23.5 -36.5 -2] (if cirque-TM040040-mount-thumb trackball-middle-translate [0 0 0])))
-(defn thumb-mr-place [shape]
-  (->> shape
-       (rotate (deg2rad  10) [1 0 0])
-       (rotate (deg2rad -23) [0 1 0])
-       (rotate (deg2rad  25) [0 0 1])
-       (translate thumborigin)
-       (translate [-23 -34 -6])))
+
+(def thumb-mr-rotation-values {:x 10 :y -23 :z 25})
+(defn thumb-mr-rotate ([shape] (thumb-mr-rotate rdx rdy rdz shape))
+  ([ rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-x-fn  10)
+        (rotate-y-fn -23)
+        (rotate-z-fn  25)
+        )))
+
+(defn thumb-mr-rotate-reverse ([shape] (thumb-mr-rotate rdx rdy rdz shape))
+  ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-x-fn  -10)
+        (rotate-y-fn 23)
+        (rotate-z-fn  -25))))
+
+
+(defn thumb-mr-place ([shape] (thumb-mr-place translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+       (rotate-x-fn  10)
+       (rotate-y-fn -23)
+       (rotate-z-fn  25)
+       (translate-fn thumborigin)
+       (translate-fn [-23 -34 -6]))))
+(defn thumb-mr-position [position] (thumb-mr-place (partial map +) rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees position))
 (def br-minithumb-loc (map + [-39 -43 -16] (if cirque-TM040040-mount-thumb [2 -2 2] [0 0 0])))
-(defn thumb-br-place [shape]
+
+(defn thumb-br-rotate ([shape] (thumb-mr-rotate rdx rdy rdz shape))
+  ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-x-fn  6)
+        (rotate-y-fn -34)
+        (rotate-z-fn  35))))
+(defn thumb-br-place  ([shape] (thumb-br-place translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
   (->> shape
-       (rotate (deg2rad   6) [1 0 0])
-       (rotate (deg2rad -34) [0 1 0])
-       (rotate (deg2rad  35) [0 0 1])
-       (translate thumborigin)
-       (translate br-minithumb-loc)))
+       (rotate-x-fn   6) 
+        (rotate-y-fn -34) 
+        (rotate-z-fn  35) 
+       (translate-fn thumborigin)
+       (translate-fn br-minithumb-loc))))
 
 (def bl-minithumb-loc (map + [-51 -25 -11.5] (if cirque-TM040040-mount-thumb [0 0 0] [0 0 0])))
-(defn thumb-bl-place [shape]
+(defn thumb-bl-rotate ([shape] (thumb-mr-rotate rdx rdy rdz shape))
+  ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-x-fn  6)
+        (rotate-y-fn -32)
+        (rotate-z-fn  35))))
+(defn thumb-bl-place  ([shape] (thumb-bl-place translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
   (->> shape
-       (rotate (deg2rad   6) [1 0 0])
-       (rotate (deg2rad -32) [0 1 0])
-       (rotate (deg2rad  35) [0 0 1])
-       (translate thumborigin)
-       (translate bl-minithumb-loc))) ;        (translate [-51 -25 -12])))
+        (rotate-x-fn   6) 
+        (rotate-y-fn -32) 
+        (rotate-z-fn  35) 
+       (translate-fn thumborigin)
+       (translate-fn bl-minithumb-loc)))) ;        (translate [-51 -25 -12])))
 
 ;defn thumb-b1-place-multmatrix [shape]
 ; (multmatrix 
@@ -150,10 +206,10 @@
     (thumb-br-place web-post-br)
     (thumb-mr-place web-post-tl)
     (thumb-mr-place web-post-bl))
-   (triangle-hulls
-    (thumb-mr-place web-post-tr)
-    (thumb-mr-place web-post-br)
-    (thumb-tr-place thumb-post-br))
+  ; (triangle-hulls
+  ;  (thumb-mr-place web-post-tr)
+  ;  (thumb-mr-place web-post-br)
+  ;  (thumb-tr-place thumb-post-br))
    (triangle-hulls    ; between top row and bottom row
     (thumb-br-place web-post-tl)
     (thumb-bl-place web-post-bl)

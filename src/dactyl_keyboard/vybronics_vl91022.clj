@@ -38,7 +38,13 @@
    (translate [0 0 (+ (/ plate-thickness 2) (- vybronics-vl91022-mount-z-axis plate-thickness))])
    ))
 
-(def vybronics-vl91022-)
+(def vybronics-vl91022-holder-leg
+  (let [leg (cube plate-thickness plate-thickness vybronics-vl91022-mount-z-axis)] 
+  (for [x [-2 2] y [-2 2]]
+    (translate (div-vec [vybronics-vl91022-mount-x-axis vybronics-vl91022-mount-y-axis vybronics-vl91022-mount-z-axis] [x y 2]) leg)
+    )
+    )
+)
 
 ;vybronics-vl91022-mount-body
 
@@ -51,21 +57,23 @@
 (def vybronics-vl91022-mount 
   (let [
         ]
-    
-    (difference
-   vybronics-vl91022-mount-body
+    (union
+     vybronics-vl91022-holder-leg
+     )
+;;     (difference
+;;    vybronics-vl91022-mount-body
    
-    (-# (translate [(- (/ (- vybronics-vl91022-x-axis 2) -2) tooth-height) 0 0](rdz -90 (cutter position dimension tooth-settings false false))))
-     (-# (mirror [1 0 0] (-# (translate [(- (/ (- vybronics-vl91022-x-axis 2) -2) tooth-height) 0 0] (rdz -90 (cutter position dimension tooth-settings false false))))))
+;;     (-# (translate [(- (/ (- vybronics-vl91022-x-axis 2) -2) tooth-height) 0 0](rdz -90 (cutter position dimension tooth-settings false false))))
+;;      (-# (mirror [1 0 0] (-# (translate [(- (/ (- vybronics-vl91022-x-axis 2) -2) tooth-height) 0 0] (rdz -90 (cutter position dimension tooth-settings false false))))))
     
-   vybronics-vl91022-body
-   top-subtraction
-   (translate [0 0 (/ plate-thickness 2)] vybronics-vl91022-mount-body-subtract)
-   (translate [0 0 (- (/ plate-thickness 2))] vybronics-vl91022-mount-body-subtract)
-    (translate [0 (/ vybronics-vl91022-mount-y-axis 2) 0 ] vybronics-vl91022-mount-body-subtract)
-   (translate [-1 (/ (- vybronics-vl91022-mount-y-axis) 2) 0] vybronics-vl91022-mount-body-subtract)
-   (translate [1 (/ (- vybronics-vl91022-mount-y-axis) 2) 0] vybronics-vl91022-mount-body-subtract)
-    (translate [(/ (- vybronics-vl91022-mount-x-axis) 2) 0 0] vybronics-vl91022-mount-body-subtract)
-(translate [(/ vybronics-vl91022-mount-x-axis 2) 0 0] vybronics-vl91022-mount-body-subtract)
-   ))
+;;    vybronics-vl91022-body
+;;    top-subtraction
+;;    (translate [0 0 (/ plate-thickness 2)] vybronics-vl91022-mount-body-subtract)
+;;    (translate [0 0 (- (/ plate-thickness 2))] vybronics-vl91022-mount-body-subtract)
+;;     (translate [0 (/ vybronics-vl91022-mount-y-axis 2) 0 ] vybronics-vl91022-mount-body-subtract)
+;;    (translate [-1 (/ (- vybronics-vl91022-mount-y-axis) 2) 0] vybronics-vl91022-mount-body-subtract)
+;;    (translate [1 (/ (- vybronics-vl91022-mount-y-axis) 2) 0] vybronics-vl91022-mount-body-subtract)
+;;     (translate [(/ (- vybronics-vl91022-mount-x-axis) 2) 0 0] vybronics-vl91022-mount-body-subtract)
+;; (translate [(/ vybronics-vl91022-mount-x-axis 2) 0 0] vybronics-vl91022-mount-body-subtract))
+    )
   ) 

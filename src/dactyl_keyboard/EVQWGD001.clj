@@ -10,6 +10,8 @@
 (def EVQWGD001-width 16.71)
 (def EVQWGD001-length 13.9)
 (def EVQWGD001-height 13.4)
+(def EVQWGD001-roller-radius 6.95)
+(def EVQWGD001-rolle-height 12.5)
 
 
 (def EVQWGD001-gap-for-plastic 2.4)
@@ -37,6 +39,7 @@
 (def EVQWGD001-holder-base-top-right  [(/ EVQWGD001-mount-width 2) (/ EVQWGD001-mount-length 2) 0])
 (def EVQWGD001-holder-base-bottom-left  [(- (/ EVQWGD001-mount-width 2)) (- (/ EVQWGD001-mount-length 2)) 0])
 (def EVQWGD001-holder-base-bottom-right   [(/ EVQWGD001-mount-width 2) (- (/ EVQWGD001-mount-length 2)) 0])
+
 
 (def  EVQWGD001-test-base
   (->>
@@ -77,7 +80,7 @@
 
 (def EVQWGD001 (translate [(- (/ EVQWGD001-width 2)) (/ EVQWGD001-length 2) (- EVQWGD001-plastic-height)] (rdz -90 (import "Encoder.stl"))))
 
-(def EVQWGD001-test
+(def EVQWGD001-holder
   (union
 
    (difference

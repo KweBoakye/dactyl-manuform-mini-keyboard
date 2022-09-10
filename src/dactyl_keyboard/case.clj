@@ -27,14 +27,7 @@
                                  thumb-key-clearance
                                  (translate trackball-origin rotated-dowells)))
 
-(defn bottom [height p]
-  (->> (project p)
-       (extrude-linear {:height height :twist 0 :convexity 0})
-       (translate [0 0 (- (/ height 2) 10)])))
 
-
-(defn bottom-hull [& p]
-  (hull p (bottom 0.001 p)))
 
 (def left-wall-x-offset 33.2)
 (def left-wall-x-offset-trackball 0)
