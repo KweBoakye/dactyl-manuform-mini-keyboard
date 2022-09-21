@@ -194,8 +194,53 @@
 (def thumb-post-bl (translate [(+ (/ mount-width -2) post-adj) (+ (/ mount-height -2) post-adj) 0] web-post))
 (def thumb-post-br (translate [(- (/ mount-width 2) post-adj)  (+ (/ mount-height -2) post-adj) 0] web-post))
 
+(def thumb-connectors-polyhedron
+  (let [steps 20
+        first-colmun-third-row-web-post-bl-top (key-position 0 2 (mapv + web-post-translation-vector web-post-bl-translation-vector [0 0 (/ web-thickness 2)]))
+        first-colmun-third-row-web-post-bl-bottom (key-position 0 2 (mapv + web-post-translation-vector web-post-bl-translation-vector [0 0 (/ web-thickness -2)]))
+        first-colmun-third-row-web-post-br-top (key-position 0 2 (mapv + web-post-translation-vector web-post-br-translation-vector [0 0 (/ web-thickness 2)]))
+        first-colmun-third-row-web-post-br-bottom (key-position 0 2 (mapv + web-post-translation-vector web-post-br-translation-vector [0 0 (/ web-thickness -2)]))
+        second-colmun-third-row-web-post-bl-top (key-position 1 2 (mapv + web-post-translation-vector web-post-bl-translation-vector [0 0 (/ web-thickness 2)]))
+        second-colmun-third-row-web-post-bl-bottom (key-position 1 2 (mapv + web-post-translation-vector web-post-bl-translation-vector [0 0 (/ web-thickness -2)])) 
+        second-colmun-third-row-web-post-br-top (key-position 1 2 (mapv + web-post-translation-vector web-post-br-translation-vector [0 0 (/ web-thickness 2)]))
+second-colmun-third-row-web-post-br-bottom (key-position 1 2 (mapv + web-post-translation-vector web-post-br-translation-vector [0 0 (/ web-thickness -2)]))
+        thumb-tl-tr-web-post-top (transform-position (partial thumb-tl-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
+        thumb-tl-tr-web-post-bottom (transform-position (partial thumb-tl-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
+        thumb-tr-tl-web-post-top (transform-position (partial thumb-tr-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
+        thumb-tr-tl-web-post-bottom (transform-position (partial thumb-tr-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
+        thumb-tr-tr-web-post-top (transform-position (partial thumb-tr-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
+thumb-tr-tr-web-post-bottom (transform-position (partial thumb-tr-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
+        
+        first-colmun-third-to-thumb-tl-and-tr (generate-bezier-quadratic-polyhedron-from-points-and-control-vectors
+                                              first-colmun-third-row-web-post-br-top thumb-tr-tl-web-post-top
+                                             first-colmun-third-row-web-post-bl-top thumb-tl-tr-web-post-top 
+                                             first-colmun-third-row-web-post-br-bottom  thumb-tr-tl-web-post-bottom
+                                             first-colmun-third-row-web-post-bl-bottom thumb-tl-tr-web-post-bottom
+                                             steps
+                                             {:outside-upper-control-point-vector [0 0 -1] :outside-lower-control-point-vector [0 0 0]
+                                              :inside-upper-control-point-vector [0 0 0] :inside-lower-control-point-vector [0 0 0]})
+        first-colmun-third-row-br-and-second-column-third-row-br-to-thumb-tr (generate-bezier-quadratic-polyhedron-from-points-and-control-vectors
+                                               
+                                                                              second-colmun-third-row-web-post-br-top thumb-tr-tr-web-post-top 
+                                                                              first-colmun-third-row-web-post-br-top thumb-tr-tl-web-post-top 
+                                                                              second-colmun-third-row-web-post-br-bottom thumb-tr-tr-web-post-bottom
+                                                                              first-colmun-third-row-web-post-br-bottom  thumb-tr-tl-web-post-bottom
+                                               
+                                               steps
+                                               {:outside-upper-control-point-vector [0 0 -1] :outside-lower-control-point-vector [0 0 -1]
+                                                :inside-upper-control-point-vector [0 0 0] :inside-lower-control-point-vector [0 0 0]})
+        
+        ] 
+    (union
+     first-colmun-third-to-thumb-tl-and-tr
+     first-colmun-third-row-br-and-second-column-third-row-br-to-thumb-tr
+     )
+    )
+  )
+
 (def thumb-connectors
   (union
+  ; thumb-connectors-polyhedron
    (triangle-hulls    ; top two
     (thumb-tl-place web-post-tr)
     (thumb-tl-place web-post-br)
@@ -231,105 +276,70 @@
     (thumb-tl-place web-post-bl)
     (thumb-tl-place web-post-br)
     (thumb-mr-place web-post-tr))
-   (triangle-hulls
-    (thumb-tl-place web-post-tl)
-(key-place 0 cornerrow web-post-bl)
-(thumb-tl-place web-post-tr)
-    )
+;;    (triangle-hulls
+;;     (thumb-tl-place web-post-tl)
+;; (key-place 0 cornerrow web-post-bl)
+;; (thumb-tl-place web-post-tr)
+;;     )
 ; ( -#(triangle-hulls
 ;   (key-place 0 cornerrow web-post-br)
 ;   (thumb-tr-place web-post-tr)
 ;(key-place 1 cornerrow web-post-br)
 ;   ))
    
-(hull
-    (key-place 2 lastrow web-post-bl)
-(thumb-tr-place web-post-tr)
-(thumb-tr-place web-post-br)
-    )
-   
-   (hull
-    (key-place 0 cornerrow web-post-bl)
-    (key-place 0 cornerrow web-post-br)
-    (thumb-tr-place web-post-tl)
-    )
 
- (hull
-  (key-place 0 cornerrow web-post-bl)
-(thumb-tr-place web-post-tl)
- (thumb-tl-place web-post-tr)
- )
+   
+  ;;  (hull
+  ;;   (key-place 0 cornerrow web-post-bl)
+  ;;   (key-place 0 cornerrow web-post-br)
+  ;;   (thumb-tr-place web-post-tl)
+  ;;   )
 
-(hull
- (thumb-tr-place web-post-br)
-(key-place 2 lastrow web-post-bl)
- (key-place 3 lastrow web-post-bl)
- )
+;;  (hull
+;;   (key-place 0 cornerrow web-post-bl)
+;; (thumb-tr-place web-post-tl)
+;;  (thumb-tl-place web-post-tr)
+;;  )
+
+
    
-   (hull
-    (key-place 2 lastrow web-post-br)
-    (key-place 2 lastrow web-post-bl)
-    (key-place 3 lastrow web-post-bl))
    
-   (triangle-hulls    ; top two to the main keyboard, starting on the left
-    
-    
-    ;(thumb-tr-place web-post-tl)
-    ;(key-place 1 cornerrow web-post-bl)
-    
-   
-    
-    
-    (key-place 2 lastrow web-post-br)
-    (key-place 3 lastrow web-post-bl)
-    (key-place 2 lastrow web-post-tr)
-    (key-place 3 lastrow web-post-tl)
-    (key-place 3 cornerrow web-post-bl)
-    (key-place 3 lastrow web-post-tr)
-    (key-place 3 cornerrow web-post-br)
-    (key-place 4 cornerrow web-post-bl))
-  (triangle-hulls 
-    
-   (key-place 1 cornerrow web-post-bl)
-    (key-place 0 cornerrow web-post-br)
-    (key-place 1 cornerrow web-post-br)
-    )
   
-   (triangle-hulls
+;;    (triangle-hulls
 
-    (thumb-tr-place (translate [0 1 0] web-post-tr))
-(thumb-tr-place  web-post-tr)
-(thumb-tr-place  web-post-tl)
-   )
-   (triangle-hulls
+;;     (thumb-tr-place (translate [0 1 0] web-post-tr))
+;; (thumb-tr-place  web-post-tr)
+;; (thumb-tr-place  web-post-tl)
+;;    )
+;;    (triangle-hulls
 
-    (thumb-tr-place (translate [0 1 0] web-post-tr))
-    (thumb-tr-place  web-post-tl)
-    (key-place 0 cornerrow web-post-br))
-   (triangle-hulls
+;;     (thumb-tr-place (translate [0 1 0] web-post-tr))
+;;     (thumb-tr-place  web-post-tl)
+;;     (key-place 0 cornerrow web-post-br))
+;;    (triangle-hulls
    
-    (thumb-tr-place (translate [ 0 1 0]web-post-tr))
-    (key-place 0 cornerrow web-post-br)
-    (key-place 1 cornerrow web-post-br)
+;;     (thumb-tr-place (translate [ 0 1 0]web-post-tr))
+;;     (key-place 0 cornerrow web-post-br)
+;;     (key-place 1 cornerrow web-post-br)
     
 
-    (thumb-tr-place (translate [0 1 0] web-post-tr))
-(thumb-tr-place  web-post-tr)
-(key-place 1 cornerrow web-post-br)
-    )
+;;     (thumb-tr-place (translate [0 1 0] web-post-tr))
+;; (thumb-tr-place  web-post-tr)
+;; (key-place 1 cornerrow web-post-br)
+;;     )
    
-   (triangle-hulls
+;;    (triangle-hulls
 
-    (thumb-tr-place (translate [0 1 0] web-post-tr))
-(key-place 2 lastrow web-post-bl)
-(key-place 1 cornerrow web-post-br)
-   )
+;;     (thumb-tr-place (translate [0 1 0] web-post-tr))
+;; (key-place 2 lastrow web-post-bl)
+;; (key-place 1 cornerrow web-post-br)
+;;    )
 
-   (triangle-hulls
+;;    (triangle-hulls
 
-    (thumb-tr-place (translate [0 1 0] web-post-tr))
-    (key-place 2 lastrow web-post-bl)
-    (thumb-tr-place  web-post-tr))
+;;     (thumb-tr-place (translate [0 1 0] web-post-tr))
+;;     (key-place 2 lastrow web-post-bl)
+;;     (thumb-tr-place  web-post-tr))
 
    
   ; (triangle-hulls
@@ -341,7 +351,46 @@
   ;   (key-place 1 cornerrow web-post-br)
   ;   (key-place 1 cornerrow web-post-bl)
   ;   (thumb-tr-place web-post-tr))
-   (triangle-hulls
+   (when (or (= last-row-style :last-row-middle-and-fourth-keys-only) (= last-row-style :all-columns))
+(hull
+ (key-place 2 lastrow web-post-bl)
+ (thumb-tr-place web-post-tr)
+ (thumb-tr-place web-post-br))
+     
+     (hull
+ (thumb-tr-place web-post-br)
+ (key-place 2 lastrow web-post-bl)
+ (key-place 3 lastrow web-post-bl))
+
+(hull
+ (key-place 2 lastrow web-post-br)
+ (key-place 2 lastrow web-post-bl)
+ (key-place 3 lastrow web-post-bl))
+  
+     (triangle-hulls    ; top two to the main keyboard, starting on the left
+
+
+    ;(thumb-tr-place web-post-tl)
+    ;(key-place 1 cornerrow web-post-bl)
+
+
+
+
+    (key-place 2 lastrow web-post-br)
+    (key-place 3 lastrow web-post-bl)
+    (key-place 2 lastrow web-post-tr)
+    (key-place 3 lastrow web-post-tl)
+    (key-place 3 cornerrow web-post-bl)
+    (key-place 3 lastrow web-post-tr)
+    (key-place 3 cornerrow web-post-br)
+    (key-place 4 cornerrow web-post-bl))
+(triangle-hulls
+
+ (key-place 1 cornerrow web-post-bl)
+ (key-place 0 cornerrow web-post-br)
+ (key-place 1 cornerrow web-post-br))
+     
+     (triangle-hulls
     (key-place 1 cornerrow web-post-br)
     (key-place 2 lastrow web-post-tl)
     (key-place 2 lastrow web-post-bl)
@@ -357,7 +406,7 @@
     (key-place 3 lastrow web-post-tr)
     (key-place 3 lastrow web-post-br)
     (key-place 3 lastrow web-post-tr)
-    (key-place 4 cornerrow web-post-bl))))
+    (key-place 4 cornerrow web-post-bl)))))
 
 ;;;;;;;;
 
@@ -398,9 +447,7 @@
   )
 (def tbjs-thumb-position-translation
   (let [pos (into [] thumborigin) iter  (into [] (range (count pos)))] 
-    tests
-    (println "pos is" pos)
-    (println " pos range" (range (count pos)))
+    tests 
     (map-indexed lll [0 0 0]
       )))
 

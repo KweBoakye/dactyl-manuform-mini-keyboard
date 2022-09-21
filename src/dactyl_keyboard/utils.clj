@@ -85,6 +85,10 @@
     (for [position positions]
       (translate position original-standoff))))
 
+(defn vec-if-not [collection]
+  (if (vector? collection) collection (vec collection))
+  )
+
 
 
 (def quarterrounnd
@@ -234,6 +238,27 @@
                      (nth bezier-smaller (+ (- penultimate-s i) 1)))))
      (join-bezier-sides bezier-larger)
      (join-bezier-sides bezier-smaller))))
+
+(defn bezier-quintic-point [c0 c1 c2 c3 c4 c5 t]
+  (let [a (- 1 t)
+        b t
+        b0 (Math/pow a 5)
+        b1 (* 5 (Math/pow a 4) b)
+        b2 (* 10 (Math/pow a 3) (Math/pow b 2))
+        b3 (* 10 (Math/pow a 2) (Math/pow b 3))
+        b4 (* 5 a (Math/pow b 4))
+        b5 (Math/pow b 5)
+        ]
+    (+ (* b0 c0) (* b1 c1) (* b2 c2) (* b3 c3) (* b4 c4) (* b5 c5))
+    )
+  )
+
+(defn bezier-quintic [p0 p1 p2 p3 p4 p5 steps]
+  (for [t (range 0 (inc steps))]
+    (into [] (concat [(bezier-quintic-point (first p0) (first p1) (first p2) (first p3) (first p4) (first p5) (/ t steps))
+                      (bezier-quintic-point (second p0) (second p1) (second p2) (second p3) (second p4) (second p5) (/ t steps))
+                      (bezier-quintic-point (nth p0 2) (nth p1 2) (nth p2 2) (nth p3 2) (nth p4 2) (nth p5 2) (/ t steps))])))
+  )
 
 (defn bezier-quartic-point [c0 c1 c2 c3 c4 t]
   (let [a (- 1 t)
@@ -412,7 +437,7 @@
 
 (defn bezier-polyhedron-generate-top-faces [outside-upper-start  inside-upper-end steps]
   (into [](concat (for [index (range 0 steps)]
-            [(+ outside-upper-start index) (- inside-upper-end index) (+ outside-upper-start (inc index))])
+            [(- inside-upper-end index) (+ outside-upper-start (inc index)) (+ outside-upper-start index)])
           (for [index (range 0 steps)]
             [(- inside-upper-end index) (- inside-upper-end (inc index)) (+ outside-upper-start (inc index))]))))
 
@@ -430,7 +455,7 @@
     )
   )
 
-  (defn generate-bezier-polyhedron [outside-upper-points outside-lower-points inside-upper-points inside-lower-points steps]
+  (defn generate-polyhedron-from-points [outside-upper-points outside-lower-points inside-upper-points inside-lower-points steps]
     (let [get-end-from-start (fn [start-index] (+ start-index  steps))
           outside-upper-start 0
           outside-upper-end (get-end-from-start outside-upper-start)
@@ -456,10 +481,10 @@
 
                                                           (generate-bezier-quadratic-polyhedron-from-points outside-upper-left outside-upper-right outside-lower-left outside-lower-right
                                                                                                             inside-upper-left inside-upper-right inside-lower-left inside-lower-right
-                                                                                                            (calculate-point-between-points outside-upper-left outside-upper-right [0 -4 0])
-                                                                                                            (calculate-point-between-points outside-lower-left outside-lower-right [0 -4 0])
-                                                                                                            (calculate-point-between-points inside-upper-left inside-upper-right [0 -4 0])
-                                                                                                            (calculate-point-between-points inside-lower-left inside-lower-right [0 -4 0])
+                                                                                                            (calculate-point-between-points outside-upper-left outside-upper-right [0 -2 0])
+                                                                                                            (calculate-point-between-points outside-lower-left outside-lower-right [0 -2 0])
+                                                                                                            (calculate-point-between-points inside-upper-left inside-upper-right [0 -2 0])
+                                                                                                            (calculate-point-between-points inside-lower-left inside-lower-right [0 -2 0])
                                                                                                             steps))
     
     ([outside-upper-left outside-upper-right outside-lower-left outside-lower-right
@@ -470,7 +495,7 @@
            outside-lower-points (bezier-quadratic outside-lower-left outside-lower-control-point outside-lower-right steps)
            inside-upper-points  (bezier-quadratic inside-upper-right inside-upper-control-point inside-upper-left steps)
            inside-lower-points (bezier-quadratic inside-lower-right inside-lower-control-point inside-lower-left steps)]
-       (generate-bezier-polyhedron outside-upper-points outside-lower-points inside-upper-points inside-lower-points steps))))
+       (generate-polyhedron-from-points outside-upper-points outside-lower-points inside-upper-points inside-lower-points steps))))
 
 (defn generate-bezier-quadratic-polyhedron-from-points-and-control-vectors 
   [outside-upper-left outside-upper-right outside-lower-left outside-lower-right inside-upper-left inside-upper-right inside-lower-left inside-lower-right
@@ -483,3 +508,114 @@
                                                      (calculate-point-between-points inside-lower-left inside-lower-right inside-lower-control-point-vector)
                                                      steps)
   )
+
+(defn bezier-along-bezier-polyhedron-generate-front-or-back-faces ([count-inner count-outer steps] (bezier-along-bezier-polyhedron-generate-front-or-back-faces count-inner count-outer steps 0))
+ 
+( [count-inner count-outer steps start-point]  (into [] (concat  (for [index-outer (range 0 (dec count-outer)) index-inner (range 0   (dec count-inner))]
+                       [(+ (* index-outer count-inner) index-inner start-point) (+ (* (inc index-outer) count-inner) (inc index-inner) start-point) (+ (* index-outer count-inner) (inc index-inner) start-point)])
+                     (for [index-outer (range 0  (dec count-outer)) index-inner (range 0   (dec count-inner))]
+                       [(+ (* index-outer count-inner) index-inner start-point) (+ (* (inc index-outer) count-inner) index-inner start-point) (+ (* (inc index-outer) count-inner) (inc index-inner) start-point)])))) 
+  
+  ) 
+
+(defn bezier-along-bezier-polyhedron-generate-side [index-start1 index-start2 steps]
+  (apply concat (for [index (range 0  steps)]
+    [[(+ index-start1 index) (+ index-start2 index) (+ index-start2 (inc index))]
+     [(+ index-start1 index) (+ index-start2 (inc index)) (+ index-start1 (inc index))]
+     ]
+    ))
+  
+  )
+
+(defn bezier-along-bezier-polyhedron-generate-top [front-start front-end back-start back-end size]
+  (let [front-end-extra (inc front-end)]
+    ( concat (for [index (range 0  (dec size))] 
+                  [(- front-end-extra (* size index)) (+ back-start (* size (inc index))) (+ back-start (* size  index))] 
+                  )
+    (for [index (range 0 (dec size))]
+      [(- front-end-extra (* size index)) (- front-end-extra (* size (inc index))) (+ back-start (* size (inc index)))])
+   [[front-start (- back-end  size) (+ front-start size)]]
+     ))
+  )
+
+(defn bezier-along-bezier-polyhedron-generate-bottom [front-start back-end size]
+  (apply concat (for [index (range 0 (dec size))
+                      :let [front-start-less (dec front-start)
+                            back-end-extra (dec back-end )
+                            ]]
+   [[(+ front-start-less (* (inc index) size)) (- back-end-extra (* (inc index ) size)) (- back-end-extra (*  index size))]
+    [(+ front-start-less (* (inc index) size)) (+ front-start-less (* (+ index 2) size)) (- back-end-extra (*  (inc index ) size))]]
+  )))
+
+(defn generate-bezier-along-bezier-polyhedron-faces [front-points back-points steps]
+  (let [
+        front-points-count (count front-points)
+        back-points-count (count back-points)
+        front-points-start 0
+        front-points-end (dec front-points-count)
+        back-points-start (inc front-points-end)
+        back-points-end (+ back-points-start back-points-count)
+        
+  ]
+    (concat (bezier-along-bezier-polyhedron-generate-front-or-back-faces (inc steps) (inc steps) steps)
+           (bezier-along-bezier-polyhedron-generate-front-or-back-faces (inc steps) (inc steps) steps back-points-start) 
+            (bezier-along-bezier-polyhedron-generate-side (- back-points-end (inc steps)) front-points-start   steps)
+            (bezier-along-bezier-polyhedron-generate-side  (inc (- front-points-end  (inc steps))) back-points-start steps)
+            (bezier-along-bezier-polyhedron-generate-top front-points-start front-points-end back-points-start back-points-end (inc steps))
+     (bezier-along-bezier-polyhedron-generate-bottom front-points-start back-points-end   (inc steps))
+     )
+    
+    ) 
+  )
+
+(defn generate-bezier-to-point-polyhedron-top-face [bezier-start-index bezier-end-index point-index]
+  (into [](concat (for [index (range bezier-start-index (inc bezier-end-index))]
+                  [index point-index (inc index)]) 
+          ))
+  )
+
+(defn generate-bezier-to-point-polyhedron-bottom-face [bezier-start-index bezier-end-index point-index]
+  (into [] (concat (for [index (range bezier-start-index (inc bezier-end-index))]
+                     [(inc index) point-index index ]))))
+
+(defn generate-bezier-to-point-polyhedron-curved-face [bezier-upper-start bezier-upper-end bezier-lower-start]
+  (into [] (apply concat (for [index (range bezier-upper-start bezier-upper-end)]
+                           [[index (inc (+ bezier-lower-start index)) (+ bezier-lower-start index)]
+                            [index (inc index) (inc (+ bezier-lower-start index))]
+                            ]
+                           ))) 
+  )
+
+(defn generate-bezier-to-point-polyhedron-left-flat-face [point-upper-index bezier-upper-start point-lower-index bezier-lower-start]
+  [[point-upper-index bezier-lower-start point-lower-index] [point-upper-index bezier-upper-start bezier-lower-start]])
+
+(defn generate-bezier-to-point-polyhedron-right-flat-face [bezier-upper-end point-upper-index  bezier-lower-end point-lower-index ]
+  [[bezier-upper-end point-upper-index point-lower-index] [bezier-upper-end point-lower-index  bezier-lower-end]])
+(defn generate-bezier-to-point-faces [bezier-upper bezier-lower]
+  (let [bezier-upper-start 0
+        bezier-upper-size (count bezier-upper)
+        bezier-upper-end (dec bezier-upper-size)
+        point-upper-index (inc bezier-upper-end)
+        bezier-lower-start (inc point-upper-index)
+        bezier-lower-size (count bezier-lower)
+        bezier-lower-end (dec (+ bezier-lower-start bezier-lower-size))
+        point-lower-index (inc bezier-lower-end)
+        ] 
+    (concat (generate-bezier-to-point-polyhedron-top-face bezier-upper-start bezier-upper-end point-upper-index)
+           (generate-bezier-to-point-polyhedron-bottom-face bezier-lower-start bezier-lower-end point-lower-index)
+           (generate-bezier-to-point-polyhedron-curved-face bezier-upper-start bezier-upper-end bezier-lower-start)
+            (generate-bezier-to-point-polyhedron-left-flat-face point-upper-index bezier-upper-start point-lower-index bezier-lower-start)
+            (generate-bezier-to-point-polyhedron-right-flat-face bezier-upper-end point-upper-index  bezier-lower-end point-lower-index)
+            )
+    )
+  )
+
+(defn generate-bezier-to-point-polyhedron [bezier-upper point-upper bezier-lower point-lower]
+  (let [bezier-to-point-polyhedron-points (apply conj (conj (vec-if-not bezier-upper) point-upper) (conj (vec-if-not bezier-lower) point-lower))
+        bezier-to-point-polyhedron-faces (generate-bezier-to-point-faces bezier-upper bezier-lower) 
+        ]
+    (polyhedron bezier-to-point-polyhedron-points bezier-to-point-polyhedron-faces )
+    )
+  )
+(defn make-point-z-value-not-below-zero [point]
+  (if (< (nth point 2) 0) (assoc (vec point) 2 0) point))

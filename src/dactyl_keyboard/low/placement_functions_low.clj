@@ -93,6 +93,12 @@
    )
   )
 
+(defn should-splay-key [column row]
+  (if (and (= row lastrow) last-row-middle-and-fourth-keys-only (false? splay-last-row)) 0
+        (γ column)
+        )
+  )
+
 (defn apply-key-geometry [translate-fn rotate-x-fn rotate-y-fn rotate-z-fn column row shape]
   (let [column-angle (* β (- centercol column))
         post-splay-translation-vector (cond (and (not= (γ column) 0) (not= row lastrow))
@@ -103,7 +109,7 @@
                           (translate-fn [(offset-for-column column) 0 (- (row-radius column))])
                           
                           (rotate-x-fn  (* (α column) (- (centerrow column) row)))
-                           (rotate-z-fn  (cond (not= row lastrow) (γ column) :else 0))
+                           (rotate-z-fn  (should-splay-key column row))
                           (translate-fn [0 0 (row-radius column)])
                           (translate-fn [0 0 (- column-radius)])
                          
@@ -138,13 +144,12 @@
          (translate-fn [0 0 keyboard-z-offset]))))
 
 (defn key-place ([column row shape] 
-                 (key-place
-                  column row
+                 (key-place column row
                   translate  (fn [angle obj] (rotate angle [1 0 0] obj))
 (fn [angle obj] (rotate angle [0 1 0] obj))
-(fn [angle obj] (rotate angle [0 0 1] obj)) shape)
+(fn [angle obj] (rotate angle [0 0 1] obj))  shape)
                  )
-  ([column row translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] 
+  ([column row translate-fn rotate-x-fn rotate-y-fn rotate-z-fn  shape] 
    (apply-key-geometry translate-fn 
                        rotate-x-fn
                        rotate-y-fn
@@ -199,15 +204,27 @@
 (defn transform-position-partial [function]
  (fn [position] (apply function (affine-transformations position))))
 
+ (defn get-transform-fn [rad-or-deg1 fn-to-transform]
+   (cond (= rad-or-deg1 :radians) (fn [position] (transform-position-radians fn-to-transform position))
+       (= rad-or-deg1 :degrees) (fn [position] (transform-position fn-to-transform position))))
+
 (defn key-position [column row position]
   (apply-key-geometry (partial map +) rotate-around-x rotate-around-y rotate-around-z column row position))
+
+(defn check-last-row-middle-and-fourth-keys-only [column row]
+  (case last-row-style 
+    :no-last-row (not= row lastrow)   
+    :last-row-middle-and-fourth-keys-only (or (.contains [2 3] column)
+                                      (not= row lastrow))
+    :all-columns   
+     true )
+  )
 
 (def key-holes
   (apply union
          (for [column columns
                row rows
-               :when (or (.contains [2 3] column)
-                         (not= row lastrow))]
+               :when (check-last-row-middle-and-fourth-keys-only column row)]
            (->> single-plate
                 (key-place column row)))))
 
@@ -215,8 +232,7 @@
   (apply union
          (for [column columns
                row rows
-               :when (or (.contains [2 3] column)
-                         (not= row lastrow))]
+               :when (check-last-row-middle-and-fourth-keys-only column row)]
            (->> (sa-cap (if (and (true? pinky-15u) (= column lastcol)) 1.5 1))
                 (key-place column row)))))
 
@@ -230,16 +246,14 @@
   (apply union
          (for [column columns
                row rows
-               :when (or (.contains [2 3] column)
-                         (not= row lastrow))] 
+               :when (check-last-row-middle-and-fourth-keys-only column row)] 
                 (key-place column row dsa-cap))))
 
 (def caps-fill
   (apply union
          (for[column columns
               row rows
-              :when (or (.contains[2 3] column)
-                        (not= row lastrow))]
+              :when (check-last-row-middle-and-fourth-keys-only column row)]
           (key-place column row keyhole-fill))
          )
   )

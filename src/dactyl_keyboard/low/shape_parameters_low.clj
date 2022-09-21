@@ -4,7 +4,7 @@
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [unicode-math.core :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all] 
+            [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.utils :refer :all]))
 
 
@@ -18,7 +18,7 @@
 
 (def far-index-curvature (deg2rad 20.4))
 (def index-curvature (deg2rad 20.4))
-(def middle-curvature (deg2rad 19.5))
+(def middle-curvature (deg2rad 20.5))
 (def ring-curvature (deg2rad 22.8))
 (def pinky-curvature (deg2rad 27.5))
 
@@ -30,8 +30,10 @@
                        :else (/ π 12)))
 
 ;(def α (/ π 12))                        ; curvature of the columns
-(def β (/ π 36))                        ; curvature of the rows
+;https://discord.com/channels/681309835135811648/747850923023532073/1017470634730717254
+(def β (/ π 180)) ; (/ π 36)                       ; curvature of the rows
 
+(def splay-last-row true)
 (def far-index-splay  5)
 (def index-splay far-index-splay)
 (def middle-splay 0)
@@ -40,26 +42,23 @@
 (defn γ [column]
   (->>
    (cond (= column 0) far-index-splay
-        (<= column 1) index-splay
-        (= column 2) middle-splay
-        (= column 3) ring-splay
-        (>= column 4) pinky-splay
-        :else 0)
-   (deg2rad)
-   ))
+         (<= column 1) index-splay
+         (= column 2) middle-splay
+         (= column 3) ring-splay
+         (>= column 4) pinky-splay
+         :else 0)
+   (deg2rad)))
 
 (defn splay-angle-to-translation [splay-angle]
   (let [x-trans (* (- splay-angle) (/ 3 5))
-        width (* (cond (neg? x-trans) (- keyswitch-width) :else keyswitch-width) 1.5)] 
-  (cond (> (abs x-trans) (* keyswitch-width 1.5)) width :else x-trans)
-    )
-  )
+        width (* (cond (neg? x-trans) (- keyswitch-width) :else keyswitch-width) 1.5)]
+    (cond (> (abs x-trans) (* keyswitch-width 1.5)) width :else x-trans)))
 
-(def far-index-post-splay-translation [(splay-angle-to-translation far-index-splay) 0 0])
-(def index-post-splay-translation [(splay-angle-to-translation index-splay) 0 0])
+(def far-index-post-splay-translation [0 0 0])
+(def index-post-splay-translation [0 0 0])
 (def middle-post-splay-translation [0 0 0])
-(def ring-post-splay-translation [(splay-angle-to-translation ring-splay) 0 0])
-(def pinky-post-splay-translation [(splay-angle-to-translation pinky-splay) 0 0])
+(def ring-post-splay-translation [0 0 0])
+(def pinky-post-splay-translation [0 0 0])
 
 (defn post-splay-translation [column]
   (cond (= column 0) far-index-post-splay-translation
@@ -67,8 +66,7 @@
         (= column 2) middle-post-splay-translation
         (= column 3) ring-post-splay-translation
         (>= column 4) pinky-post-splay-translation
-        :else 0)
-  )
+        :else 0))
 
 (defn centerrow [column] (cond
                            (= column 0) (- nrows 3)  ;inner index
@@ -85,6 +83,9 @@
 (def pinky-15u false)
 
 (def extra-row false)                   ; adds an extra bottom row to the outer columns
+(def last-row-style :no-last-row) ; :no-last-row :last-row-middle-and-fourth-keys-only :all-columns 
+(def last-row-middle-and-fourth-keys-only false)
+(def no-last-row true) ; having only three rows comes out nicer if you have four then remove the last row
 (def inner-column false)
 (def thumb-style "default")
 
@@ -151,3 +152,10 @@
 
 (when (= nrows 4)
   (def left-wall-y-modifier 0))
+(when (= nrows 3)
+  (def left-wall-y-modifier 0))
+
+(def left-wall-x-offset 5) ; original 10
+(def left-wall-z-offset 4) ; original 3
+(def left-wall-x-offset-oled  -10)
+

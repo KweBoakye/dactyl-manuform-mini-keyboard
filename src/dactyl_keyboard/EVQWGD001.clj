@@ -62,7 +62,7 @@
 (def EVQWGD001-holder-body
   (->> (hull
         (for [i [0 0.25 0.5 0.75 1]
-              :let [y (* (Math/cos (* i 90)) EVQWGD001-mount-y-modifier) x  (+ -3 (* (Math/sin (* i 90)) 3))]]
+              :let [y (* (Math/cos (* i (deg2rad 90))) EVQWGD001-mount-y-modifier) x  (+ -3 (* (Math/sin (* i (deg2rad 90))) 3))]]
 
           (extrude-linear {:height (+ (- (+ EVQWGD001-plastic-height plate-thickness) 0) y) :center false}
                           (offset-delta {:delta x  :chamfer false :r false} EVQWGD001-holder-base))))

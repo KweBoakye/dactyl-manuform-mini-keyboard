@@ -7,7 +7,7 @@
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.low.placement-functions-low :refer :all]
             [dactyl-keyboard.hand :refer :all]
-            [dactyl-keyboard.low.case-low :refer :all]
+            [dactyl-keyboard.low.case-low-functions :refer :all]
             [dactyl-keyboard.tenting-hardware :refer :all]
             [unicode-math.core :refer :all]))
 

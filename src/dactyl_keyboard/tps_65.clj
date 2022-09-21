@@ -39,6 +39,7 @@
  (def tps-65-y-modifier 1)
  (def tps-65-mount-corner-radius tps-65-corner-radius)
  (def tps-65-mount-corner-radius-with-offset (+ tps-65-mount-corner-radius 1))
+ (def tps-65-radius-compensation 0.5)
 
  ;(def tps-65-corner-cutout )
  (def tps-65-overlay-corner-cylinder 
@@ -106,6 +107,11 @@
    [(- (/ tps-65-width 2) tps-65-corner-radius),
               (- (/ tps-65-length 2) tps-65-corner-radius),
               0] )
+
+(def tps-65-mount-corner-cylinder-top-centre-position
+  [0,
+   (- (/ tps-65-length 2) tps-65-corner-radius),
+   0])
 
 (def tps-65-mount-corner-cylinder-bottom-left-position
    [(- tps-65-corner-radius (/ tps-65-width 2)),
@@ -179,7 +185,7 @@
     )
    )
  (defn tps-radius-compensation-adjust [radius-compensation]
-   (if  (pos? radius-compensation) (+ radius-compensation 0.5) (- radius-compensation 0.5)))
+   (if  (pos? radius-compensation) (+ radius-compensation tps-65-radius-compensation) (- radius-compensation tps-65-radius-compensation)))
  
  (def tps-65-mount-base 
    (->> (let [corner (square tps-65-corner-radius tps-65-corner-radius) half-radius (/ tps-65-corner-radius 2)]
