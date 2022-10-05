@@ -114,6 +114,9 @@
 (def wall-xy-offset 5)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
 (def wall-thickness 2)                  ; wall thickness parameter; originally 5
 (def wall-xy-offset-thin 1)
+(def wall-xy-offset-medium-thin 2)
+(def wall-xy-offset-mid 3)
+
 
 ;; Settings for column-style == :fixed
 ;; The defaults roughly match Maltron settings

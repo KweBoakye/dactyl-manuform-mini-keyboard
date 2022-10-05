@@ -33,6 +33,7 @@
 (def oled-post-bl-translation-vector  [(+ (/ mount-width -1.95) oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0])
 (def oled-post-br-translation-vector  [(- (/ mount-width 1.95)  oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0])
 (def oled-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) oled-post-adj) 0])
+(def oled-post-rm-translation-vector  [(- (/ mount-width 1.95)  oled-post-adj) 0 0])
   
 (def oled-post-tr (translate oled-post-tr-translation-vector oled-post))
 (def oled-post-tl (translate oled-post-tl-translation-vector oled-post))
@@ -51,6 +52,7 @@
 (def curve-post-bl-translation-vector  [(+ (/ mount-width -1.95) curve-post-adj) (+ (/ mount-height -1.95) curve-post-adj) 0] )
 (def curve-post-br-translation-vector  [(- (/ mount-width 1.95)  curve-post-adj) (+ (/ mount-height -1.95) curve-post-adj) 0] )
 (def curve-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) curve-post-adj) 0])
+(def curve-post-rm-translation-vector  [(- (/ mount-width 1.95)  curve-post-adj) 0 0])
 
 (def curve-post-tr (translate curve-post-tr-translation-vector curve-post))
 (def curve-post-tl (translate curve-post-tl-translation-vector curve-post))
@@ -87,6 +89,7 @@
     "bl" oled-post-bl-translation-vector
     "br" oled-post-br-translation-vector
     "bm" oled-post-bm-translation-vector
+    "rm" oled-post-rm-translation-vector
     [0 0 0]))
 
 (defn get-curve-corner-translation-vector [position]
@@ -96,6 +99,7 @@
     "bl" curve-post-bl-translation-vector
     "br" curve-post-br-translation-vector
     "bm" curve-post-bm-translation-vector
+    "rm" curve-post-rm-translation-vector
     [0 0 0]))
 
 (defn get-oled-post-outer-x-and-y-vector [dx dy]

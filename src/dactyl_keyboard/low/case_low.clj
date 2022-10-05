@@ -1113,7 +1113,7 @@ thumb-corners
       
        (rdz far-index-splay) 
       (translate (rotate-around-z far-index-splay [-0.5 (first far-index-post-splay-translation) 0])) ;x and y axes get reversed by rotate-around-z 
-   (translate (map + usb-holder-position [-12 6.5 3]) )
+   (translate (map + usb-holder-position [-16 6.5 3]) )
        
        
    ))
@@ -1121,25 +1121,25 @@ thumb-corners
 (def usb-jack 
   (->>
    (union
-     (hull
-      (translate [(- (/ usb-jack-height 2) (/ usb-jack-width 2)) 0 0] usb-jack-cylinder)
-      (translate [(- (/ usb-jack-width 2) (/ usb-jack-height 2) ) 0 0] usb-jack-cylinder)
-      
-      )
+      (hull
+       (translate [(- (/ usb-jack-height 2) (/ usb-jack-width 2)) 0 0] usb-jack-cylinder)
+       (translate [(- (/ usb-jack-width 2) (/ usb-jack-height 2) ) 0 0] usb-jack-cylinder)
+    
+       )
     (union
      (translate [(- (/ usb-jack-height 2) (/ usb-jack-width 2)) 0 0] usb-c-torus)
-     (translate [(* (- (/ usb-jack-height 2) (/ usb-jack-width 2) ) 0.75) 0 0] usb-c-torus)
-     (translate [(/ (- (/ usb-jack-height 2) (/ usb-jack-width 2) )2) 0 0] usb-c-torus)
-     (translate [(/ (- (/ usb-jack-height 2) (/ usb-jack-width 2) ) 4) 0 0] usb-c-torus)
-     usb-c-torus
-      (translate [(/ (- (/ usb-jack-width 2) (/ usb-jack-height 2)) 4) 0 0] usb-c-torus)
-     (translate [(/ (- (/ usb-jack-width 2) (/ usb-jack-height 2)) 2) 0 0] usb-c-torus)
-     (translate [(* (- (/ usb-jack-width 2) (/ usb-jack-height 2)) 0.75) 0 0] usb-c-torus)
+     ;(translate [(* (- (/ usb-jack-height 2) (/ usb-jack-width 2) ) 0.75) 0 0] usb-c-torus)
+     ;(translate [(/ (- (/ usb-jack-height 2) (/ usb-jack-width 2) )2) 0 0] usb-c-torus)
+     ;(translate [(/ (- (/ usb-jack-height 2) (/ usb-jack-width 2) ) 4) 0 0] usb-c-torus)
+    ; usb-c-torus
+     ; (translate [(/ (- (/ usb-jack-width 2) (/ usb-jack-height 2)) 4) 0 0] usb-c-torus)
+     ;(translate [(/ (- (/ usb-jack-width 2) (/ usb-jack-height 2)) 2) 0 0] usb-c-torus)
+     ;(translate [(* (- (/ usb-jack-width 2) (/ usb-jack-height 2)) 0.75) 0 0] usb-c-torus)
     (translate [(- (/ usb-jack-width 2) (/ usb-jack-height 2)) 0 0] usb-c-torus))
       
      )
-   (translate [0 -2 0])
-   (usb-jack-place )
+  (translate [0 -2 0])
+   
    ))
 
 (def pro-micro-position (map + (key-position 0 1 (wall-locate3 -1 0)) [-6 2 -15]))

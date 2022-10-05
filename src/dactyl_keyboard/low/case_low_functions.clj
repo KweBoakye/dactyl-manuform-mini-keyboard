@@ -209,10 +209,7 @@
             (translate-fn translation-modifier)))
          bezier-points)))
 
-(defn plot-bezier-points [bezier-points shape]
-  (mapv (fn [point]
-          (translate point shape))
-        bezier-points))
+
 
 
 (defn plot-and-translate-bezier-points-with-rotation [place bezier-points shape rotation-fn]
@@ -552,6 +549,12 @@
                                                                           (translate-fn position)
                                                                           (tps-65-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
 
+(defn tps-65-translate-and-place-at-position-with-offset ([position offset shape] (tps-65-translate-and-place-at-position-with-offset position offset translate rdx rdy rdz shape))
+  ([position offset translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape 
+                                                                          (translate-fn offset)       
+                                                                          (translate-fn position)
+                                                                          (tps-65-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
+
 
 
 (defn tps-65-translate-and-place-with-radius
@@ -619,6 +622,13 @@
         (translate-fn position)
         (EVQWGD001-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
 
+(defn EVQWGD001-translate-and-place-at-position-with-offset ([position offset shape] (EVQWGD001-translate-and-place-at-position-with-offset position offset translate rdx rdy rdz shape))
+  ([position offset translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (translate-fn offset)
+        (translate-fn position)
+        (EVQWGD001-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
+
 (defn screen-holder-rotate [shape]
   (->> shape
        (rdx -5)
@@ -646,13 +656,13 @@
        (translate [x y z])
        (screen-holder-place)))
 
-(def screen-holder-rotate-side-y -80)
+(def screen-holder-rotate-side-y -70)
 (defn screen-holder-rotate-side
   ([shape] (screen-holder-rotate-side rdz rdy rdz shape))
   ([rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
                                                     (rotate-z-fn -90)
                                                     (rotate-y-fn screen-holder-rotate-side-y)
-                                                    (rotate-x-fn -17.5)
+                                                    (rotate-x-fn -18)
                                                     (rotate-z-fn 20))))
 (defn screen-holder-place-side ([shape] (screen-holder-place-side translate rdx rdy rdz shape))
   ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
@@ -660,12 +670,22 @@
                                                                  (translate-fn [0 -20 8])
        ;(rdz 5)
                                                                  (left-wall-plate-place -2 -3 translate-fn rotate-x-fn rotate-z-fn)
-                                                                 (translate-fn [0 0 (- 2.5 keyboard-z-offset 3.5)]))))
+                                                                 (translate-fn [0 0 (- 2.5 keyboard-z-offset 3)]))))
 
 (defn screen-holder-translate-and-place-side ([x y z shape] (screen-holder-translate-and-place-side x y z translate rdx rdy rdz shape))
   ([x y z translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
                                                                        (translate-fn [x y z])
                                                                        (screen-holder-place-side translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
+
+(defn vybronics-vl91022-place ([shape] (vybronics-vl91022-place translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-z-fn -90)
+        (rotate-y-fn 180)
+        (tps-65-translate-and-place-at-position [10 0 (- (+ tps-65-depth tps-65-depth-tolerance))] translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
+    ) 
+   ) 
+  )
 
 (defn wall-corner-points [dx1 dy1 dxmid dymid dx2 dy2 translation-mod  dz]
 

@@ -249,6 +249,21 @@
                :when (check-last-row-middle-and-fourth-keys-only column row)] 
                 (key-place column row dsa-cap))))
 
+(def switch-model
+  (->>
+   (import "../parts/Kailh Polia.stl")
+   (rdz -90)
+   (translate [0 0 plate-thickness])
+   )
+  )
+
+(def switches (apply union
+         (for[column columns
+              row rows
+              :when (check-last-row-middle-and-fourth-keys-only column row)]
+          (key-place column row switch-model))
+         ))
+
 (def caps-fill
   (apply union
          (for[column columns

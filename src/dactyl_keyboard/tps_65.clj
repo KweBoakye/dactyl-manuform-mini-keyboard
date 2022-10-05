@@ -187,6 +187,9 @@
  (defn tps-radius-compensation-adjust [radius-compensation]
    (if  (pos? radius-compensation) (+ radius-compensation tps-65-radius-compensation) (- radius-compensation tps-65-radius-compensation)))
  
+ (defn tps-radius-compensation-adjust-reverse [radius-compensation]
+   (if  (pos? radius-compensation)  (- radius-compensation tps-65-radius-compensation) (+ radius-compensation tps-65-radius-compensation)))
+ 
  (def tps-65-mount-base 
    (->> (let [corner (square tps-65-corner-radius tps-65-corner-radius) half-radius (/ tps-65-corner-radius 2)]
           (hull 

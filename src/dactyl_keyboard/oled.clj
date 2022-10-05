@@ -101,6 +101,7 @@
 (def ST7789-240x240-154-holder-size [ST7789-240x240-154-holder-width ST7789-240x240-154-holder-height ST7789-240x240-154-holder-thickness])
 (def ST7789-240x240-154-mount-rotation-x-old (deg2rad 20))
 (def ST7789-240x240-154-mount-rotation-z-old (deg2rad -3))
+(def ST7789-240x240 (rdz -90 (import "../parts/1.54 TFT IPS - Module - Assembly.stl")))
 
 ;(def ST7789-240x240-154-screen-cutout)
 (def countersink-chamfer
