@@ -8,6 +8,8 @@
 *.gcode
 *.scad
 /target
-*.stl
+/things/*.stl
+/things-low/*.stl
 *.ai
 *.svg
+*.json

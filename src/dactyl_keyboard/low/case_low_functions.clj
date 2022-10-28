@@ -602,13 +602,13 @@
       ;; (translate (col-avg br-minithumb-loc [0 0 tps-65-z-position]) )
       ;;  (translate [-10 10 2])
                                                                  (rotate-z-fn (- tps-65-z-rotation))
-                                                                 (rotate-y-fn -70)
-                                                                 (rotate-x-fn 20)
+                                                                 (rotate-y-fn -20)
+                                                                 (rotate-x-fn -20)
                                                                  (tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2)),
                                                                                                           0,
                                                                                                           0] (- tps-65-mount-corner-radius-with-offset)  0
                                                                                                          translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
-                                                                 (translate-fn [(- (/ EVQWGD001-mount-width 2)) (- (/ EVQWGD001-height 2)) (- EVQWGD001-mount-length)]))))
+                                                                 (translate-fn [(- (/ EVQWGD001-mount-width 2)) (- (/ EVQWGD001-height 2)) (- (/ EVQWGD001-mount-length 2))]))))
 
 (defn EVQWGD001-translate-and-place ([x y z shape] (EVQWGD001-translate-and-place x y z translate rdx rdy rdz shape))
   ([x y z translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
@@ -676,6 +676,11 @@
   ([x y z translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
                                                                        (translate-fn [x y z])
                                                                        (screen-holder-place-side translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
+(defn screen-holder-translate-and-place-side-with-offset ([x y z offset shape] (screen-holder-translate-and-place-side-with-offset x y z offset translate rdx rdy rdz shape))
+  ([x y z offset translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape 
+                                                                              (translate-fn offset)
+                                                                              (translate-fn [x y z]) 
+                                                                              (screen-holder-place-side translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
 
 (defn vybronics-vl91022-place ([shape] (vybronics-vl91022-place translate rdx rdy rdz shape))
   ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]

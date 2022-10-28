@@ -1194,19 +1194,27 @@ thumb-corners
     (->> (screw-insert-shape bottom-radius top-radius height)
          (translate (map + offset [(first position) (second position) (/ height 2)])))))
 
-(defn screw-insert-all-shapes [bottom-radius top-radius height]
-  (union 
-         (screw-insert lastcol 0         bottom-radius top-radius height [-152 9 0])
-;(screw-insert 0 lastrow   bottom-radius top-radius height [-50 7 0])
-   (screw-insert 0 0         bottom-radius top-radius height [9 6 0])
-         (screw-insert 0 lastrow   bottom-radius top-radius height [-17 -7 0])
-    (screw-insert 2 0  bottom-radius top-radius height [0 -1 0])
-(screw-insert 1 lastrow         bottom-radius top-radius height [0 -6 0])
-          (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
-          (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
-       
+(defn screw-insert-all-shapes [bottom-radius top-radius height] 
+  (let [left-section-side (-# (screw-insert 0 0         bottom-radius top-radius height [(+  (- tps-65-length) (/ mount-width 4 ) ) (/ mount-height 8) 0]))
+        ;left-section-bottom (screw-insert 0 lastrow   bottom-radius top-radius height [-50 7 0]) 
+        first-col-top (screw-insert 0 0         bottom-radius top-radius height [0 (/ mount-height 3) 0])
+        thumb-bottom-left (screw-insert 0 lastrow   bottom-radius top-radius height [-18 -6.5 0])
+        thumb-bottom-right (screw-insert 1 lastrow         bottom-radius top-radius height [(/ mount-width 3) (/ mount-height 4) 0])
+        top-mid (screw-insert 2 0  bottom-radius top-radius height [(/ mount-width -2) (/ mount-height -4) 0])
+        top-right (screw-insert lastcol 0         bottom-radius top-radius height [0 (/ mount-height 2) 0])
+        bottom-right (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
+        ]
+    (union 
+     left-section-side 
+     first-col-top
+     thumb-bottom-left 
+     top-mid 
+     thumb-bottom-right 
+     top-right   
+     ;bottom-right
    
          ))
+  )
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)

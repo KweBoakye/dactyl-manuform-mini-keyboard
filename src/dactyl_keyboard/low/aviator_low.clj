@@ -34,6 +34,9 @@
 (def aviator-neck-support-height (+ metal-tactile-button-distance-from-top-of-ball-to-top-of-neck metal-tactile-button-neck-height))
 (def aviator-neck-bezier-width aviator-neck-width)
 (def aviator-assembly-left-or-right-translation (- (/ aviator-diameter 2) 5))
+(def font-name "Microgramma")
+(def font-size 1.2)
+(def text-depth 1)
 
 (def aviator-neck-height 4)
 (def aviator-offset [0 (/ aviator-neck-height 2) 0])
@@ -595,9 +598,10 @@ aviator-top-right-quad-points (bezier-circle-quadrant aviator-top-right-quad)
 
 
 (def aviator-neck-poly 
-  (let [steps-for-seven 70
-        steps-for-four 40
+  (let [steps-for-seven 140
+        steps-for-four 80
         neck-bezier-outside (aviator-neck-poly-shape aviator-neck-width aviator-neck-support-width 0 0 (/ steps-for-seven 7))
+        neck-bezier-outside-back (map #(mapv + [0 (- wall-thickness) 0] %)(aviator-neck-poly-shape aviator-neck-width aviator-neck-support-width 0 0 (/ steps-for-seven 7)))
         neck-control (aviator-neck-poly-shape 0 0  0 0 (/ steps-for-seven 7))
         neck-upper-control (aviator-neck-poly-shape (/ aviator-neck-width 2) (/ aviator-neck-support-width 2) (- aviator-neck-height) aviator-neck-support-height (/ steps-for-seven 7))
         neck-upper-control-2 (aviator-neck-poly-shape (/ aviator-neck-width 2) (/ aviator-neck-support-width 2) (- (+ aviator-neck-height (/ aviator-neck-width 2))) (+ aviator-neck-support-height (/ aviator-neck-support-width 2)) (/ steps-for-seven 7))
@@ -611,18 +615,32 @@ aviator-top-right-quad-points (bezier-circle-quadrant aviator-top-right-quad)
                                   (nth neck-upper-control-2 index)
                                   (nth neck-upper index)
                                   steps-for-seven))))
+        bezier-back-polyhedron-side-points (into [] (apply concat 
+                                                           (for [index (range 0 (inc steps-for-seven))]
+                                                             (bezier-linear
+                                                              (nth neck-bezier-outside-back index)
+                                                              (nth neck-bezier-outside index)
+                                                              steps-for-seven
+                                                              )
+                                                             )))
+        lower-back-centre (transform-position (partial aviator-place-shape) [0 0 wall-thickness])
         lower-centre (transform-position (partial aviator-place-shape) [0 0 0])
         upper-centre (transform-position (partial aviator-place-shape) [0 0 (- (+ aviator-neck-height (/ aviator-neck-width 2)))])
         lower-centre-index (count bezier-polyhedron-side-points)
         upper-centre-index  (inc lower-centre-index)
+        lower-back-centre-index (count bezier-polyhedron-side-points)
+        lower-centre-index-for-back (inc lower-back-centre-index) 
         bottom-faces (for [index (range 0 (inc steps-for-seven))]
                        [(* (inc steps-for-seven) index) lower-centre-index (* (inc steps-for-seven) (inc index))])
         top-faces (for [index (range 0 steps-for-seven)]
                     [(+ steps-for-seven (* (inc steps-for-seven) index))  (+ (*  (inc steps-for-seven) (inc index)) steps-for-seven) upper-centre-index])
         bezier-polyhedron-side-faces (bezier-along-bezier-polyhedron-generate-front-or-back-faces (inc steps-for-seven) (inc steps-for-seven) steps-for-seven)
         bezier-polyhedron-points (concat bezier-polyhedron-side-points [lower-centre upper-centre])
-        bezier-polyhedron-faces (into [] (concat bezier-polyhedron-side-faces bottom-faces  top-faces))
-        bezier-polyhedron (polyhedron bezier-polyhedron-points bezier-polyhedron-faces)
+        bezier-back-polyhedron-points (concat bezier-back-polyhedron-side-points [lower-back-centre lower-centre])
+        bezier-polyhedron-faces (into [] (concat bezier-polyhedron-side-faces bottom-faces top-faces))
+        bezier-back-polyhedron-faces (into [] (concat bezier-polyhedron-side-faces bottom-faces  top-faces))
+        bezier-polyhedron (polyhedron bezier-polyhedron-points  bezier-polyhedron-faces)
+        bezier-back-polyhedron (polyhedron bezier-back-polyhedron-points bezier-back-polyhedron-faces)
         neck-bezier-inside (aviator-neck-poly-shape (- aviator-neck-width) (- aviator-neck-support-width) 0 0 (/ steps-for-seven 7))
         neck-bezier-upper-inside (aviator-neck-poly-shape (- aviator-neck-width) (- aviator-neck-support-width) (- (+ aviator-neck-height (/ aviator-neck-width 2))) (+ aviator-neck-support-height (/ aviator-neck-support-width 2)) (/ steps-for-seven 7))
         aviator-mount-outside-lower (aviator-mount-shape 0 0 (/ steps-for-four 4))
@@ -649,11 +667,11 @@ tactile-mount-right-polyhedron (mount-polyhedron-tactile tactile-mount-right-out
         ]
   
     (union 
-     aviator-mount-polyhedron 
+     bezier-back-polyhedron
+     aviator-mount-polyhedron
      ;tactile-mount-left-polyhedron
      ;tactile-mount-right-polyhedron
-     bezier-polyhedron
-     )
+     bezier-polyhedron)
     )
   )
 
@@ -668,20 +686,20 @@ tactile-mount-right-polyhedron (mount-polyhedron-tactile tactile-mount-right-out
         z-trans (/ (* wall-thickness 1.5) 2)
         translation [x-trans y-trans z-trans]
         place-and-translate #(place (mapv + translation (rotate-around-z-in-degrees 90  %)))
-        upper-top-left-corner (place-and-translate [(/ shape-x -2) (/ shape-y 2) (/ shape-z -2)])
-        upper-top-right-corner (place-and-translate [(/ shape-x -2) (/ shape-y -2) (/ shape-z -2)])
+        upper-top-left-corner (place-and-translate [(/ shape-x -2) (- (/ shape-y 2) 1) (/ shape-z -2)])
+        upper-top-right-corner (place-and-translate [(/ shape-x -2) (+ (/ shape-y -2) 1) (/ shape-z -2)])
         upper-bottom-left-corner  (place-and-translate [(/ shape-x 2) (/ shape-y 2) (/ shape-z -2)])
         upper-bottom-right-corner (place-and-translate [(/ shape-x 2) (/ shape-y -2) (/ shape-z -2)])
         lower-top-left-corner (place-and-translate [(+ (/ shape-x -2) 4) (/ shape-y 2) (/ shape-z 2)])
         lower-top-right-corner (place-and-translate [(+ (/ shape-x -2) 4) (/ shape-y -2) (/ shape-z 2)])
         lower-bottom-left-corner (place-and-translate [(/ shape-x 2) (/ shape-y 2) (/ shape-z 2)])
         lower-bottom-right-corner (place-and-translate [(/ shape-x 2) (/ shape-y -2) (/ shape-z 2)])
-        upper-top-left-corner-control-point (place-and-translate [(- (/ shape-x -2) 1) (/ shape-y 2) (/ shape-z -2)])
-        upper-top-right-corner-control-point (place-and-translate [(- (/ shape-x -2) 1) (/ shape-y -2) (/ shape-z -2)])
+        upper-top-left-corner-control-point (place-and-translate [(- (/ shape-x -2) 1)  (* shape-y 0.375) (/ shape-z -2)])
+        upper-top-right-corner-control-point (place-and-translate [(- (/ shape-x -2) 1) (* shape-y -0.375) (/ shape-z -2)])
         base-points [upper-top-left-corner upper-top-right-corner upper-bottom-left-corner upper-bottom-right-corner lower-top-left-corner lower-top-right-corner lower-bottom-left-corner lower-bottom-right-corner]
         base-faces [[0 1 3] [0 3 2]  [5 4 6] [5 6 7] [0 4 5] [0 5 1] [2 3 7] [2 7 6] [4 0 2] [4 2 6] [1 5 7] [1 7 3]]
-        lower-top-left-corner-curve-point (place-and-translate [(- (/ shape-x -2) 1) (/ shape-y 2) (* shape-z 1.75)])
-        lower-top-right-corner-curve-point (place-and-translate [(- (/ shape-x -2) 1) (/ shape-y -2) (* shape-z 1.75)])
+        lower-top-left-corner-curve-point (place-and-translate [(- (/ shape-x -2) 1) (/ shape-y 4) (* shape-z 1.75)])
+        lower-top-right-corner-curve-point (place-and-translate [(- (/ shape-x -2) 1) (/ shape-y -4) (* shape-z 1.75)])
         upper-left-edge-points (bezier-linear upper-top-left-corner upper-bottom-left-corner steps)
         upper-right-edge-points (bezier-linear upper-top-right-corner upper-bottom-right-corner steps)
         lower-left-edge-points (bezier-linear lower-top-left-corner lower-bottom-left-corner steps)
@@ -690,10 +708,15 @@ tactile-mount-right-polyhedron (mount-polyhedron-tactile tactile-mount-right-out
         left-curve (bezier-quadratic upper-top-left-corner upper-top-left-corner-control-point lower-top-left-corner-curve-point steps)
         right-curve (bezier-quadratic upper-top-right-corner upper-top-right-corner-control-point lower-top-right-corner-curve-point steps)
         curve-polyhedron (generate-bezier-to-point-polyhedron left-curve lower-top-left-corner right-curve lower-top-right-corner)
+        test [(place-and-translate [(/ shape-x 2) (/ shape-y 2) (/ shape-z -2)]) 
+              (place-and-translate [(/ shape-x -2) (/ shape-y 2) (/ shape-z -2)])
+             (place-and-translate [(- (/ shape-x -2) 1) (/ shape-y 2) (* shape-z 1.75)]) ]
         ]
     (union
-      base-polyhedron
-     curve-polyhedron 
+     (plot-bezier-points (bezier-cubic upper-bottom-left-corner upper-top-left-corner upper-top-left-corner-control-point lower-top-left-corner-curve-point steps) (sphere 0.1)) 
+     (plot-bezier-points (bezier-cubic upper-bottom-right-corner upper-top-right-corner upper-top-right-corner-control-point lower-top-right-corner-curve-point steps) (sphere 0.1))
+     (-# base-polyhedron) 
+     (-# curve-polyhedron) 
      )
     ) 
   )
@@ -757,8 +780,19 @@ aviator-neck-support-right
 
 (def aviator-assembly-polyhedron 
   (union
+   (->>
+    (text "RESET" :font font-name :size font-size :halign "center") 
+    (extrude-linear {:height 0.5 :center false})
+    (translate [0 (+ metal-tactile-button-hole-radius font-size 1) (+ aviator-neck-height 1)])
+    (aviator-neck-support-place aviator-assembly-left-or-right-translation)
+    )
+   (->>
+    (text "BOOT" :font font-name :size font-size :halign "center")
+    (extrude-linear {:height 0.5 :center false})
+    (translate [0 (-(+ metal-tactile-button-hole-radius font-size 2)) (+ aviator-neck-height 1)])
+    (aviator-neck-support-place (- aviator-assembly-left-or-right-translation)))
    aviator-neck-poly 
-   aviator-assembly-back
+   ;aviator-assembly-back
    )
   
    

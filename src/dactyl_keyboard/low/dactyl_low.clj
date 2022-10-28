@@ -32,7 +32,8 @@
             [dactyl-keyboard.metal-tactile-button :refer :all]
             [dactyl-keyboard.AST1109MLTRQ :refer :all]
             [dactyl-keyboard.dovetail :refer :all]
-            [dactyl-keyboard.MxLEDBitPCB-holder :refer :all] 
+            [dactyl-keyboard.MxLEDBitPCB-holder :refer :all]
+            [dactyl-keyboard.des-caps :refer :all] 
             ))
 
 
@@ -43,10 +44,20 @@
                :when (check-last-row-middle-and-fourth-keys-only column row)] 
                 (key-place column row MxLEDBitPCB))))
 
+(def kailh-hotswap-mx 
+  (translate [0.75 -4.75 (- plate-thickness)] (import "../parts/Kailh Hotswap MX v22.stl")))
+
+(def kailh-hotswap-mx-thumbs 
+  (union
+   (thumb-1x-layout kailh-hotswap-mx)
+   (thumb-15x-layout kailh-hotswap-mx)
+   )
+  )
+
 
 (def pcb
   (->>
-   (cube 17.8 17.8 3.05)
+   (cube MxLEDBitPCB-holder-width MxLEDBitPCB-holder-length MxLEDBitPCB-holder-thickness)
    (translate [0 0 (- 3.05)])))
 
 (def pcb-cutout
@@ -60,7 +71,7 @@
                row rows
                :when (or (.contains [2 3] column)
                          (not= row lastrow))]
-           (key-place column row pcb))))
+           (key-place column row MxLEDBitPCB))))
 
 (def mxd (multmatrix-translate [4 4 4]))
 ;; (def model-right (difference
@@ -137,14 +148,15 @@
       steps-mid 16]
     (union
 
-     (polyhedron-thumb-walls steps)
+     (polyhedron-thumb-walls steps);renders
      thumb-type
      ;thumb-connector-type
      key-holes
-     (thumb-connecters-polyhedron steps-low)
+     (thumb-to-body-connecters-polyhedron steps)
+     (thumb-connecters-polyhedron steps-low) ;renders
        (key-web-connecters-polyhedron steps-low)
      (EVQWGD001-place EVQWGD001-holder)
-     
+     (front-wall-connecters-polyhedron steps);renders
       (union
        (difference 
         (union
@@ -165,9 +177,9 @@
                                                 (rdz 120 (binding [*fn* 3] (cylinder 1 (+ tps-65-depth tps-65-depth-tolerance) :center false))))
         )
        ;(color [1 0 0 1] (rp2040-plus-place rp2040-plus-mount))
-      (difference screw-insert-outers
-             screw-insert-holes
-             )
+      ;; (difference screw-insert-outers
+      ;;        screw-insert-holes
+      ;;        )
        (vybronics-vl91022-place vybronics-vl91022-mount)
        (difference
         (cond
@@ -183,6 +195,17 @@
        (write-scad model-polyhedron))
 
 (def gx16 (import "GX16-4P.STL"))
+ 
+ (spit "things-low/model-polyhedron-test.scad"
+       (write-scad (union 
+                    model-polyhedron
+                    (EVQWGD001-place EVQWGD001)
+                    (aviator-place-shape (translate  [9.5 -10.75 (- aviator-plug-connecter-length)] (rdy -90 gx16)))
+                    switches
+                    pcb-place
+                    dsa-caps
+                    dsa-thumbcaps
+                    )))
 
  ;(spit"things-low/multmatrix-test.scad"
  ;(write-scad (thumb-b1-place-multmatrix (cube 5 5 5))))
@@ -258,61 +281,59 @@
     left-section-back-points    (left-section-back steps :bottom-plate true)
     back-left-wall-to-screen-points (back-left-wall-to-screen steps :bottom-plate true)
         screen-holder-bottom-left-outside-floor-point-and-screen-holder-bottom-right-outside-floor-point [ screen-holder-bottom-left-outside-floor-point screen-holder-bottom-right-outside-floor-point]
-        left-section-front-polyhedron-bottom-points (left-section-front-polyhedron-bottom steps)
-        polyhedron-thumb-walls-points (polyhedron-thumb-walls steps :bottom-plate true) 
-        thumb-connecters-polyhedron-points (thumb-connecters-polyhedron steps :bottom-plate true)
+        left-section-front-polyhedron-bottom-points (reverse (left-section-to-thumb-cluster-convex-walls steps :bottom-plate true))
+        polyhedron-thumb-walls-points (polyhedron-thumb-walls-for-convex-cluster steps :bottom-plate true) 
+        thumb-connecters-polyhedron-points  (thumb-to-body-connecters-polyhedron steps :bottom-plate true)
         front-wall-polyhedron-points (front-wall-polyhedron steps :bottom-plate true)
-        right-wall-polyhedron-points (right-wall-polyhedron steps :bottom-plate true)
+        right-wall-polyhedron-points (right-wall-polyhedron-catmull-rom-spline steps :bottom-plate true)
         bottom-plate-points (concat 
                              back-wall-polyhedron-points
                              left-section-back-points
                              back-left-wall-to-screen-points 
-                                    screen-holder-bottom-left-outside-floor-point-and-screen-holder-bottom-right-outside-floor-point
+                                  screen-holder-bottom-left-outside-floor-point-and-screen-holder-bottom-right-outside-floor-point
                                     left-section-front-polyhedron-bottom-points
                              thumb-connecters-polyhedron-points       
                              polyhedron-thumb-walls-points
                                     front-wall-polyhedron-points
-                                    right-wall-polyhedron-points)
-        ]
-    ;(extrude-linear
-   ;{:height 2.6 :center false :convexity 10}
-   
-   ; (difference 
-     (union
-      ;(plot-bezier-points right-wall-polyhedron-points (sphere 0.1))
-      (polygon (map drop-last bottom-plate-points))
-      ;(polyhedron-thumb-walls steps)
-      ;thumbcaps-fill-type
-      ;thumb-type
-      ;(thumb-connecters-polyhedron steps-low)
-      ;key-holes
-      ;thumb-type
-      ;thumbcaps-fill-type
-      ;caps-fill
-      ;(thumb-connecters-polyhedron steps-low)
-      ;(key-web-connecters-polyhedron steps-low)
-      ;(EVQWGD001-place    (->> (cube  EVQWGD001-mount-width EVQWGD001-mount-length EVQWGD001-mount-height)
-       ;                        (translate [0 0 (/ EVQWGD001-mount-height 2)])))
-      ;(polyhedron-left-section steps)
-      ;(right-side-polyhedron steps)
-      ;(polyhedron-case-walls steps)
-      ;(tps-65-place tps-65-base)
-      ;screw-insert-outers 
-      ;(cond
-       ; (= screen-holder-mount-position "screen-holder-mount-top") (screen-holder-place screen-holder)
-        ;(= screen-holder-mount-position "screen-holder-mount-side") (screen-holder-place-side screen-holder))
-      
-     ; )
-     ;(translate [0 0 -10] screw-insert-screw-holes)
-     ;)
-     ;)
-     ;)
-     )
-     ))
+                                    right-wall-polyhedron-points
+                             )
+    
+        ] 
+   (union 
+    (translate [0 0 -1.5](extrude-linear
+   {:height 1.5 :center false :convexity 10} 
+      (polygon (map drop-last bottom-plate-points)) 
+     )) 
+)
+  )
+)
 
 (spit "things-low/bottom-plate-for-polyhedron-model.scad"
       (write-scad bottom-plate-for-polyhedron-model)
       )
+
+
+(spit "things-low/bottom-plate-for-polyhedron-model-placement-test.scad"
+ (write-scad
+  (let [tactile-switch-place-holder (import "../parts/tactileswitch-short.STL")]
+    (union
+     bottom-plate-for-polyhedron-model
+ pcb-place
+(IS31FL3743A-standoff-place IS31FL3743A-standoff-test)
+(drv2605l-place drv2605l-standoffs-test)
+(six-pin-ffc-adapter-place six-pin-ffc-adapter-test)
+(rp2040-plus-place rp2040-plus-mount)
+(screen-holder-place-side ST7789-240x240)
+;(aviator-neck-support-place (- aviator-assembly-left-or-right-translation) tactile-switch-place-holder)
+(aviator-place-shape (translate  [9.5 -10.75 (- aviator-plug-connecter-length)] (rdy -90 gx16)))
+(EVQWGD001-place EVQWGD001)
+switches)))
+)
+
+(spit "things-low/polyhedron-model-with-bottom-plate-test.scad"
+      (write-scad (union
+                   model-polyhedron
+                    bottom-plate-for-polyhedron-model)))
 
 ;; (def bottom-plate-old
 ;;   (cut
@@ -371,19 +392,19 @@
 (spit "things-low/EVQWGD001-test.scad"
       (write-scad EVQWGD001-holder))
 
-(spit "things-low/vybronics-vl91022-mount.scad"
-      (write-scad (union
-                   (difference
-                    (tps-65-place tps-65-mount)
-                    (tps-65-place tps-65-mount-cutout)
-                    (tps-65-place (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout))
-                    (tps-65-translate-and-place-with-radius (mapv + tps-65-mount-corner-cylinder-bottom-left-position [0 0 (/ (- tps-65-depth tps-65-depth-tolerance 0.5) 1)])
-                                                            (- 0.5 tps-65-mount-corner-radius) (- 0.5 tps-65-mount-corner-radius)
-                                                            (rdz 120 (binding [*fn* 3] (cylinder 1 (+ tps-65-depth tps-65-depth-tolerance) :center false))))
-                    )
-                   (tps-65-translate-and-place-at-position [10 0 (- (+ tps-65-depth tps-65-depth-tolerance))] (rdy 180 (rdz -90 vybronics-vl91022-mount)))
+;; (spit "things-low/vybronics-vl91022-mount.scad"
+;;       (write-scad (union
+;;                    (difference
+;;                     (tps-65-place tps-65-mount)
+;;                     (tps-65-place tps-65-mount-cutout)
+;;                     (tps-65-place (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout))
+;;                     (tps-65-translate-and-place-with-radius (mapv + tps-65-mount-corner-cylinder-bottom-left-position [0 0 (/ (- tps-65-depth tps-65-depth-tolerance 0.5) 1)])
+;;                                                             (- 0.5 tps-65-mount-corner-radius) (- 0.5 tps-65-mount-corner-radius)
+;;                                                             (rdz 120 (binding [*fn* 3] (cylinder 1 (+ tps-65-depth tps-65-depth-tolerance) :center false))))
+;;                     )
+;;                    (tps-65-translate-and-place-at-position [10 0 (- (+ tps-65-depth tps-65-depth-tolerance))] (rdy 180 (rdz -90 vybronics-vl91022-mount)))
                    
-                   )))
+;;                    )))
 
 ;; (spit "things-low/drv2605l.scad"
 ;;       (write-scad drv2605l))
@@ -422,11 +443,12 @@
 (spit "things-low/aviator-assembly.scad"
       (write-scad 
 
-(difference
-  ;(-# aviator-assembly) 
+(difference 
  (union
+  
  aviator-assembly-polyhedron
-  (left-section-back 36))
+   (left-section-back 36)
+  )
    
  aviator-assembly-diffs
 
@@ -576,6 +598,8 @@
        ;;   (tps-65-place tps-65-base)
        ;;   (tps-65-place tps-65-mount-cutout)
        ;;   )
+                    (translate [0 0 -1.5] bottom-plate-for-polyhedron-model)
+                    (polyhedron-thumb-walls 36)
                     (back-left-wall-to-screen 36)
                     (EVQWGD001-place EVQWGD001-holder)
        ; (EVQWGD001-place EVQWGD001)
@@ -633,33 +657,53 @@
 ;; (spit "things-low/thumb-wall-test.scad"
 ;;       (write-scad
 ;;        (union
-;;         thumb-type
-;;         key-holes
-;;         (right-side-polyhedron 36)
-;;         thumb-walls-polyhedron
-;;         thumb-corners-polyhedron
-;;         thumb-tweeners-polyhedron
+;;         thumb-type 
+;;         (polyhedron-thumb-walls 36)
 ;;         (thumb-connecters-polyhedron 36)
-;;         front-wall-polyhedron)))
+;;         ;front-wall-polyhedron
+;;         )))
 
-(spit "things-low/render-test.scad"
-      (write-scad
-       (union
-       ;thumb-walls-polyhedron
-       ;front-wall-polyhedron
-       ;thumb-corners-polyhedron
-       key-holes
-       switches
-       dsa-caps
-       MxLEDBitPCB-placed
-      ;thumb-type
-      ;;  thumb-tweeners-polyhedron
-      ;;   thumb-walls-polyhedron
-      ;;   thumb-corners-polyhedron
-       ; (thumb-connecters-polyhedron 12)
-       (key-web-connecters-polyhedron 8)
-        )
-       ))
+;; (spit "things-low/render-test.scad"
+;;       (write-scad
+;;        (let 
+;;         [steps 36
+;;          steps-low 8](union 
+;;                       (polyhedron-thumb-walls steps);renders
+;;                       (thumb-connecters-polyhedron steps-low)
+;; thumb-type
+;;         (key-web-connecters-polyhedron steps-low)
+;;                       key-holes
+;;                       (thumb-to-body-connecters-polyhedron steps)
+;;             (right-side-polyhedron steps)
+;;                       (difference
+;;                        (tps-65-place tps-65-mount)
+;;                        (tps-65-place tps-65-mount-cutout)
+;;                        (tps-65-place (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout))
+;;                        (tps-65-translate-and-place-with-radius (mapv + tps-65-mount-corner-cylinder-bottom-left-position [0 0 (/ (- tps-65-depth tps-65-depth-tolerance 0.25) 1)])
+;;                                                                (- 0.5 tps-65-mount-corner-radius) (- 0.5 tps-65-mount-corner-radius)
+;;                                                                (rdz 120 (binding [*fn* 3] (cylinder 1 (+ tps-65-depth tps-65-depth-tolerance) :center false)))))
+;;                       (EVQWGD001-place EVQWGD001-holder)
+;;                       (difference
+;;                        (cond
+;;                          (= screen-holder-mount-position "screen-holder-mount-top") (screen-holder-place screen-holder)
+;;                          (= screen-holder-mount-position "screen-holder-mount-side") (screen-holder-place-side screen-holder))
+;;                        (cond
+;;                          (= screen-holder-mount-position "screen-holder-mount-top") (screen-holder-place screen-holder-cut)
+;;                          (= screen-holder-mount-position "screen-holder-mount-side") (screen-holder-place-side screen-holder-cut)))
+;; (difference
+;;  (polyhedron-case-walls steps)
+;;  (usb-jack-place usb-jack-polyhedron))
+;;                       (front-wall-connecters-polyhedron steps)
+;;                      (difference
+;;                       (union
+;;                        (polyhedron-left-section steps)
+;;                        aviator-assembly-polyhedron)
+;;                       aviator-assembly-diffs)
+;; (vybronics-vl91022-place vybronics-vl91022-mount)
+;;                       )
+                     
+;;                      )
+;;        ))
 
 ;; (spit "things-low/single-plate-test.scad"
 ;;       (write-scad (union
@@ -683,49 +727,177 @@
 ;;        )
 ;;       )
 
-;; (spit "things-low/right-wall-test.scad"
-;;       (write-scad
-;;        right-wall-polyhedron
-;;        ))
+(spit "things-low/right-wall-test.scad"
+      (write-scad
+       (union 
+        ; (right-wall-polyhedron 36)
+        (right-wall-polyhedron-catmull-rom-spline 36)
+       key-holes
+       )))
 
-;; (spit "things-low/switch-test.scad"
-;;       (write-scad
-;;        (union
-;;         (-# single-plate)
-;;         switch-model
-;;         (-# dsa-cap)
-;;         MxLEDBitPCB
-;;         MxLEDBitPCB-holder-leg-1
-;;         MxLEDBitPCB-holder-leg-2
-;;         )))
+(spit "things-low/switch-test.scad"
+      (write-scad
+       (union
+        (-# single-plate)
+        switch-model
+        (-# dsa-cap)
+        (translate [0.75 -4.75 (- plate-thickness)](-# (import "../parts/Kailh Hotswap MX v22.stl")))
+        MxLEDBitPCB
+        MxLEDBitPCB-holder-legs
+        )))
 
-  (spit "things-low/back-wall-polyhedron.scad"
-        (write-scad (union 
-                     (difference 
-                     (back-wall-polyhedron 36)
-                     (usb-jack-place usb-jack-polyhedron))
-                     (rp2040-plus-place rp2040-plus-mount)
-                     (-# (left-section-back 36))
-                     ))
-        )
+  ;; (spit "things-low/back-wall-polyhedron.scad"
+  ;;       (write-scad (union 
+  ;;                    (difference 
+  ;;                    (back-wall-polyhedron 36)
+  ;;                    (usb-jack-place usb-jack-polyhedron))
+  ;;                    (rp2040-plus-place rp2040-plus-mount)
+  ;;                    (-# (left-section-back 36))
+  ;;                    ))
+  ;;       )
   
-  (spit "things-low/usb-jack-test.scad"
-        (write-scad (union 
-                     (usb-jack-place (-# usb-jack))
-                     (usb-jack-place usb-jack-polyhedron)
-                     )))
+;;   (spit "things-low/usb-jack-test.scad"
+;;         (write-scad (union 
+;;                      (usb-jack-place (-# usb-jack))
+;;                      (usb-jack-place usb-jack-polyhedron)
+;;                      )))
   
-  
+  (defn e-place [shape]
+    (->>
+     (rdz 180 shape)
+     (rdx 45)
+     (translate [(/ keyswitch-width -2) 0 (/ cap-top-height 2)])
+     (thumb-place-convex -1 2)))
 
-;; (spit "things-low/front-and-thumb-wall-test.scad"
-;;       (write-scad
-;;        (union
-;;         front-wall-polyhedron
-;;         (polyhedron-thumb-walls 36)
-;;         key-holes
-;;         thumb-type
-;;         ) 
-;;        )
-;;       )
+(spit "things-low/front-and-thumb-wall-test.scad"
+      (write-scad
+       (union
+        (front-wall-polyhedron 36)
+        ;(back-left-wall-to-screen 36)
+        (thumb-connecters-polyhedron 12)
+        ;(polyhedron-thumb-walls 36)
+        (polyhedron-thumb-walls-for-convex-cluster 36)
+        (left-section-to-thumb-cluster-convex-walls 36)
+        (screen-holder-place-side screen-holder)
+        ;(tps-65-place tps-65-mount)
+        ;(e-place EVQWGD001-holder)
+        ;(e-place EVQWGD001)
+        (left-section-to-thumb-cluster-convex-connecetors 36)
+        key-holes
+        thumb-type
+        dsa-thumbcaps) 
+       )
+      )
+
+(spit "things-low/front-wall-polyhedron-test.scad"
+      (write-scad (front-wall-polyhedron 36))
+      )
+  
+  ;; (spit "things-low/left-front-test.scad"
+  ;;       (write-scad
+  ;;        (union
+  ;;         ;; (difference
+  ;;         ;;  (screen-holder-place-side screen-holder)
+  ;;         ;;   (screen-holder-place-side screen-holder-cut))
+  ;;         ;(tps-65-place tps-65-mount)
+  ;;         (difference
+  ;;          (left-section-front-polyhedron 36)
+  ;;          (EVQWGD001-place EVQWGD001-main-cutout))
+  ;;         ;(EVQWGD001-place EVQWGD001-holder)
+  ;;         ;thumb-type
+  ;;         ;(polyhedron-thumb-walls 36)
+  ;;         (back-left-wall-to-screen 36)
+  ;;         ;under-screen
+          
+  ;;         )))
+
+
+  
+(spit "things-low/key-placement-test.scad"
+      (write-scad
+       (project
+        (union
+        key-holes
+        thumb-type
+        ))
+       )
+      )
+  (spit "things-low/key-test.scad"
+        (write-scad 
+         (union
+          (union 
+          ;switches
+         ; (thumb-1x-layout switch-model)
+          ;(thumb-15x-layout switch-model)
+          MxLEDBitPCB-placed
+          ;(thumb-1x-layout MxLEDBitPCB)
+;(thumb-15x-layout MxLEDBitPCB)
+           ;(place-per-key MxLEDBitPCB-holder-legs)
+          
+          key-holes
+          ;kailh-hotswap-mx-thumbs
+          ;(-# (thumb-bl-place oled-post-tl))
+          ;(key-web-connecters-polyhedron 12)
+          ;(des-caps {:style :des-scooped})
+          des-thumbs
+          ;dsa-caps
+          dsa-thumbcaps
+          ;(place-per-key kailh-hotswap-mx)
+          ;(thumb-place-convex 0 0 oled-post-tr)
+          ;(color WHI (thumb-place-convex 0 0 single-plate))
+          ;(color RED (thumb-place-convex 0 1 single-plate))
+          ;(color GRE (thumb-place-convex 0 2 single-plate))
+          ;(color CYA (thumb-place-convex 1 0 single-plate))
+          ;(color MAG (thumb-place-convex 1 1 single-plate))
+          ;(color PUR (thumb-place-convex 1 2 single-plate))
+          ;(color WHI (thumb-place-convex 0 0 dsa-cap))
+          (color RED (thumb-place-convex 0 1 dsa-cap))
+          (color GRE (thumb-place-convex 0 2 dsa-cap))
+          ;(color CYA (thumb-place-convex 1 0 dsa-cap))
+         ; (color MAG (thumb-place-convex 1 1 dsa-cap))
+          ;(color PUR (thumb-place-convex 1 2 dsa-cap))
+          (e-place EVQWGD001)
+          (e-place EVQWGD001-holder)
+          thumb-type
+          (thumb-1x-layout MxLEDBitPCB)
+          (thumb-15x-layout MxLEDBitPCB)
+          ;(right-side-polyhedron 36)
+          (tps-65-place tps-65-mount)
+          (thumb-connecters-polyhedron 12))
+         ;  (translate [0 0 -20] (cube 350 350 40))
+          )))
+  
+  ;; (spit "things-low/des-test.scad"
+  ;;       (write-scad
+  ;;        (union
+  ;;         (-# des-r1) 
+  ;;         switch-model
+  ;;         single-plate
+  ;;         )
+  ;;        ))
+  
+  ;; (spit "things-low/hole-placement-test.scad"
+  ;;       (write-scad 
+  ;;        (let 
+  ;;         [steps 36]
+  ;;          (union
+  ;;           (polyhedron-left-section steps)
+  ;;         (polyhedron-case-walls steps)
+  ;;           (polyhedron-thumb-walls steps)
+  ;;           screw-insert-outers
+  ;;           (rp2040-plus-place rp2040-plus-mount )
+
+  ;;           ))))
+
+(spit "things-low/currently-editing.scad"
+      (write-scad
+       (include "front-and-thumb-wall-test.scad"))
+      )
+
+(spit "things-low/right-side-polyhedron.scad"
+      (write-scad
+       (union
+        (right-side-polyhedron 36)
+        key-holes)))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch

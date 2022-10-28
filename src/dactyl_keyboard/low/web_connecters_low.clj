@@ -51,6 +51,7 @@
 (def web-post-br-translation-vector  [(- (/ mount-width 1.95) post-adj) (+ (/ mount-height -1.95) post-adj) 0] )
 (def web-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) post-adj) 0])
 (def web-post-rm-translation-vector  [(- (/ mount-width 1.95) post-adj) 0  0])
+(def web-post-lm-translation-vector  [(+ (/ mount-width -1.95) post-adj) 0  0])
 (def web-post-tr (translate  web-post-tr-translation-vector web-post))
 (def web-post-tl (translate  web-post-tl-translation-vector web-post))
 (def web-post-bl (translate  web-post-bl-translation-vector  web-post))
@@ -70,6 +71,7 @@
     "br" web-post-br-translation-vector
     "bm" web-post-bm-translation-vector
     "rm" web-post-rm-translation-vector
+    "lm" web-post-lm-translation-vector
     "centre" [0 0 0]
     [0 0 0]))
 
@@ -81,6 +83,7 @@
     "br" (mapv + web-post-br-translation-vector [web-post-x-distance-from-single-plate-corner  web-post-y-distance-from-single-plate-corner 0])
     "bm" (mapv + web-post-bm-translation-vector [0 (- web-post-y-distance-from-single-plate-corner) 0])
     "rm" (mapv + web-post-rm-translation-vector [web-post-x-distance-from-single-plate-corner 0 0])
+    "lm" (mapv + web-post-lm-translation-vector [(- web-post-x-distance-from-single-plate-corner) 0 0])
     "centre" [0 0 0]
     [0 0 0])
   )
