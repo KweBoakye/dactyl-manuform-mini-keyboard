@@ -22,6 +22,11 @@
   (map + (key-position 1 cornerrow [(/ mount-width 2) (- (/ mount-height 2)) 0])
        thumb-offsets))
 
+(def thumb-offsets-convex [-14 -42 13.5])
+(def thumborigin-convex
+  (map + (key-position 1 cornerrow [(/ mount-width 2) (- (/ mount-height 2)) 0])
+       thumb-offsets))
+
 
 (def trackball-middle-translate [-6.5 6 -0.5])
 (def minithumb-tip-offset [-35 -16 -6.5])
@@ -35,53 +40,170 @@
                                    (- plate-thickness (/ web-thickness 2))]))]
     (union top-plate (mirror [0 0 0] top-plate))))
 
-(def thumb-tr-rotation-values {:x 14 :y -15 :z 10})
+(defn thumb-place-convex ([column row shape] 
+                          (thumb-place-convex column row translate rdx rdy rdz  shape))
+  ([column row translate-fn rotate-x-fn  rotate-y-fn rotate-z-fn  shape]
+   (let [cap-top-height (+ plate-thickness sa-profile-key-height)
+
+         row-radius (+ (/ (/ (+ mount-height extra-height) 2)
+                          (Math/sin (/ (deg2rad thumb-alpha) 2)))
+                       cap-top-height)
+
+
+         column-radius (+ (/ (/ (+ mount-width extra-width) 2)
+                             (Math/sin (/ (deg2rad thumb-beta) 2)))
+                          cap-top-height)
+         extra-translation (if (and (= column 1) (= row 1))  [0  (/ mount-height 4) 0] [0 0 0])
+         #_(+ (/ (/ (+ pillar-width 5) 2)
+                 (Math/sin (/ (deg2rad beta) 2)))
+              cap-top-height)]
+    (->> shape
+         ;(rotate-z-fn -45) 
+         ;(rotate-z-fn  -90)
+         (rotate-x-fn 4.5)
+         (rotate-y-fn (/ 180 -14))
+         (rotate-z-fn 7.5)
+         
+
+         (translate-fn [0 0   (- row-radius)])
+
+         (rotate-y-fn (* thumb-alpha  row))
+
+         (translate-fn [0 0 (+ row-radius)])
+         
+                   (translate-fn [0 (+ thumb-fan-radius) 0])
+ (rotate-z-fn (* thumb-fan-angle    row)); (* (inc row) 7))  
+
+ (translate-fn [0 (- thumb-fan-radius) 0])
+         (translate-fn (rotate-around-z-in-degrees (* 1 (* thumb-fan-angle  row))
+                                                   (mapv + [(+ (* (/ (+ mount-width) 1)  row) (/  extra-width 2) (* (/ (+ mount-width extra-width) 2)  column)) 
+                                                   (* (* (/ (+ mount-height extra-height) -4) (if (zero? row) 0 1)) column);(* (/ (+ mount-height extra-height) 2) row)
+                                                    (+ (- (* plate-thickness row)) (- (* plate-thickness column)))] extra-translation)))
+        ;;  (translate-fn (rotate-around-z-in-degrees (* 1 (* thumb-fan-angle  row))
+        ;;                                            [(* (/ (+ mount-width extra-width) 2)  column)
+        ;;                                           (* (* (/ (+ mount-height extra-height) -4) (if (zero? row) 0 1)) column)
+        ;;                                             0]))
+        ;;  (translate-fn (rotate-around-z-in-degrees (* 1 (* thumb-fan-angle  row)) extra-translation))
+         
+         
+                  
+         (translate-fn [0 0 (- column-radius)])
+         (rotate-x-fn (* (- thumb-beta) column))
+;(rotate-x-fn fan-tilt)
+         (translate-fn [0 0 (+ column-radius)])
+(translate-fn [0 0 (- thumb-well-radius)])
+
+(rotate-y-fn  thumb-well-angle)
+(translate-fn [0 0 thumb-well-radius])
+         
+
+
+
+         (rotate-x-fn 7.5)
+          (rotate-y-fn -20)
+          (rotate-z-fn 2.5)
+        ;;  (translate-fn (rotate-around-z-in-degrees (* 1 (* fan-angle (dec row)))
+        ;;                                            [(* (/ (+ mount-width extra-width) 1) (dec row)) 0 0]))
+                   (translate-fn thumborigin-convex)
+           (translate-fn [0 (/ (+ mount-height extra-height) -2)
+                          0;(- (+ (/ cap-top-height 2) ))
+                          ]) 
+         ;(translate-fn [0 0 cap-top-height])
+
+         ))))
+
+
+(def thumb-tr-standard-rotation-values {:x 14 :y -15 :z 10})
+(def thumb-tr-convex-rotation-values {:x 14 :y -15 :z 10})
+(def thumb-tr-rotation-values (case thumb-curvature-type
+                                :thumb-curvature-standard thumb-tr-standard-rotation-values
+                                :thumb-curvature-convex thumb-tr-convex-rotation-values))
 
 (defn thumb-tr-rotate ([shape] (thumb-tr-rotate rdx rdy rdz shape))
   ([ rotate-x-fn rotate-y-fn rotate-z-fn shape]
   (->> shape  
        (rotate-x-fn  (thumb-tr-rotation-values :x))
-   (rotate-y-fn -15)
-        (rotate-z-fn  10) )
+   (rotate-y-fn (thumb-tr-rotation-values :y))
+        (rotate-z-fn  (thumb-tr-rotation-values :z)) )
   )
 )
+(def thumb-tr-translation-values [-15 -10  5])
 
-(defn thumb-tr-place ([shape] (thumb-tr-place translate rdx rdy rdz shape))
+(defn thumb-tr-place-standard ([shape] (thumb-tr-place-standard translate rdx rdy rdz shape))
   ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
-          (rotate-x-fn  14)
-(rotate-y-fn -15)
-(rotate-z-fn  10)
+         (thumb-tr-rotate rotate-x-fn rotate-y-fn rotate-z-fn) 
         (translate-fn thumborigin)
        (translate-fn [-15 -10 5])))) ; original 1.5u  (translate [-12 -16 3])
+
+(def thumb-tr-place (case thumb-curvature-type
+                      :thumb-curvature-standard thumb-tr-place-standard
+                      :thumb-curvature-convex (partial thumb-place-convex 0 0)))
 (defn thumb-tr-position [position] (thumb-tr-place (partial map +) rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees position))
 (def tl-minithumb-loc (map + minithumb-tip-offset (if cirque-TM040040-mount-thumb trackball-middle-translate [0 0 0])))
+
+(def thumb-tl-standard-rotation-values {:x 10 :y -23 :z 25})
+(def thumb-tl-convex-rotation-values {:x (+ (thumb-tr-convex-rotation-values :x) -4) 
+                                      :y (+ (thumb-tr-convex-rotation-values :y) 2.5)
+                                      :z (+ (thumb-tr-convex-rotation-values :z) 15)})
+(def thumb-tl-rotation-values (case thumb-curvature-type
+                                :thumb-curvature-standard thumb-tl-standard-rotation-values
+                                :thumb-curvature-convex thumb-tl-convex-rotation-values))
 
 (defn thumb-tl-rotate ([shape] (thumb-tl-rotate  rdx rdy rdz shape))
   ([ rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
-        (rotate-x-fn  10) 
-        (rotate-y-fn -23) 
-        (rotate-z-fn  25) ; original 10
+        (rotate-x-fn  (thumb-tl-rotation-values :x)) 
+        (rotate-y-fn (thumb-tl-rotation-values :y)) 
+        (rotate-z-fn  (thumb-tl-rotation-values :z)) ; original 10
    )))
 
-(defn thumb-tl-place ([shape] (thumb-tl-place translate rdx rdy rdz shape))
+(def thumb-tl-standard-translation-values [-35 -16 -2])
+(def thumb-tl-convex-translation-values
+  (map + thumb-tr-translation-values  
+       (apply thumb-tl-rotate (rotation-transformations [(- (+ mount-width (* 2 extra-width))) (* extra-height 2) 0]) )))
+(def thumb-tl-translation-values (case thumb-curvature-type
+                                   :thumb-curvature-standard thumb-tl-standard-translation-values
+                                   :thumb-curvature-convex thumb-tl-convex-translation-values))
+
+(defn thumb-tl-place-standard ([shape] (thumb-tl-place-standard translate rdx rdy rdz shape))
   ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
         (thumb-tl-rotate rotate-x-fn rotate-y-fn rotate-z-fn)
        (translate-fn thumborigin)
-       (translate-fn [-35 -16 -2])))) ; original 1.5u (translate [-32 -15 -2])))
+       (translate-fn thumb-tl-translation-values)))) ; original 1.5u (translate [-32 -15 -2])))
+
+(def thumb-tl-place (case thumb-curvature-type
+                       :thumb-curvature-standard  thumb-tl-place-standard
+                       :thumb-curvature-convex  (partial thumb-place-convex 0 1)))
 
 (def mr-minithumb-loc (map + [-23.5 -36.5 -2] (if cirque-TM040040-mount-thumb trackball-middle-translate [0 0 0])))
 
-(def thumb-mr-rotation-values {:x 10 :y -23 :z 25})
+
+(def thumb-mr-standard-rotation-values {:x 10 :y -23 :z 25})
+(def thumb-mr-convex-rotation-values {:x (+ (thumb-tr-convex-rotation-values :x) -4)
+                                      :y (+ (thumb-tr-convex-rotation-values :y) 2.5)
+                                      :z (+ (thumb-tr-convex-rotation-values :z) 10)})
+(def thumb-mr-rotation-values (case thumb-curvature-type
+                                :thumb-curvature-standard  thumb-mr-standard-rotation-values
+                                :thumb-curvature-convex  thumb-mr-convex-rotation-values))
+
 (defn thumb-mr-rotate ([shape] (thumb-mr-rotate rdx rdy rdz shape))
-  ([ rotate-x-fn rotate-y-fn rotate-z-fn shape]
+  ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
-        (rotate-x-fn  10)
-        (rotate-y-fn -23)
-        (rotate-z-fn  25)
-        )))
+        (rotate-x-fn  (thumb-mr-rotation-values :x))
+        (rotate-y-fn (thumb-mr-rotation-values :y))
+        (rotate-z-fn  (thumb-mr-rotation-values :z)))))
+
+(def thumb-mr-standard-translation-values [-23 -34 -6])
+(def thumb-mr-convex-translation-values (map + thumb-tr-translation-values
+                                             (apply thumb-mr-rotate (rotation-transformations [(- (+ mount-width (* 1.5 extra-width))) 
+                                                                                               (+ (- mount-height) (* extra-height -2)) 0]))))
+
+(def thumb-mr-translation-values (case thumb-curvature-type 
+                                            :thumb-curvature-standard thumb-mr-standard-translation-values
+                                            :thumb-curvature-convex thumb-mr-convex-translation-values))
+
 
 (defn thumb-mr-rotate-reverse ([shape] (thumb-mr-rotate rdx rdy rdz shape))
   ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
@@ -91,24 +213,36 @@
         (rotate-z-fn  -25))))
 
 
-(defn thumb-mr-place ([shape] (thumb-mr-place translate rdx rdy rdz shape))
+(defn thumb-mr-place-standard ([shape] (thumb-mr-place-standard translate rdx rdy rdz shape))
   ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
-       (rotate-x-fn  10)
-       (rotate-y-fn -23)
-       (rotate-z-fn  25)
+       (thumb-mr-rotate rotate-x-fn rotate-y-fn rotate-z-fn)
        (translate-fn thumborigin)
-       (translate-fn [-23 -34 -6]))))
-(defn thumb-mr-position [position] (thumb-mr-place (partial map +) rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees position))
-(def br-minithumb-loc (map + [-39 -43 -16] (if cirque-TM040040-mount-thumb [2 -2 2] [0 0 0])))
+       (translate-fn thumb-mr-translation-values))))
 
-(defn thumb-br-rotate ([shape] (thumb-mr-rotate rdx rdy rdz shape))
+(def thumb-mr-place (case thumb-curvature-type
+                      :thumb-curvature-standard thumb-mr-place-standard
+                      :thumb-curvature-convex (partial thumb-place-convex 1 1)))
+(defn thumb-mr-position [position] (thumb-mr-place (partial map +) rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees position))
+(def br-minithumb-loc (map + [-39 -43 -16] (if (= thumb-curvature-type :thumb-curvature-convex) [-4.5 2.5 -3] [0 0 0]))) 
+
+(def thumb-br-standard-rotation-values {:x 6 :y -34 :z 35})
+(def thumb-br-convex-rotation-values {:x (+ (thumb-tr-convex-rotation-values :x) -8)
+                                      :y (+ (thumb-tr-convex-rotation-values :y) 5)
+                                      :z (+ (thumb-tr-convex-rotation-values :z) 20)})
+(def thumb-br-rotation-values (case thumb-curvature-type
+                                :thumb-curvature-standard  thumb-br-standard-rotation-values
+                                :thumb-curvature-convex  thumb-br-convex-rotation-values))
+
+
+
+(defn thumb-br-rotate-standard ([shape] (thumb-br-rotate-standard rdx rdy rdz shape))
   ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
         (rotate-x-fn  6)
         (rotate-y-fn -34)
         (rotate-z-fn  35))))
-(defn thumb-br-place  ([shape] (thumb-br-place translate rdx rdy rdz shape))
+(defn thumb-br-place-standard  ([shape] (thumb-br-place-standard translate rdx rdy rdz shape))
   ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
   (->> shape
        (rotate-x-fn   6) 
@@ -117,22 +251,82 @@
        (translate-fn thumborigin)
        (translate-fn br-minithumb-loc))))
 
+(defn thumb-br-rotate-convex ([shape] (thumb-br-rotate-convex rdx rdy rdz shape))
+  ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-x-fn  (thumb-br-convex-rotation-values :x))
+        (rotate-y-fn (thumb-br-convex-rotation-values :y))
+        (rotate-z-fn  (thumb-br-convex-rotation-values :z)))))
+
+(def thumb-br-convex-translation-values
+  (map + thumb-tr-translation-values 
+       (apply thumb-br-rotate-convex 
+              (rotation-transformations [(-  (+ (* 2 mount-width) (* 3 extra-width))) (+  (- mount-height) ) 0]))))
+
+(defn thumb-br-place-convex  ([shape] (thumb-br-place-convex translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (thumb-br-rotate-convex rotate-x-fn rotate-y-fn rotate-z-fn)
+        (translate-fn thumborigin)
+        (translate-fn thumb-br-convex-translation-values))))
+
+(def thumb-br-rotate (case thumb-curvature-type
+                       :thumb-curvature-standard thumb-br-rotate-standard
+                       :thumb-curvature-convex thumb-br-rotate-convex))
+(def thumb-br-place (case thumb-curvature-type
+                      :thumb-curvature-standard thumb-br-place-standard
+                      :thumb-curvature-convex (partial thumb-place-convex 1 2)))
+
 (def bl-minithumb-loc (map + [-51 -25 -11.5] (if cirque-TM040040-mount-thumb [0 0 0] [0 0 0])))
-(defn thumb-bl-rotate ([shape] (thumb-mr-rotate rdx rdy rdz shape))
+(def bl-minithumb-loc-convex (map + [-52.5 -25.5 -11.5]  (if cirque-TM040040-mount-thumb [0 0 0] [0 0 0])))
+;; (def bl-minithumb-loc (case thumb-curvature-type
+;;                        :thumb-curvature-standard thumb-bl-rotate-standard
+;;                        :thumb-curvature-convex thumb-bl-rotate-convex))
+
+(defn thumb-bl-rotate-standard ([shape] (thumb-bl-rotate-standard rdx rdy rdz shape))
   ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
         (rotate-x-fn  6)
         (rotate-y-fn -32)
         (rotate-z-fn  35))))
-(defn thumb-bl-place  ([shape] (thumb-bl-place translate rdx rdy rdz shape))
+(defn thumb-bl-place-standard  ([shape] (thumb-bl-place-standard translate rdx rdy rdz shape))
   ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
   (->> shape
-        (rotate-x-fn   6) 
-        (rotate-y-fn -32) 
-        (rotate-z-fn  35) 
+        (thumb-bl-rotate-standard rotate-x-fn rotate-y-fn rotate-z-fn)
        (translate-fn thumborigin)
        (translate-fn bl-minithumb-loc)))) ;        (translate [-51 -25 -12])))
 
+(def thumb-bl-rotate-convex-values 
+  {:x (+ (thumb-tr-convex-rotation-values :x) -8)
+   :y (+ (thumb-tr-convex-rotation-values :y) 5)
+   :z (+ (thumb-tr-convex-rotation-values :z) 20)}
+  )
+
+(defn thumb-bl-rotate-convex ([shape] (thumb-bl-rotate-convex rdx rdy rdz shape))
+  ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (rotate-x-fn  (thumb-bl-rotate-convex-values :x))
+        (rotate-y-fn (thumb-bl-rotate-convex-values :y))
+        (rotate-z-fn  (thumb-bl-rotate-convex-values :z)))))
+
+(def thumb-bl-rotate (case thumb-curvature-type
+                       :thumb-curvature-standard thumb-bl-rotate-standard
+                       :thumb-curvature-convex thumb-bl-rotate-convex))
+
+(def thumb-bl-convex-translation-values 
+  (map + thumb-tr-translation-values
+       (apply thumb-bl-rotate (rotation-transformations [(-  (+ (* 2 mount-width) (* 3 extra-width)))  (* extra-height 3) 0]))))
+(defn thumb-bl-place-convex ([shape] (thumb-bl-place-convex translate rdx rdy rdz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+   (->> shape
+        (thumb-bl-rotate-convex rotate-x-fn rotate-y-fn rotate-z-fn)
+        (translate-fn thumborigin)
+        (translate-fn thumb-bl-convex-translation-values))))
+
+
+(def thumb-bl-place (case thumb-curvature-type
+                             :thumb-curvature-standard thumb-bl-place-standard
+                             :thumb-curvature-convex (partial thumb-place-convex 0 2)))
 ;defn thumb-b1-place-multmatrix [shape]
 ; (multmatrix 
 ;   (mmul

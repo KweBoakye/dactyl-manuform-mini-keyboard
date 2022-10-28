@@ -31,7 +31,18 @@
 
 ;(def α (/ π 12))                        ; curvature of the columns
 ;https://discord.com/channels/681309835135811648/747850923023532073/1017470634730717254
-(def β (/ π 180)) ; (/ π 36)                       ; curvature of the rows
+
+(def far-index-tilt (/ π 18))
+(def index-tilt (/ π 180))
+(def middle-tilt (/ π 180))
+(def ring-tilt (/ π 180))
+(def pinky-tilt (/ π 180))
+(defn β [column](cond (= column 0) far-index-tilt
+                      (<= column 1) index-tilt
+                      (= column 2) middle-tilt
+                      (= column 3) ring-tilt
+                      (>= column 4) pinky-tilt
+                      :else (/ π 180))) ; (/ π 36)                       ; curvature of the rows
 
 (def splay-last-row true)
 (def far-index-splay  5)
@@ -88,11 +99,14 @@
 (def no-last-row true) ; having only three rows comes out nicer if you have four then remove the last row
 (def inner-column false)
 (def thumb-style "default")
+(keyword "thumb-curvature-standard")
+(keyword "thumb-curvature-convex")
+(def thumb-curvature-type :thumb-curvature-convex)
 
-(def far-index-stagger [0 -6 0])
+(def far-index-stagger [0 -6 -4])
 (def index-stagger [0 -2 0])
 (def middle-stagger [0 5.82 -2.5])
-(def ring-stagger [0 -3 0])
+(def ring-stagger [0 -6 0.5])
 (def pinky-stagger [0 -18 5.64])
 
 (defn column-offset [column] (cond
@@ -104,8 +118,15 @@
                                :else [0 0 0]))
 
 (def thumb-offsets [6 -3 7])
+(def thumb-fan-radius 70)
+(def thumb-fan-angle 17.5)
+(def thumb-well-radius 85)
+(def thumb-well-angle 10)
+(def thumb-alpha 15)
+(def thumb-beta 3.75)
 
-(def keyboard-z-offset 9)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
+
+(def keyboard-z-offset 10)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
 
 (def extra-width 2.5)                   ; extra space between the base of keys; original= 2
 (def extra-height 1.0)                  ; original= 0.5

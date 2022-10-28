@@ -26,10 +26,10 @@
 (defn row-radius [column] (+ (/ (/ (+ mount-height extra-height) 2)
                       (Math/sin (/ (α column) 2)))
                    cap-top-height))
-(def column-radius (+ (/ (/ (+ mount-width extra-width) 2)
-                         (Math/sin (/ β 2)))
+(defn column-radius [column] (+ (/ (/ (+ mount-width extra-width) 2)
+                         (Math/sin (/ (β column) 2)))
                       cap-top-height))
-(def column-x-delta (+ -1 (- (* column-radius (Math/sin β)))))
+(defn column-x-delta [column] (+ -1 (- (* (column-radius column) (Math/sin (β column))))))
 
  (defn offset-for-column [col]
    (if (and (true? pinky-15u) (= col lastcol)) 5.5 0))
@@ -70,7 +70,7 @@
          
 ;;          (translate-fn [0 0 keyboard-z-offset]))))
 (defn apply-key-geometry-rotation-values [column row]
-  (let [column-angle (* β (- centercol column))
+  (let [column-angle (* (β column) (- centercol column))
         x (* (α column) (- (centerrow column) row)) 
         y column-angle 
         z (cond (not= row lastrow) (γ column) :else 0)
@@ -83,7 +83,7 @@
 
 (defn apply-key-geometry-rotation ([ column row shape] (apply-key-geometry-rotation rx ry rz column row shape))
   ([rotate-x-fn rotate-y-fn rotate-z-fn column row shape]
-   (let [column-angle (* β (- centercol column))] 
+   (let [column-angle (* (β column) (- centercol column))] 
    (->> shape
        (rotate-x-fn  (* (α column) (- (centerrow column) row)))
   (rotate-z-fn  (cond (not= row lastrow) (γ column) :else 0))
@@ -100,7 +100,7 @@
   )
 
 (defn apply-key-geometry [translate-fn rotate-x-fn rotate-y-fn rotate-z-fn column row shape]
-  (let [column-angle (* β (- centercol column))
+  (let [column-angle (* (β column) (- centercol column))
         post-splay-translation-vector (cond (and (not= (γ column) 0) (not= row lastrow))
                                             (post-splay-translation column)
                                             :else [0 0 0]
@@ -111,21 +111,21 @@
                           (rotate-x-fn  (* (α column) (- (centerrow column) row)))
                            (rotate-z-fn  (should-splay-key column row))
                           (translate-fn [0 0 (row-radius column)])
-                          (translate-fn [0 0 (- column-radius)])
+                          (translate-fn [0 0 (- (column-radius column))])
                          
                           (rotate-y-fn  column-angle)
                           
-                          (translate-fn [0 0 column-radius])
+                          (translate-fn [0 0 (column-radius column)])
                           (translate-fn (column-offset column))
                           
                           )
-        column-z-delta (* column-radius (- 1 (Math/cos column-angle)))
+        column-z-delta (* (column-radius column) (- 1 (Math/cos column-angle)))
         placed-shape-ortho (->> shape
                                 (translate-fn [0 0 (- (row-radius column))])
                                 (rotate-x-fn  (* (α column) (- (centerrow column) row)))
                                 (translate-fn [0 0 (row-radius column)])
                                 (rotate-y-fn  column-angle)
-                                (translate-fn [(- (* (- column centercol) column-x-delta)) 0 column-z-delta])
+                                (translate-fn [(- (* (- column centercol) (column-x-delta column))) 0 column-z-delta])
                                 (translate-fn (column-offset column)))
         placed-shape-fixed (->> shape
                                 (rotate-y-fn  (nth fixed-angles column))
@@ -218,6 +218,17 @@
                                       (not= row lastrow))
     :all-columns   
      true )
+  )
+
+(defn place-per-key ([shape] (place-per-key translate rx ry rz shape))
+  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
+  (apply union
+         (for [column columns
+               row rows
+               :when (check-last-row-middle-and-fourth-keys-only column row)]
+           (->> shape
+                (key-place column row translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)))) 
+   )
   )
 
 (def key-holes
