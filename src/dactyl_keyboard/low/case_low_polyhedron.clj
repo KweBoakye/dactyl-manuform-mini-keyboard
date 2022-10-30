@@ -1761,9 +1761,18 @@
   (let [thumb-bl-tl (wall-brace-polyhedron-points thumb-bl-place -1 0 "tl"  :degrees steps) 
         thumb-bl-tr (wall-brace-polyhedron-points thumb-bl-place 0 -1 "tr"  :degrees steps)
         thumb-br-tl (wall-brace-polyhedron-points thumb-br-place -1 0 "tl"  :degrees steps)
+        thumb-bl-br (web-post-point thumb-bl-place "br"  :degrees)
+        thumb-tl-tl (web-post-point thumb-tl-place "tl"  :degrees)
+        thumb-tl-tr (web-post-point thumb-tl-place "tr"  :degrees)
+        thumb-tr-tl (web-post-point thumb-tr-place "tl"  :degrees)
+        first-column-cornerrow-bl (web-post-point (partial key-place 0 cornerrow) "bl"  :radians)
+        first-column-cornerrow-br (web-post-point (partial key-place 0 cornerrow) "br"  :radians)
         tps-65-top-left-inner-higher    (transform-position
                                   (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-left-position)
                                   [(- (+ tps-65-corner-radius 0.05))  (+ tps-65-corner-radius 0.05) (- (/ web-thickness 4))])
+        tps-65-bottom-left-inner-translated (transform-position
+                                (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-left-position)
+                                [0  (- (+ tps-65-corner-radius 0.05)) (- (/ web-thickness 2))])
         tps-65-outside-control-points-1 (bezier-linear tps-65-top-right-outer tps-65-mid-right-outer  steps)
         tps-65-outside-control-points-2 (bezier-linear tps-65-mid-right-outer tps-65-bottom-right-inner steps)
         tps-65-inside-control-points-1 (bezier-linear tps-65-mid-right-inner  tps-65-top-right-outer steps)
@@ -1847,13 +1856,161 @@
                                            (nth bottom-control-points index)
                                            steps
                                            :alpha-type :centripetal :t1 0.7 :t2 0.9))))
+        top-left-surface-outer-points (into []
+                                            (apply concat
+                                                   (for [index (range 0 (inc steps))
+                                                         :let [left-side-points (bezier-cubic 
+                                                                                 tps-65-top-left-outer
+                                                                                 tps-65-top-left-control-point-outer
+                                                                                 screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+                                                                                 screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
+                                                                                 steps)
+                                                               right-side-points (take (inc steps) outside-points-1)]]
+                                                     (bezier-linear 
+                                                      (nth right-side-points index)
+                                                     (nth left-side-points index) 
+                                                      steps))))
+         top-left-surface-inner-points (into []
+                                             (apply concat
+                                                    (for [index (range 0 (inc steps))
+                                                          :let [left-side-points (bezier-linear
+                                                                                
+                                                                               screen-holder-inside-point-with-same-y-as-tps-65-top-left-inner
+                                                                               tps-65-top-left-inner-with-same-z-as-screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+                                                                                  steps)
+                                                                right-side-points (bezier-linear 
+                                                                                               screen-holder-top-right-outside-point
+                                                                                               screen-holder-top-right-inside-point
+                                                                                          
+                                                                                                 steps
+                                                                                                 )]]
+                                                      (bezier-linear
+                                                      (nth right-side-points index)
+                                                       (nth left-side-points index)
+                                                      
+                                                       steps))))
+         l-out (take-last (inc steps) outside-points-2)
+         l-in (reverse (catmull-rom-spline-curve
+               (map + tps-65-bottom-right-inner [0 -2 8])
+               tps-65-bottom-left-inner
+               (thumb-bl-tr :web-post-position-bottom)
+               (thumb-bl-br :bottom)
+               steps
+               :alpha-type :uniform :t1 0.6 :t2 0.9))
+         r-in (reverse (catmull-rom-spline-curve
+               (mapv + tps-65-bottom-left-inner [0 -2 4])
+               tps-65-bottom-left-inner
+               (thumb-tl-tl :bottom)
+               (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
+               steps
+               :alpha-type :centripetal :t1 0.7 :t2 0.9))
+         r-out (catmull-rom-spline-curve
+                tps-65-top-right-outer
+                tps-65-bottom-left-outer
+                (thumb-tl-tl :top)
+                (assoc (thumb-tl-tl :top) 2 0)
+                steps
+                :alpha-type :centripetal :t1 0.7 :t2 0.9)
+         pp (into []
+                  (apply concat
+                         (for [index (range 0 (inc steps))
+                               :let [a (take-last (inc steps) outside-points-2)
+                                     b (catmull-rom-spline-curve 
+                                        tps-65-top-right-outer
+                                        tps-65-bottom-left-outer
+                                        (thumb-tl-tl :top)
+                                        (assoc (thumb-tl-tl :top) 2 0)
+                                        steps
+                                        :alpha-type :centripetal :t1 0.7 :t2 0.9
+                                        ) 
+                                     ;(bezier-linear tps-65-bottom-left-outer (thumb-tl-tl :top) steps)
+                                     ]]
+                           (bezier-linear 
+                            (nth r-out index)
+                            (nth l-out index) 
+                            steps))))
+         
+         cc (into []
+                  (apply concat
+                         (for [index (range 0 (inc steps))
+                               :let [a (catmull-rom-spline-curve
+                                        tps-65-bottom-right-inner
+                                        tps-65-bottom-left-inner
+                                        (thumb-bl-tr :web-post-position-bottom)
+                                        (thumb-bl-br :bottom)
+                                        steps
+                                        :alpha-type :centripetal :t1 0.7 :t2 0.9) 
+                                     ;(take (inc steps) inside-points-2)
+                                     b (catmull-rom-spline-curve 
+                                        tps-65-bottom-left-inner-translated
+                                        tps-65-bottom-left-inner
+                                        (thumb-tl-tl :bottom)
+                                        (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
+                                        steps
+                                        :alpha-type :centripetal :t1 0.7 :t2 0.9
+                                        ) 
+                                     ;(bezier-quadratic tps-65-bottom-left-inner-translated (calculate-point-between-points tps-65-bottom-left-inner-translated (thumb-tl-tl :bottom) [0 2 0]) (thumb-tl-tl :bottom) steps)
+                                     ]]
+                           (bezier-linear 
+                            (nth r-in index)
+                            (nth l-in index) 
+                            steps))))
+        
         ]
-        (println ( thumb-bl-tl :web-post-position-top))
+        
         (union
          (generate-bezier-along-bezier-polyhedron outside-points-1 inside-points-1  steps)
         (generate-bezier-along-bezier-polyhedron outside-points-2 inside-points-2 steps)
-         )
-        ))
+         (generate-bezier-along-bezier-polyhedron top-left-surface-outer-points top-left-surface-inner-points steps)
+          ;; (generate-bezier-along-bezier-polyhedron-from-points-list-linear
+          ;;  (take-last (inc steps) outside-points-2)
+          ;;  (bezier-linear (thumb-tl-tr :top) (thumb-tl-tl :top) steps)
+          ;;  (bezier-linear  (thumb-tl-tl :bottom)  (thumb-tl-tr :bottom) steps)
+          ;;  (reverse (take (inc steps) inside-points-2)) 
+          ;;  steps
+          ;; )
+         ;(polyhedron cc (bezier-along-bezier-polyhedron-generate-front-or-back-faces (inc steps) (inc steps) steps))
+         (generate-bezier-along-bezier-polyhedron pp cc steps)
+         (generate-bezier-along-bezier-polyhedron-from-points-list-linear 
+          (bezier-linear (first-column-cornerrow-bl :top) (thumb-tl-tr :top) steps)
+          r-out 
+          (bezier-linear  (thumb-tl-tr :bottom) (first-column-cornerrow-bl :bottom) steps) 
+          r-in 
+          steps
+          )
+         
+        ;;  (hull
+        ;;   (key-place 0 cornerrow web-post-bl)
+        ;;   (key-place 0 cornerrow web-post-br)
+        ;;   (thumb-tl-place web-post-tr)
+        ;;   (thumb-tr-place web-post-tl))
+        ;;   (generate-bezier-along-bezier-polyhedron-from-points-linear 
+        ;;    (thumb-tl-tr :top)(first-column-cornerrow-bl :top) 
+        ;;    (thumb-tl-tr :bottom) (first-column-cornerrow-bl :bottom) 
+        ;;  (thumb-tr-tl :top) (first-column-cornerrow-br :top)  
+        ;;    (thumb-tr-tl :bottom) (first-column-cornerrow-br :bottom)
+           
+        ;;    steps
+        ;;   )
+         (difference (generate-bezier-along-bezier-polyhedron-from-points-linear
+          (first-column-cornerrow-bl :top) (first-column-cornerrow-br :top)  
+          (thumb-tl-tr :top) (thumb-tr-tl :top)
+          (first-column-cornerrow-br :bottom)(first-column-cornerrow-bl :bottom)
+          (thumb-tr-tl :bottom)(thumb-tl-tr :bottom)   
+          steps
+          :inside-upper-control-point-vector [0 2 0])
+                     (->> top-nub
+                          (mirror [1 0 0])
+                          (mirror [0 1 0]) 
+                          (rotate (/ π 2) [0 0 1]) 
+                          (key-place 0 cornerrow)))
+         
+         ;(translate (first (take-last (inc steps) outside-points-2)) (sphere 1))
+        
+         ;(plot-bezier-points (take (inc steps) inside-points-2) (sphere 0.1))
+         ;(plot-bezier-points (take (inc steps) inside-points-2) (sphere 0.1))
+         ;(plot-bezier-points (take (inc steps) inside-points-2) (sphere 0.1))
+        ))) 
 (defn left-section-to-thumb-cluster-convex-walls [steps & {:keys [bottom-plate] :or {bottom-plate false}}]
   (let [wall-brace-quadratic-fn (get-wall-brace-quadratic-fn bottom-plate)
         wall-brace-polyhedron-fn (get-wall-brace-polyhedron-fn bottom-plate)
@@ -2061,7 +2218,8 @@
 
 
                      index-bl-to-inner-br-to-thumb-tr-tl-polyhedron
-                     inner-index-bl-to-br-thumb-tr-tl-to-thumb-tl-tr-polyhedron)]
+                     ;inner-index-bl-to-br-thumb-tr-tl-to-thumb-tl-tr-polyhedron
+                     )]
     (if (true? bottom-plate) thumb-tr-to-index-false-wall-brace-floor-points polyhedrons)))
 
 (defn thumb-connecters-polyhedron [steps]
@@ -2387,10 +2545,7 @@
      (thumb-walls-polyhedron-for-convex-cluster-map :thumb-tr-br-to-tr))))
 
 (defn polyhedron-left-section [steps]
-  (union
-   (difference
-    (left-section-front-polyhedron steps)
-    (EVQWGD001-place EVQWGD001-main-cutout))
+  (union 
    (back-left-wall-to-screen steps)
    (left-section-back steps)
    under-screen))

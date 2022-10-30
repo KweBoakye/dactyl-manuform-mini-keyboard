@@ -148,14 +148,16 @@
       steps-mid 16]
     (union
 
-     (polyhedron-thumb-walls steps);renders
+     (polyhedron-thumb-walls-for-convex-cluster steps);renders
      thumb-type
      ;thumb-connector-type
      key-holes
      (thumb-to-body-connecters-polyhedron steps)
+     (left-section-to-thumb-cluster-convex-walls steps)
+     (left-section-to-thumb-cluster-convex-connecetors steps)
      (thumb-connecters-polyhedron steps-low) ;renders
        (key-web-connecters-polyhedron steps-low)
-     (EVQWGD001-place EVQWGD001-holder)
+     ;(EVQWGD001-place EVQWGD001-holder)
      (front-wall-connecters-polyhedron steps);renders
       (union
        (difference 
@@ -197,15 +199,15 @@
 (def gx16 (import "GX16-4P.STL"))
  
  (spit "things-low/model-polyhedron-test.scad"
-       (write-scad (union 
+       (write-scad (color D_BLA (union 
                     model-polyhedron
-                    (EVQWGD001-place EVQWGD001)
+                    ;(EVQWGD001-place EVQWGD001)
                     (aviator-place-shape (translate  [9.5 -10.75 (- aviator-plug-connecter-length)] (rdy -90 gx16)))
                     switches
-                    pcb-place
+                   ; pcb-place
                     dsa-caps
                     dsa-thumbcaps
-                    )))
+                    ))))
 
  ;(spit"things-low/multmatrix-test.scad"
  ;(write-scad (thumb-b1-place-multmatrix (cube 5 5 5))))
@@ -772,20 +774,25 @@ switches)))
 (spit "things-low/front-and-thumb-wall-test.scad"
       (write-scad
        (union
-        (front-wall-polyhedron 36)
-        ;(back-left-wall-to-screen 36)
-        (thumb-connecters-polyhedron 12)
+        ;(front-wall-polyhedron 36)
+        (back-left-wall-to-screen 36)
+        (thumb-to-body-connecters-polyhedron 36)
+        ;(thumb-connecters-polyhedron 12)
         ;(polyhedron-thumb-walls 36)
         (polyhedron-thumb-walls-for-convex-cluster 36)
         (left-section-to-thumb-cluster-convex-walls 36)
-        (screen-holder-place-side screen-holder)
-        ;(tps-65-place tps-65-mount)
+        ;(screen-holder-place-side screen-holder)
+        (tps-65-place tps-65-mount)
         ;(e-place EVQWGD001-holder)
         ;(e-place EVQWGD001)
         (left-section-to-thumb-cluster-convex-connecetors 36)
+        (right-side-polyhedron 36)
+        (key-web-connecters-polyhedron 12)
+        (thumb-connecters-polyhedron 12)
         key-holes
         thumb-type
-        dsa-thumbcaps) 
+        dsa-thumbcaps
+        ) 
        )
       )
 
