@@ -2,7 +2,13 @@
 
 This is a fork of the [Dactyl-ManuForm](https://github.com/tshort/dactyl-keyboard). The Dactyl-Manuform is a fork of the [Dactyl](https://github.com/adereth/dactyl-keyboard) with the thumb cluster from [ManuForm](https://github.com/jeffgran/ManuForm).
 
-Build log: https://www.beekeeb.com/dactyl-manuform-mini-mechanical-keyboard-build-log/
+# Custom Dactyl Mini
+A Dactyl Mini completely reworked to use Affine Transformations, Bezier Curves and splines and Openscads Polyhedrons to build most of the model.
+
+It has per column Stagger, Splay, Curvature and tilt along with a "flatter" thumb cluster
+
+It also supports a tps-65 trackpad, st7789 screen, GX16 connecters for split transport and a rp2040 plus board
+![custom dactyl mini](images/finalJPG.JPG)
 
 ## Forks
 
