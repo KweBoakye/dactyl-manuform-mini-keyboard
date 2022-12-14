@@ -6,13 +6,14 @@
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.dovetail :refer :all]
+            [dactyl-keyboard.tps-65 :refer :all]
             ))
 
 
-(def vybronics-vl91022-x-axis 22.7)
-(def vybronics-vl91022-y-axis 9.1)
+(def vybronics-vl91022-x-axis 23.1)
+(def vybronics-vl91022-y-axis 10.1)
 (def vybronics-vl91022-z-axis 10.1)
-(def tolerance 0.1)
+(def tolerance 0.4)
 (def vybronics-vl91022-subtraction-x-axis (+ vybronics-vl91022-x-axis tolerance))
 (def vybronics-vl91022-subtraction-y-axis (+ vybronics-vl91022-y-axis tolerance))
 (def vybronics-vl91022-subtraction-z-axis (+ vybronics-vl91022-z-axis tolerance))
@@ -34,6 +35,10 @@
   (->>
    (cube vybronics-vl91022-subtraction-x-axis vybronics-vl91022-subtraction-y-axis vybronics-vl91022-subtraction-z-axis)
    (translate [0 0 (/ vybronics-vl91022-subtraction-z-axis 2)])))
+
+(def vybronics-vl91022-mount-hole-cover 
+   (cube vybronics-vl91022-x-axis vybronics-vl91022-y-axis tps-65-depth)
+   )
 
 (def top-subtraction
   (->> 
@@ -67,7 +72,8 @@
         ]
         (union
          curved-poly
-         holder-back 
+         holder-back
+         
          (mirror [1 0 0]
                  curved-poly
                  holder-back
@@ -92,6 +98,10 @@
 (def tooth-height 2)
 (def tooth-clearance 0.5)
 (def tooth-settings [tooth-count tooth-height tooth-clearance])
+(def vybronics-vl91022-support-bar
+  (->> 
+   (cube tps-65-mount-length vybronics-vl91022-mount-y-axis  tps-65-depth)
+   (translate [0 0   (+ (/ tps-65-depth -2)  (+ tps-65-trackpad-only-thickness tps-65-depth-tolerance))])))
 (def vybronics-vl91022-mount 
   (let [
         ]
@@ -100,7 +110,10 @@
      ;(-# vybronics-vl91022-body)
      holder 
       vybronics-vl91022-mount-body 
-      )
+     vybronics-vl91022-support-bar
+     (translate [0 0 (- tps-65-depth)]vybronics-vl91022-support-bar)
+     )
+     (translate [0 0 -4] vybronics-vl91022-mount-body-subtract)
      vybronics-vl91022-mount-body-subtract
      )
 ;;     (difference

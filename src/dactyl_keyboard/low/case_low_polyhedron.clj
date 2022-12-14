@@ -57,12 +57,12 @@
                                  [(+ tps-65-corner-radius 0.05)  (+ tps-65-corner-radius 0.05) (/ web-thickness -2)]))
 
 (def  tps-65-mid-right-outer    (transform-position
-                                 (partial tps-65-translate-and-place-at-position [(- (/ tps-65-width 2) tps-65-corner-radius),
+                                 (partial tps-65-translate-and-place-at-position [(- (/ tps-65-mount-width 2) tps-65-corner-radius),
                                                                                   0,
                                                                                   0])
                                  [(+ tps-65-corner-radius 0.05)  0 0]))
 (def  tps-65-mid-right-inner    (transform-position
-                                 (partial tps-65-translate-and-place-at-position [(- (/ tps-65-width 2) tps-65-corner-radius),
+                                 (partial tps-65-translate-and-place-at-position [(- (/ tps-65-mount-width 2) tps-65-corner-radius),
                                                                                   0,
                                                                                   0])
                                  [(+ tps-65-corner-radius 0.05)  0 (/ web-thickness -2)]))
@@ -83,12 +83,12 @@
                                [(- (+ tps-65-corner-radius 0.05))  (+ tps-65-corner-radius 0.05) (- (/ web-thickness 2))]))
 
 (def tps-65-mid-left-outer    (transform-position
-                               (partial tps-65-translate-and-place-at-position [(- tps-65-corner-radius (/ tps-65-width 2)),
+                               (partial tps-65-translate-and-place-at-position [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
                                                                                 0,
                                                                                 0])
                                [(- (+ tps-65-corner-radius 0.05))  0 0]))
 (def tps-65-mid-left-inner    (transform-position
-                               (partial tps-65-translate-and-place-at-position [(- tps-65-corner-radius (/ tps-65-width 2)),
+                               (partial tps-65-translate-and-place-at-position [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
                                                                                 0,
                                                                                 0])
                                [(- (+ tps-65-corner-radius 0.05))  0 (- (/ web-thickness 2))]))
@@ -150,6 +150,39 @@
 (def screen-holder-bottom-right-outside-floor-point (assoc (vec screen-holder-bottom-right-outside-point) 2 0))
 (def screen-holder-bottom-left-inside-floor-point (assoc (vec screen-holder-bottom-left-inside-point) 2 0))
 (def screen-holder-bottom-right-inside-floor-point (assoc (vec screen-holder-bottom-right-inside-point) 2 0))
+;;  (defn tps-65-outside-control-points-1 [steps] (bezier-linear tps-65-top-right-outer tps-65-mid-right-outer  steps))
+;; (defn tps-65-outside-points-1 [steps] (bezier-linear tps-65-top-left-outer tps-65-mid-left-outer steps))
+;; (defn thumb-bl-tl [steps] (wall-brace-polyhedron-points thumb-bl-place -1 0 "tl"  :degrees steps))
+;; ;[thumb-bl-tr (wall-brace-polyhedron-points thumb-bl-place 0 -1 "tr"  :degrees steps)]
+;; (defn thumb-br-tl [steps] (wall-brace-polyhedron-points thumb-br-place -1 0 "tl"  :degrees steps))
+
+;; (defn left-section-to-thumb-cluster-convex-walls-top-outside [steps] (reverse (catmull-rom-spline-curve
+;;                                                                  ((thumb-br-tl steps) :web-post-position-top)
+;;                                                                  ((thumb-bl-tl steps) :web-post-position-top)
+;;                                                                  screen-holder-top-right-outside-point
+;;                                                                  screen-holder-top-left-outside-point
+;;                                                                  steps
+;;                                                                  :alpha-type :centripetal :t1 0.7 :t2 0.9)))
+;; (defn left-section-to-thumb-cluster-convex-walls-bottom-outside [steps] (reverse (catmull-rom-spline-curve
+;;                                                                           ((thumb-br-tl steps) :wall-locate3-point-floor)
+;;                                                                           ((thumb-bl-tl steps) :wall-locate3-point-floor)
+;;                                                                           screen-holder-bottom-right-outside-floor-point
+;;                                                                           screen-holder-bottom-left-outside-floor-point
+;;                                                                           steps
+;;                                                                           :alpha-type :centripetal :t1 0.7 :t2 0.9)))
+;; (defn outside-points-1 [steps] (into [] (apply concat
+;;                                           (for [index (range 0 (inc steps))
+;;                                                 :let [control-points (tps-65-outside-control-points-1 steps)
+;;                                                       points (tps-65-outside-points-1 steps)
+;;                                                       left-section-to-thumb-cluster-convex-walls-top-outside-points (left-section-to-thumb-cluster-convex-walls-top-outside steps)
+;;                                                       left-section-to-thumb-cluster-convex-walls-bottom-outside-points (left-section-to-thumb-cluster-convex-walls-bottom-outside steps)]] 
+;;                                             (catmull-rom-spline-curve
+;;                                              (nth control-points index)
+;;                                              (nth points index)
+;;                                              (nth left-section-to-thumb-cluster-convex-walls-top-outside-points index)
+;;                                              (nth left-section-to-thumb-cluster-convex-walls-bottom-outside-points index)
+;;                                              steps
+;;                                              :alpha-type :centripetal :t1 0.7 :t2 0.9)))))
 (defn back-left-wall-to-screen [steps & {:keys [bottom-plate] :or {bottom-plate false}}]
   (let [half-steps1 (if (even? steps) (/ steps 2) (/ (inc steps) 2))
         half-steps2 (if (even? steps) (/ steps 2) (/ (dec steps) 2))
@@ -324,7 +357,7 @@
                                                                                             (calculate-point-between-points (tps-65-top-right-points :web-post-position-bottom) tps-65-top-middle-inner [0 0 0])
                                                                                             (calculate-point-between-points (tps-65-top-right-points :wall-locate-2-top) tps-65-top-middle-control-point-inner-flat control-vector)
                                                                                             (calculate-point-between-points (tps-65-top-right-points :wall-locate-2-bottom) screen-holder-top-left-inside-point control-vector)
-                                                                                            (calculate-point-between-points (tps-65-top-right-points :wall-locate-2-bottom-floor) screen-holder-bottom-left-inside-floor-point [0 0 0])
+                                                                                            (calculate-point-between-points (tps-65-top-right-points :wall-locate-2-bottom-floor) screen-holder-bottom-left-inside-floor-point control-vector)
                                                                                             steps)
                                                                             mid-curves (concat
                                                                                         (drop-last (bezier-quadratic
@@ -388,7 +421,10 @@
                                                                                                              :let [tps-65-points (bezier-linear tps-65-top-left-inner-with-same-z-as-screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
                                                                                                                                                 tps-65-top-middle-inner   steps)
                                                                                                      ;control-points (bezier-linear tps-65-top-left-control-point-inner tps-65-top-middle-control-point-inner   steps)
-                                                                                                                   screen-holder-inner-points (bezier-linear screen-holder-inside-point-with-same-y-as-tps-65-top-left-inner screen-holder-top-left-inside-point steps)]]
+                                                                                                                   screen-holder-inner-points (bezier-linear 
+                                                                                                                                               tps-65-top-left-inner-with-same-z-as-screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+                                                                                                                                               ;screen-holder-inside-point-with-same-y-as-tps-65-top-left-inner
+                                                                                                                                                             screen-holder-top-left-inside-point steps)]]
                                                                                                          (bezier-linear
                                                                                                           (nth tps-65-points index)
                                                                                             ;(nth control-points index)
@@ -398,11 +434,12 @@
                                                                       (generate-bezier-along-bezier-polyhedron-faces
                                                                        tps-65-screen-side-bezier-along-bezier-point-outer
                                                                        tps-65-screen-side-bezier-along-bezier-point-inner steps))
-        tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-polyhedron (polyhedron (concat tps-65-screen-side-bezier-along-bezier-middle-to-right-outer-points tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-inner-points)
-                                                                                                    (generate-bezier-along-bezier-polyhedron-faces
-                                                                                                     tps-65-screen-side-bezier-along-bezier-middle-to-right-outer-points
-                                                                                                     tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-inner-points
-                                                                                                     steps))
+        tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-polyhedron (generate-bezier-along-bezier-polyhedron tps-65-screen-side-bezier-along-bezier-middle-to-right-outer-points tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-inner-points steps) 
+        ;; (polyhedron (concat tps-65-screen-side-bezier-along-bezier-middle-to-right-outer-points tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-inner-points)
+        ;;                                                                                             (generate-bezier-along-bezier-polyhedron-faces
+        ;;                                                                                              tps-65-screen-side-bezier-along-bezier-middle-to-right-outer-points
+        ;;                                                                                              tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-inner-points
+        ;;                                                                                              steps))
         front-points-count (count tps-65-top-right-to-screen-holder-outer)
         back-points-count (count tps-65-top-right-to-screen-holder-inner)
         front-points-start 0
@@ -426,8 +463,22 @@
         ;;                             (for [index (range 0 (- (count top-upper-curve-points-flattend) steps 1))]
         ;;                               [index (inc index) (+ (inc index) steps) (+ index steps)]))
         ;; top-upper-curve-polyhedron (polyhedron top-upper-curve-points-flattend top-upper-curve-faces)
+    
         tps-65-top-right-to-screen-holder-outer-floor-points (reverse (filter #(= (nth % 2) 0.0) tps-65-top-right-to-screen-holder-outer))
-        polyhedrons (union
+        polyhedrons (union 
+                    ;;  (chained-hull-for-two-lists (plot-bezier-points
+                    ;;                               (bezier-cubic
+                    ;;                               screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
+                    ;;                               screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+                    ;;                               tps-65-top-left-control-point-outer
+                    ;;                               tps-65-top-left-outer
+                    ;;                               steps)
+                    ;;                               (sphere 0.001)
+                    ;;                               ) 
+                    ;;                              (plot-bezier-points (reverse (take (inc steps) (outside-points-1 steps))) (sphere 0.001))
+                    ;;                              steps
+                    ;;                              )
+                     
                      tps-65-screen-side-bezier-along-bezier-middle-to-screen-holder-right-polyhedron
                      (polyhedron  (concat tps-65-top-right-to-screen-holder-outer  tps-65-top-right-to-screen-holder-inner)
                                   (into [] (concat
@@ -438,7 +489,8 @@
                                             (bezier-along-bezier-polyhedron-generate-side-reverse-3  back-points-start (+ 0  steps)  steps (inc steps))
                                             (bezier-along-bezier-polyhedron-generate-side-reverse-3  front-points-start (+ back-points-start   steps)   steps  (inc steps))
                    ;(bezier-along-bezier-polyhedron-generate-side  front-points-start  back-points-start steps)
-                                            ))))]
+                                            )))
+                     )]
     (if (true? bottom-plate) tps-65-top-right-to-screen-holder-outer-floor-points polyhedrons)
     ;(println top-bezier-points) 
 
@@ -523,12 +575,12 @@
 
         EVQWGD001-mount-bottom-right-outside-floor (translate-to-floor EVQWGD001-mount-bottom-right-outside)
         EVQWGD001-mount-bottom-right-inside-floor (translate-to-floor EVQWGD001-mount-bottom-right-inside)
-        thumb-bl-tl-outside (transform-position
+        thumb-bl-tthumb-bl-to-tps-65-bottom-leftside (transform-position
                              (partial thumb-bl-place) (mapv + (wall-locate3-for-polyhedron-point -1 0) curve-post-tl-translation-vector curve-post-translation-vector [(/ curve-post-size 2) (/ curve-post-size 2) (- oled-holder-thickness curve-post-size)]))
-        thumb-bl-tl-inside (transform-position
+        thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside (transform-position
                             (partial thumb-bl-place) (mapv + (wall-locate2 -1 0) oled-post-tl-translation-vector oled-translation-vector [(/ oled-post-size 2) (/ oled-post-size 2)  0]))
-        thumb-bl-tl-outside-floor (assoc (vec thumb-bl-tl-outside) 2 0)
-        thumb-bl-tl-inside-floor (assoc (vec thumb-bl-tl-inside) 2 0)
+        thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor (assoc (vec thumb-bl-tthumb-bl-to-tps-65-bottom-leftside) 2 0)
+        thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-floor (assoc (vec thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside) 2 0)
         thumb-bl-tl-web-post-bottom (transform-position (partial thumb-bl-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
         thumb-bl-tr-web-post-top (transform-position (partial thumb-bl-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
         thumb-bl-tr-web-post-bottom (transform-position (partial thumb-bl-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
@@ -541,8 +593,8 @@
                                           (mapv + oled-translation-vector [(/ oled-post-size 2) (/ oled-post-size 2) (/ oled-holder-thickness 2)]))
 
                                          (transform-position
-                                          (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2))
-                                                                                           (/ (- (/ tps-65-length 2) tps-65-corner-radius) 2)
+                                          (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2))
+                                                                                           (/ (- (/ tps-65-mount-length 2) tps-65-corner-radius) 2)
                                                                                            0] (- tps-65-mount-corner-radius)  0)
                                           (mapv + oled-translation-vector [(/ oled-post-size 2) 0 (/ oled-holder-thickness 2)]))
                                          steps)
@@ -551,8 +603,8 @@
 
 
                                                (transform-position
-                                                (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2))
-                                                                                                 (/ (- (/ tps-65-length 2) tps-65-corner-radius) 2)
+                                                (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2))
+                                                                                                 (/ (- (/ tps-65-mount-length 2) tps-65-corner-radius) 2)
                                                                                                  0] (- tps-65-mount-corner-radius)  0)
                                                 (mapv + oled-translation-vector [(/ oled-post-size 2) 0 (/ oled-holder-thickness -2)]))
                                                (transform-position
@@ -562,8 +614,8 @@
         trackpad-thumb-side-points-right (bezier-linear
                                           (nth trackpad-thumb-side-points-left  steps)
                                           ;; (transform-position
-                                          ;;  (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2))
-                                          ;;                                                   (/ (- (/ tps-65-length 2) tps-65-corner-radius) 2)
+                                          ;;  (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2))
+                                          ;;                                                   (/ (- (/ tps-65-mount-length 2) tps-65-corner-radius) 2)
                                           ;;                                                   0] (- tps-65-mount-corner-radius)  0)
                                           ;;  (mapv + oled-translation-vector [(/ oled-post-size -2) 0 (/ oled-holder-thickness 2)]))
 
@@ -577,8 +629,8 @@
                                                  (mapv + oled-translation-vector [0.4 (/ oled-post-size -2) (/ oled-holder-thickness -2)]))
 
                                                 (transform-position
-                                                 (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2))
-                                                                                                  (/ (- (/ tps-65-length 2) tps-65-corner-radius) 2)
+                                                 (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2))
+                                                                                                  (/ (- (/ tps-65-mount-length 2) tps-65-corner-radius) 2)
                                                                                                   0] (- tps-65-mount-corner-radius)  0)
                                                  (mapv + oled-translation-vector [(/ oled-post-size 2) 0 (/ oled-holder-thickness -2)]))
                                                 steps)
@@ -592,10 +644,10 @@
         bottom-inside-control-point (mapv + EVQWGD001-mount-bottom-right-inside [0 -2 0] (mapv (fn [point] (/ point 2)) (mapv - screen-holder-bottom-right-inside-floor-point EVQWGD001-mount-bottom-right-inside)))
         screen-holder-bottom-right-outside-floor-to-EVQWGD001-mount-bottom-right-floor-outside-control (calculate-point-between-points screen-holder-bottom-right-outside-floor-point EVQWGD001-mount-bottom-right-inside-floor [0 -2 0])
         screen-holder-bottom-right-inside-floor-to-EVQWGD001-mount-bottom-right-floor-inside-control (calculate-point-between-points screen-holder-bottom-right-inside-floor-point EVQWGD001-mount-bottom-right-inside-floor [0 -2 0])
-        EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tl-outside-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-outside thumb-bl-tl-outside [0 -2 0])
-        EVQWGD001-mount-bottom-right-inside-to-thumb-bl-tl-inside-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-inside thumb-bl-tl-inside [0 -2 0])
-        EVQWGD001-mount-bottom-right-outside-floor-to-thumb-bl-tl-outside-floor-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-outside-floor thumb-bl-tl-outside-floor [0 -2 0])
-        EVQWGD001-mount-bottom-right-inside-floor-to-thumb-bl-tl-inside-floor-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-inside-floor thumb-bl-tl-inside-floor [0 -2 0])
+        EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-outside thumb-bl-tthumb-bl-to-tps-65-bottom-leftside [0 -2 0])
+        EVQWGD001-mount-bottom-right-inside-to-thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-inside thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside [0 -2 0])
+        EVQWGD001-mount-bottom-right-outside-floor-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-outside-floor thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor [0 -2 0])
+        EVQWGD001-mount-bottom-right-inside-floor-to-thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-floor-control-point (calculate-point-between-points EVQWGD001-mount-bottom-right-inside-floor thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-floor [0 -2 0])
         EVQWGD001-mount-top-right-outside-to-thumb-bl-tr-web-post-top-control-point (calculate-point-between-points EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top [0 1 0])
         EVQWGD001-mount-top-right-inside-to-thumb-bl-tr-web-post-bottom-control-point (calculate-point-between-points EVQWGD001-mount-top-right-inside thumb-bl-tr-web-post-bottom [0 1 0])
         EVQWGD001-mount-points (concat (bezier-quadratic screen-holder-top-right-outside-point upper-outside-control-point EVQWGD001-mount-top-left-outside (/ steps 2))
@@ -608,15 +660,15 @@
                                                                       (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset)
                                                                       (mapv + oled-translation-vector [(/ oled-post-size -2) (/ oled-post-size -2) (/ oled-holder-thickness 2)]))
                                                                      (transform-position
-                                                                      (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2))
-                                                                                                                       (/ (- (/ tps-65-length 2) tps-65-corner-radius) 2)
+                                                                      (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2))
+                                                                                                                       (/ (- (/ tps-65-mount-length 2) tps-65-corner-radius) 2)
                                                                                                                        0] (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset)
                                                                       (mapv + oled-translation-vector [(/ oled-post-size -2) (/ oled-post-size -2) (/ oled-holder-thickness 2)]))
                                                                      steps)
         thumb-side-trackpad-to-EVQWGD001-linear-control-points-right (bezier-linear
                                                                       (transform-position
-                                                                       (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2))
-                                                                                                                        (/ (- (/ tps-65-length 2) tps-65-corner-radius) 2)
+                                                                       (partial tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2))
+                                                                                                                        (/ (- (/ tps-65-mount-length 2) tps-65-corner-radius) 2)
                                                                                                                         0] (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset)
                                                                        (mapv + oled-translation-vector [(/ oled-post-size -2) (/ oled-post-size -2) (/ oled-holder-thickness 2)]))
                                                                       (transform-position
@@ -632,7 +684,7 @@
 
         thumb-bl-tl-curve (map #(transform-position
                                  (partial thumb-bl-place) %)  (fillet-about-point -1 0 steps (mapv +  curve-post-tl-translation-vector curve-post-translation-vector [(/ curve-post-size -2) (/ curve-post-size 2) (+ curve-post-size)])))
-        EVQWGD001-mount-bottom-right-outside-to-thumb-bl-outside (bezier-quadratic  EVQWGD001-mount-bottom-right-outside (calculate-point-between-points EVQWGD001-mount-bottom-right-outside thumb-bl-tl-outside [0 1 0]) thumb-bl-tl-outside  steps)
+        EVQWGD001-mount-bottom-right-outside-to-thumb-bthumb-bl-to-tps-65-bottom-leftside (bezier-quadratic  EVQWGD001-mount-bottom-right-outside (calculate-point-between-points EVQWGD001-mount-bottom-right-outside thumb-bl-tthumb-bl-to-tps-65-bottom-leftside [0 1 0]) thumb-bl-tthumb-bl-to-tps-65-bottom-leftside  steps)
         EVQWGD001-mount-bottom-right-outside-to-thumb-bl-web-post-tl (bezier-linear
                                                                       EVQWGD001-mount-bottom-right-outside
                                                                       (transform-position (partial thumb-bl-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
@@ -711,10 +763,10 @@
                                                                                                                steps))))
 
 
-        ;;          EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tl-outside-points (bezier-quadratic EVQWGD001-mount-bottom-right-outside )
-;;  EVQWGD001-mount-bottom-right-inside-to-thumb-bl-tl-inside-points (bezier-quadratic)
-;;  EVQWGD001-mount-bottom-right-outside-floor-to-thumb-bl-tl-outside-floor-points (bezier-quadratic)
-;;  EVQWGD001-mount-bottom-right-inside-floor-to-thumb-bl-tl-inside-floor-points (bezier-quadratic)
+        ;;          EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-points (bezier-quadratic EVQWGD001-mount-bottom-right-outside )
+;;  EVQWGD001-mount-bottom-right-inside-to-thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-points (bezier-quadratic)
+;;  EVQWGD001-mount-bottom-right-outside-floor-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor-points (bezier-quadratic)
+;;  EVQWGD001-mount-bottom-right-inside-floor-to-thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-floor-points (bezier-quadratic)
         upper-points-start 0
         upper-points-end (dec (count screen-holder-top-right-outside-to-EVQWGD001-mount-top-left-outside-points))
         mid-points-size (count screen-holder-bottom-right-outside-to-EVQWGD001-mount-bottom-left-outside-points)
@@ -740,23 +792,23 @@
                                                                                              screen-holder-bottom-right-inside-point EVQWGD001-mount-bottom-right-inside screen-holder-bottom-right-inside-floor-point EVQWGD001-mount-bottom-right-inside-floor
                                                                                              steps)
         EVQWGD001-bottom-right-and-floor-thumb-bl-tl-and-floor-polyhedron (generate-bezier-quadratic-polyhedron-from-points-and-control-vectors
-                                                                           EVQWGD001-mount-bottom-right-outside thumb-bl-tl-outside
-                                                                           EVQWGD001-mount-bottom-right-outside-floor thumb-bl-tl-outside-floor
-                                                                           EVQWGD001-mount-bottom-right-inside thumb-bl-tl-inside
-                                                                           EVQWGD001-mount-bottom-right-inside-floor thumb-bl-tl-inside-floor
+                                                                           EVQWGD001-mount-bottom-right-outside thumb-bl-tthumb-bl-to-tps-65-bottom-leftside
+                                                                           EVQWGD001-mount-bottom-right-outside-floor thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor
+                                                                           EVQWGD001-mount-bottom-right-inside thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside
+                                                                           EVQWGD001-mount-bottom-right-inside-floor thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-floor
                                                                            steps
                                                                            {:outside-upper-control-point-vector [0 1 0] :outside-lower-control-point-vector [0 1 0]
                                                                             :inside-upper-control-point-vector [0 1 0] :inside-lower-control-point-vector [0 1 0]})
         EVQWGD001-mount-bottom-right-to-thumb-bl-polyhedron (generate-polyhedron-from-points
 
                                                              thumb-bl-tl-curve
-                                                             EVQWGD001-mount-bottom-right-outside-to-thumb-bl-outside
+                                                             EVQWGD001-mount-bottom-right-outside-to-thumb-bthumb-bl-to-tps-65-bottom-leftside
 
                                                              (bezier-linear
-                                                              thumb-bl-tl-inside
+                                                              thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside
                                                               thumb-bl-tl-web-post-bottom
                                                               steps)
-                                                             (bezier-quadratic thumb-bl-tl-inside (calculate-point-between-points EVQWGD001-mount-bottom-right-inside thumb-bl-tl-inside  [0 1 0])   EVQWGD001-mount-bottom-right-inside steps)
+                                                             (bezier-quadratic thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside (calculate-point-between-points EVQWGD001-mount-bottom-right-inside thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside  [0 1 0])   EVQWGD001-mount-bottom-right-inside steps)
 
 
 
@@ -921,11 +973,11 @@
         EVQWGD001-mount-bottom-mid-outside-floor (assoc (vec EVQWGD001-mount-bottom-mid-outside) 2 0)
         EVQWGD001-mount-bottom-mid-outside-floor-control-point (mapv + [0 -1 0] EVQWGD001-mount-bottom-mid-outside-floor)
         thumb-bl-tl (wall-brace-polyhedron-circular-curve-points thumb-bl-place -1 0 "tl" :degrees steps)
-        thumb-bl-tl-outside (thumb-bl-tl :outer-points)
-        thumb-bl-tl-inside (thumb-bl-tl :inner-points)
-        thumb-bl-tl-wall-locate3-floor (last thumb-bl-tl-outside)
-        thumb-bl-tl-outside-floor  ((wall-brace-polyhedron-circular-points thumb-bl-place -1 0 "tl" :degrees steps) :circular-point-floor)
-        thumb-bl-tl-inside-floor (assoc (vec thumb-bl-tl-inside) 2 0)
+        thumb-bl-tthumb-bl-to-tps-65-bottom-leftside (thumb-bl-tl :outer-points)
+        thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside (thumb-bl-tl :inner-points)
+        thumb-bl-tl-wall-locate3-floor (last thumb-bl-tthumb-bl-to-tps-65-bottom-leftside)
+        thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor  ((wall-brace-polyhedron-circular-points thumb-bl-place -1 0 "tl" :degrees steps) :circular-point-floor)
+        thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside-floor (assoc (vec thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside) 2 0)
         thumb-bl-tl-web-post-top (transform-position (partial thumb-bl-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
         thumb-bl-tl-web-post-bottom (transform-position (partial thumb-bl-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
         thumb-bl-tr-web-post-top (transform-position (partial thumb-bl-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
@@ -1002,7 +1054,7 @@
         screen-holder-bottom-right-floor-to-thumb-bl-tl-wall-locate3-floor
         (concat  (drop-last (bezier-quadratic screen-holder-bottom-right-outside-floor-point (calculate-point-between-points screen-holder-bottom-right-outside-floor-point EVQWGD001-mount-bottom-mid-outside-floor-control-point [0 -1 0]) EVQWGD001-mount-bottom-mid-outside-floor-control-point steps))
                  (drop-last (bezier-quadratic EVQWGD001-mount-bottom-mid-outside-floor-control-point (calculate-point-between-points EVQWGD001-mount-bottom-mid-outside-floor-control-point thumb-bl-tl-wall-locate3-floor [0 -1 0]) thumb-bl-tl-wall-locate3-floor steps))
-                 (reverse thumb-bl-tl-outside))
+                 (reverse thumb-bl-tthumb-bl-to-tps-65-bottom-leftside))
         screen-holder-outside-right-with-same-z-as-EVQWGD001-top-left-outside (find-point-on-line-using-z screen-holder-top-right-outside-point screen-holder-bottom-right-outside-point (nth EVQWGD001-mount-top-left-outside 2))
         screen-holder-inside-right-wide-with-same-z-as-EVQWGD001-top-left-outside (find-point-on-line-using-z screen-holder-top-right-inside-point-wide screen-holder-bottom-right-inside-point-wide (nth EVQWGD001-mount-top-left-outside 2))
         screen-holder-inside-right-with-same-z-as-EVQWGD001-top-left-inside (find-point-on-line-using-z screen-holder-top-right-inside-point screen-holder-bottom-right-inside-point (nth EVQWGD001-mount-top-left-inside 2))
@@ -1016,7 +1068,7 @@
         (bezier-cubic-through-points screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top (* steps 3) :t1 0.25 :t2 0.75)
         screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tl-web-post-top
         (bezier-cubic-through-points screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top (* steps 3) :t1 0.25 :t2 0.75)
-        screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tl-outside-floor (bezier-linear screen-holder-bottom-right-inside-floor-point thumb-bl-tl-outside-floor (* steps 3))
+        screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor (bezier-linear screen-holder-bottom-right-inside-floor-point thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor (* steps 3))
         a1 (catmull-rom-spline-curve screen-holder-top-right-outside-point screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside steps :t1 0.6 :t2 0.9 :alphaType :chordal)
         a2 (catmull-rom-spline-curve screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top steps :t1 0.5 :t2 0.7)
         a3  (catmull-rom-spline-curve EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top thumb-tl-tl-web-post-top steps :t1 0.5 :t2 0.7 :alphaType :chordal)
@@ -1036,7 +1088,7 @@
                                                                  [(+ (+ tps-65-mount-corner-radius-with-offset 0.05))  (- (+ tps-65-corner-radius 0.05)) 0])
         screen-bottom-to-top-inside-wide (bezier-linear screen-holder-bottom-right-inside-point-wide-floor screen-holder-top-right-inside-point-wide (* steps 2))
         mid2-ctrl (mapv + [0 (+ (* 4 tps-65-mount-corner-radius-with-offset)) -200] tps-65-mount-upper-with-same-x-as-EVQWGD001-mount-top-right-outside)
-        mid2-ctrl-inside (mapv + [0 (+ (* 4 tps-65-mount-corner-radius-with-offset)) -200] tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside)
+        mid2-ctrthumb-bl-tr-to-tps-65-bottom-left-innerside (mapv + [0 (+ (* 4 tps-65-mount-corner-radius-with-offset)) -200] tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside)
         tps-65-top-left-to-screen-holder-top-right-inside-wide-catmull (catmull-rom-spline-curve screen-holder-inside-right-wide-with-same-z-as-EVQWGD001-top-left-outside screen-holder-top-right-inside-point-wide tps-65-mount-top-left-upper tps-65-mount-top-left-upper-catmull-rom-control-point steps :t1 0.6 :t2 0.7)
         EVQWGD001-mount-left-parallel-floor (find-point-on-line-using-z EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside 0)
         EVQWGD001-mount-right-parallel-floor (find-point-on-line-using-z EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside 0)
@@ -1067,7 +1119,7 @@
         EVQWGD001-mount-top-left-inside-catmull-rom (reverse (catmull-rom-spline-curve EVQWGD001-mount-bottom-left-inside EVQWGD001-mount-top-left-inside tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside (mapv + [0 (+ (* 1 tps-65-mount-corner-radius-with-offset)) 0] tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside) steps :t1 0.6 :t2 0.7 :alphaType :centripetal))
         EVQWGD001-mount-floor-to-bottom-right-inside-catmull-rom (reverse (catmull-rom-spline-curve (mapv + [0 0 -2] EVQWGD001-mount-bottom-right-inside-floor) EVQWGD001-mount-bottom-right-inside-floor EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside steps :t1 0.4 :t2 0.5 :alphaType :centripetal))
         EVQWGD001-mount-bottom-to-top-right-inside-catmull-rom (reverse (catmull-rom-spline-curve EVQWGD001-mount-bottom-right-inside-floor EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside steps :t1 0.5 :t2 0.5 :alphaType :chordal))
-        tps-65-mount-bottom-left-to-EVQWGD001-inside-catmull-rom (reverse (catmull-rom-spline-curve EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside   tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside mid2-ctrl-inside steps :t1 0.7 :t2 0.8))
+        tps-65-mount-bottom-left-to-EVQWGD001-inside-catmull-rom (reverse (catmull-rom-spline-curve EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside   tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside mid2-ctrthumb-bl-tr-to-tps-65-bottom-left-innerside steps :t1 0.7 :t2 0.8))
         screen-bottom-to-top-inside-to-tps-65-top-left-upper (concat (drop-last tps-65-top-left-to-screen-holder-top-right-inside-catmull)  screen-bottom-to-top-inside)
         mid1-inside (concat (drop-last EVQWGD001-mount-top-left-inside-catmull-rom)
                             (drop-last EVQWGD001-mount-bottom-left-top-left-inside-catmull-rom)
@@ -1120,7 +1172,7 @@
                           ;(nth tps-65-mount-top-left-to-bottom-left-web-post-top-control-points index)
                            (nth mid1 index);(nth screen-holder-top-right-inside-point--to-EVQWGD001-mount-top-left-outside-to-EVQWGD001-mount-top-right-outside-to-thumb-bl-tr-web-post-top index)
                            (nth mid2 index) ;(nth screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tl-web-post-top index)
-                           (nth thumb-bl-tl-floor-to-thumb-tl-tl index) ;(nth screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tl-outside-floor index)
+                           (nth thumb-bl-tl-floor-to-thumb-tl-tl index) ;(nth screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor index)
                            (* steps 3)
                            :t1 0.2
                            :t2 0.7))
@@ -1130,7 +1182,7 @@
                            (nth screen-bottom-to-top-inside-to-tps-65-top-left-upper index)
                            (nth mid1-inside index)
                            (nth mid2-inside index)
-                          ;(nth screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tl-outside-floor index)
+                          ;(nth screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor index)
                            (nth thumb-bl-tl-floor-to-thumb-tl-tl-bottom index)
                            (* steps 3)
                            :t1 0.2
@@ -1763,70 +1815,71 @@
         thumb-br-tl (wall-brace-polyhedron-points thumb-br-place -1 0 "tl"  :degrees steps)
         thumb-bl-br (web-post-point thumb-bl-place "br"  :degrees)
         thumb-tl-tl (web-post-point thumb-tl-place "tl"  :degrees)
+        thumb-tl-bl (web-post-point thumb-tl-place "bl"  :degrees)
         thumb-tl-tr (web-post-point thumb-tl-place "tr"  :degrees)
         thumb-tr-tl (web-post-point thumb-tr-place "tl"  :degrees)
         first-column-cornerrow-bl (web-post-point (partial key-place 0 cornerrow) "bl"  :radians)
         first-column-cornerrow-br (web-post-point (partial key-place 0 cornerrow) "br"  :radians)
         tps-65-top-left-inner-higher    (transform-position
-                                  (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-left-position)
-                                  [(- (+ tps-65-corner-radius 0.05))  (+ tps-65-corner-radius 0.05) (- (/ web-thickness 4))])
+                                         (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-left-position)
+                                         [(- (+ tps-65-corner-radius 0.05))  (+ tps-65-corner-radius 0.05) (- (/ web-thickness 4))])
         tps-65-bottom-left-inner-translated (transform-position
-                                (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-left-position)
-                                [0  (- (+ tps-65-corner-radius 0.05)) (- (/ web-thickness 2))])
+                                             (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-left-position)
+                                             [0  (- (+ tps-65-corner-radius 0.05)) (- (/ web-thickness 2))])
         tps-65-outside-control-points-1 (bezier-linear tps-65-top-right-outer tps-65-mid-right-outer  steps)
         tps-65-outside-control-points-2 (bezier-linear tps-65-mid-right-outer tps-65-bottom-right-inner steps)
         tps-65-inside-control-points-1 (bezier-linear tps-65-mid-right-inner  tps-65-top-right-outer steps)
         tps-65-inside-control-points-2 (bezier-linear tps-65-bottom-right-inner tps-65-mid-right-inner  steps)
-        tps-65-outside-points-1 (bezier-linear tps-65-top-left-outer tps-65-mid-left-outer steps)
+        tps-65-outside-points-1 (bezier-linear  tps-65-top-left-outer tps-65-mid-left-outer steps)
         tps-65-outside-points-2 (bezier-linear tps-65-mid-left-outer tps-65-bottom-left-outer steps)
-        tps-65-inside-points-1 (bezier-linear tps-65-mid-left-inner tps-65-top-left-inner-higher  steps)
+        tps-65-inside-points-1 (bezier-linear tps-65-mid-left-inner (mapv + [0 0 0]tps-65-top-left-inner)  steps)
         tps-65-inside-points-2 (bezier-linear tps-65-bottom-left-inner tps-65-mid-left-inner steps)
         left-section-to-thumb-cluster-convex-walls-top-outside (reverse (catmull-rom-spline-curve 
-                                                                (thumb-br-tl :web-post-position-top)
-                                                            (thumb-bl-tl :web-post-position-top) 
-                                                            screen-holder-top-right-outside-point
-                                                                        screen-holder-top-left-outside-point 
-                                                            steps
-                                                            :alpha-type :centripetal :t1 0.7 :t2 0.9))
+                                                                         (thumb-br-tl :web-post-position-top)
+                                                                         (thumb-bl-tl :web-post-position-top) 
+                                                                         screen-holder-top-right-outside-point
+                                                                         screen-holder-top-left-outside-point 
+                                                                         steps
+                                                                         :alpha-type :centripetal :t1 0.7 :t2 0.9))
         left-section-to-thumb-cluster-convex-walls-top-inside  (catmull-rom-spline-curve
-                                                               (thumb-br-tl :web-post-position-bottom) 
-                                                               (thumb-bl-tl :web-post-position-bottom) 
+                                                                (thumb-br-tl :web-post-position-bottom) 
+                                                                (thumb-bl-tl :web-post-position-bottom) 
                                                                 screen-holder-top-right-inside-point
-                                                               screen-holder-top-left-inside-point 
+                                                                screen-holder-top-left-inside-point 
                                                                 steps
                                                                 :alpha-type :centripetal :t1 0.7 :t2 0.9)
         left-section-to-thumb-cluster-convex-walls-bottom-outside (reverse (catmull-rom-spline-curve
-                                                                    (thumb-br-tl :wall-locate3-point-floor)
-                                                                (thumb-bl-tl :wall-locate3-point-floor)
-                                                                screen-holder-bottom-right-outside-floor-point
-                                                                   screen-holder-bottom-left-outside-floor-point
-                                                                   steps
-                                                                :alpha-type :centripetal :t1 0.7 :t2 0.9))
+                                                                            (thumb-br-tl :wall-locate3-point-floor)
+                                                                            (thumb-bl-tl :wall-locate3-point-floor)
+                                                                            screen-holder-bottom-right-outside-floor-point
+                                                                            screen-holder-bottom-left-outside-floor-point
+                                                                            steps
+                                                                            :alpha-type :centripetal :t1 0.7 :t2 0.9))
         
         left-section-to-thumb-cluster-convex-walls-bottom-inside (catmull-rom-spline-curve
                                                                   (thumb-br-tl :wall-locate-2-bottom-floor) 
-                                                                   (thumb-bl-tl :wall-locate-2-bottom-floor)
-                                                                   screen-holder-bottom-right-inside-floor-point
-                                                                 screen-holder-bottom-left-inside-floor-point 
-                                                                   steps
-                                                                   :alpha-type :centripetal :t1 0.7 :t2 0.9)
+                                                                  (thumb-bl-tl :wall-locate-2-bottom-floor)
+                                                                  screen-holder-bottom-right-inside-floor-point
+                                                                  screen-holder-bottom-left-inside-floor-point 
+                                                                  steps
+                                                                  :alpha-type :centripetal :t1 0.7 :t2 0.9)
         thumb-bl-tl-to-thumb-bl-tr-top-outside (bezier-linear (thumb-bl-tl :web-post-position-top) (thumb-bl-tr :web-post-position-top) steps)
         thumb-bl-tl-to-thumb-bl-tr-bottom-outside (bezier-linear (thumb-bl-tl :wall-locate3-point-floor) (thumb-bl-tr :wall-locate3-point-floor) steps)
         thumb-bl-tl-to-thumb-bl-tr-top-inside (bezier-linear  (thumb-bl-tr :web-post-position-bottom) (thumb-bl-tl :web-post-position-bottom) steps)
         thumb-bl-tl-to-thumb-bl-tr-bottom-inside (bezier-linear (thumb-br-tl :wall-locate-2-bottom-floor) (thumb-bl-tl :wall-locate-2-bottom-floor)  steps)
         bottom-outside-points (concat (drop-last left-section-to-thumb-cluster-convex-walls-top-outside) thumb-bl-tl-to-thumb-bl-tr-top-outside)
-        bottom-outside-control-points (concat (drop-last left-section-to-thumb-cluster-convex-walls-bottom-outside)thumb-bl-tl-to-thumb-bl-tr-bottom-outside)
+        bottom-outside-control-points (concat (drop-last left-section-to-thumb-cluster-convex-walls-bottom-outside) thumb-bl-tl-to-thumb-bl-tr-bottom-outside)
         bottom-inside-points (concat (drop-last left-section-to-thumb-cluster-convex-walls-top-inside) thumb-bl-tl-to-thumb-bl-tr-top-inside)
         bottom-inside-control-points (concat (drop-last left-section-to-thumb-cluster-convex-walls-bottom-inside) thumb-bl-tl-to-thumb-bl-tr-bottom-inside)
         outside-points-1 (into [] (apply concat
-                                       (for [index (range 0 (inc steps))]
-                                         (catmull-rom-spline-curve
-                                          (nth tps-65-outside-control-points-1 index)
-                                          (nth tps-65-outside-points-1 index)
-                                          (nth left-section-to-thumb-cluster-convex-walls-top-outside index)
-                                          (nth left-section-to-thumb-cluster-convex-walls-bottom-outside index)
-                                          steps
-                                          :alpha-type :centripetal :t1 0.7 :t2 0.9))))
+                                         (for [index (range 0 (inc steps))]
+                                           (catmull-rom-spline-curve
+                                            (nth tps-65-outside-control-points-1 index)
+                                            (nth tps-65-outside-points-1 index)
+                                            (nth left-section-to-thumb-cluster-convex-walls-top-outside index)
+                                            (nth left-section-to-thumb-cluster-convex-walls-bottom-outside index)
+                                            steps
+                                            :alpha-type :centripetal :t1 0.725 :t2 0.9))))
         outside-points-2 (into [] (apply concat
                                          (for [index (range 0 (inc steps))]
                                            (catmull-rom-spline-curve
@@ -1835,17 +1888,19 @@
                                             (nth thumb-bl-tl-to-thumb-bl-tr-top-outside index)
                                             (nth thumb-bl-tl-to-thumb-bl-tr-bottom-outside index)
                                             steps
-                                            :alpha-type :centripetal :t1 0.7 :t2 0.9))))
+                                            :alpha-type :centripetal :t1 0.725 :t2 0.9))))
         
         inside-points-1 (into [] (apply concat
-                                       (for [index (range 0 (inc steps))]
-                                         (catmull-rom-spline-curve
-                                          (nth tps-65-inside-control-points-1 index)
-                                          (nth tps-65-inside-points-1 index)
-                                          (nth left-section-to-thumb-cluster-convex-walls-top-inside index)
-                                          (nth left-section-to-thumb-cluster-convex-walls-bottom-inside index)
-                                          steps
-                                          :alpha-type :centripetal :t1 0.7 :t2 0.9))))
+                                        (for [index (range 0 (inc steps))]
+                                          (bezier-linear
+                                           ;catmull-rom-spline-curve
+                                           ;(nth tps-65-inside-control-points-1 index)
+                                           (nth tps-65-inside-points-1 index)
+                                           (nth left-section-to-thumb-cluster-convex-walls-top-inside index)
+                                           ;(nth left-section-to-thumb-cluster-convex-walls-bottom-inside index)
+                                           steps
+                                           ;:alpha-type :centripetal :t1 0.71 :t2 0.8
+                                           ))))
         inside-points-2 (into [] (apply concat
                                         (for [index (range 0 (inc steps))
                                               :let [bottom-control-points (reverse thumb-bl-tl-to-thumb-bl-tr-bottom-outside) ]]
@@ -1855,143 +1910,147 @@
                                            (nth thumb-bl-tl-to-thumb-bl-tr-top-inside index)
                                            (nth bottom-control-points index)
                                            steps
-                                           :alpha-type :centripetal :t1 0.7 :t2 0.9))))
+                                           :alpha-type :centripetal :t1 0.8 :t2 0.9))))
         top-left-surface-outer-points (into []
                                             (apply concat
                                                    (for [index (range 0 (inc steps))
                                                          :let [left-side-points (bezier-cubic 
-                                                                                 tps-65-top-left-outer
-                                                                                 tps-65-top-left-control-point-outer
-                                                                                 screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
                                                                                  screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
+                                                                                 screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+                                                                                 tps-65-top-left-control-point-outer 
+                                                                                  tps-65-top-left-outer
                                                                                  steps)
-                                                               right-side-points (take (inc steps) outside-points-1)]]
+                                                               right-side-points (reverse (take (inc steps) outside-points-1))]]
+                                                     (bezier-linear 
+                                                      (nth left-side-points index)
+                                                      (nth right-side-points index) 
+                                                      steps))))
+        top-left-surface-inner-points (into []
+                                            (apply concat
+                                                   (for [index (range 0 (inc steps))
+                                                         :let [left-side-points   (bezier-linear   tps-65-top-left-inner screen-holder-top-right-outside-point steps)
+                                                               ;(map #(mapv + [-0.1 0 0] %) (take-last (inc steps) inside-points-1))
+                                                              ;;  (bezier-linear
+                                                                                 
+                                                              ;;                    screen-holder-inside-point-with-same-y-as-tps-65-top-left-inner
+                                                              ;;                    tps-65-top-left-inner-with-same-z-as-screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+                                                              ;;                    steps)
+                                                               right-side-points (bezier-linear 
+                                                                                  tps-65-top-left-inner
+                                                                                  screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper 
+                                                                                  steps
+                                                                                  )]]
                                                      (bezier-linear 
                                                       (nth right-side-points index)
-                                                     (nth left-side-points index) 
+                                                    (nth left-side-points index)
+                                                      ;tps-65-top-left-inner-with-same-z-as-screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
                                                       steps))))
-         top-left-surface-inner-points (into []
-                                             (apply concat
-                                                    (for [index (range 0 (inc steps))
-                                                          :let [left-side-points (bezier-linear
-                                                                                
-                                                                               screen-holder-inside-point-with-same-y-as-tps-65-top-left-inner
-                                                                               tps-65-top-left-inner-with-same-z-as-screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
-                                                                                  steps)
-                                                                right-side-points (bezier-linear 
-                                                                                               screen-holder-top-right-outside-point
-                                                                                               screen-holder-top-right-inside-point
-                                                                                          
-                                                                                                 steps
-                                                                                                 )]]
-                                                      (bezier-linear
-                                                      (nth right-side-points index)
-                                                       (nth left-side-points index)
-                                                      
-                                                       steps))))
-         l-out (take-last (inc steps) outside-points-2)
-         l-in (reverse (catmull-rom-spline-curve
-               (map + tps-65-bottom-right-inner [0 -2 8])
-               tps-65-bottom-left-inner
-               (thumb-bl-tr :web-post-position-bottom)
-               (thumb-bl-br :bottom)
+        thumb-bl-to-tps-65-bottom-left-outer (take-last (inc steps) outside-points-2)
+        thumb-bl-tr-to-tps-65-bottom-left-inner (reverse (catmull-rom-spline-curve
+                       (map + tps-65-bottom-left-inner [0 -40 -20])
+                       tps-65-bottom-left-inner
+                       (thumb-bl-tr :web-post-position-bottom)
+                       (mapv + [0 -40 20] (thumb-bl-br :top))
+                       steps
+                       :alpha-type :centripetal :t1 0.8 :t2 0.9))
+        thumb-tl-tl-to-tps-65-bottom-left-inner (reverse (catmull-rom-spline-curve
+                       (mapv + tps-65-bottom-left-inner [0 -2 4])
+                       tps-65-bottom-left-inner
+                       (thumb-tl-tl :bottom)
+                       (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
+                       steps
+                       :alpha-type :centripetal :t1 0.7 :t2 0.9))
+        thumb-tl-tl-to-tps-65-bottom-left-outer (catmull-rom-spline-curve
+               tps-65-top-right-outer
+               tps-65-bottom-left-outer
+               (thumb-tl-tl :top)
+               (thumb-tl-bl :top)
                steps
-               :alpha-type :uniform :t1 0.6 :t2 0.9))
-         r-in (reverse (catmull-rom-spline-curve
-               (mapv + tps-65-bottom-left-inner [0 -2 4])
-               tps-65-bottom-left-inner
-               (thumb-tl-tl :bottom)
-               (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
-               steps
-               :alpha-type :centripetal :t1 0.7 :t2 0.9))
-         r-out (catmull-rom-spline-curve
-                tps-65-top-right-outer
-                tps-65-bottom-left-outer
-                (thumb-tl-tl :top)
-                (assoc (thumb-tl-tl :top) 2 0)
-                steps
-                :alpha-type :centripetal :t1 0.7 :t2 0.9)
-         pp (into []
-                  (apply concat
-                         (for [index (range 0 (inc steps))
-                               :let [a (take-last (inc steps) outside-points-2)
-                                     b (catmull-rom-spline-curve 
-                                        tps-65-top-right-outer
-                                        tps-65-bottom-left-outer
-                                        (thumb-tl-tl :top)
-                                        (assoc (thumb-tl-tl :top) 2 0)
-                                        steps
-                                        :alpha-type :centripetal :t1 0.7 :t2 0.9
-                                        ) 
+               :alpha-type :centripetal :t1 0.7 :t2 0.7)
+        thumb-bl-tr-to-thumb-tl-tl-to-tps-65-bottom-left-outer (into []
+                 (apply concat
+                        (for [index (range 0 (inc steps))
+                              :let [a (take-last (inc steps) outside-points-2)
+                                    b (catmull-rom-spline-curve 
+                                       tps-65-top-right-outer
+                                       tps-65-bottom-left-outer
+                                       (thumb-tl-tl :top)
+                                       (assoc (thumb-tl-tl :top) 2 0)
+                                       steps
+                                       :alpha-type :centripetal :t1 0.7 :t2 0.9
+                                       )
                                      ;(bezier-linear tps-65-bottom-left-outer (thumb-tl-tl :top) steps)
-                                     ]]
-                           (bezier-linear 
-                            (nth r-out index)
-                            (nth l-out index) 
-                            steps))))
-         
-         cc (into []
-                  (apply concat
-                         (for [index (range 0 (inc steps))
-                               :let [a (catmull-rom-spline-curve
-                                        tps-65-bottom-right-inner
-                                        tps-65-bottom-left-inner
-                                        (thumb-bl-tr :web-post-position-bottom)
-                                        (thumb-bl-br :bottom)
-                                        steps
-                                        :alpha-type :centripetal :t1 0.7 :t2 0.9) 
+                                    ]]
+                          (bezier-linear 
+                           (nth thumb-tl-tl-to-tps-65-bottom-left-outer index)
+                           (nth thumb-bl-to-tps-65-bottom-left-outer index) 
+                           steps))))
+        
+        thumb-bl-tr-to-thumb-tl-tl-to-tps-65-bottom-left-inner (into []
+                 (apply concat
+                        (for [index (range 0 (inc steps))
+                              :let [a (catmull-rom-spline-curve
+                                       tps-65-bottom-right-inner
+                                       tps-65-bottom-left-inner
+                                       (thumb-bl-tr :web-post-position-bottom)
+                                       (thumb-bl-br :bottom)
+                                       steps
+                                       :alpha-type :centripetal :t1 0.7 :t2 0.9) 
                                      ;(take (inc steps) inside-points-2)
-                                     b (catmull-rom-spline-curve 
-                                        tps-65-bottom-left-inner-translated
-                                        tps-65-bottom-left-inner
-                                        (thumb-tl-tl :bottom)
-                                        (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
-                                        steps
-                                        :alpha-type :centripetal :t1 0.7 :t2 0.9
-                                        ) 
+                                    b (catmull-rom-spline-curve 
+                                       tps-65-bottom-left-inner-translated
+                                       tps-65-bottom-left-inner
+                                       (thumb-tl-tl :bottom)
+                                       (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
+                                       steps
+                                       :alpha-type :centripetal :t1 0.7 :t2 0.9
+                                       )
                                      ;(bezier-quadratic tps-65-bottom-left-inner-translated (calculate-point-between-points tps-65-bottom-left-inner-translated (thumb-tl-tl :bottom) [0 2 0]) (thumb-tl-tl :bottom) steps)
-                                     ]]
-                           (bezier-linear 
-                            (nth r-in index)
-                            (nth l-in index) 
-                            steps))))
+                                    ]]
+                          (bezier-linear 
+                           (nth thumb-tl-tl-to-tps-65-bottom-left-inner index)
+                           (nth thumb-bl-tr-to-tps-65-bottom-left-inner index) 
+                           steps))))
         
         ]
         
-        (union
-         (generate-bezier-along-bezier-polyhedron outside-points-1 inside-points-1  steps)
-        (generate-bezier-along-bezier-polyhedron outside-points-2 inside-points-2 steps)
-         (generate-bezier-along-bezier-polyhedron top-left-surface-outer-points top-left-surface-inner-points steps)
-          ;; (generate-bezier-along-bezier-polyhedron-from-points-list-linear
-          ;;  (take-last (inc steps) outside-points-2)
-          ;;  (bezier-linear (thumb-tl-tr :top) (thumb-tl-tl :top) steps)
-          ;;  (bezier-linear  (thumb-tl-tl :bottom)  (thumb-tl-tr :bottom) steps)
-          ;;  (reverse (take (inc steps) inside-points-2)) 
-          ;;  steps
-          ;; )
-         ;(polyhedron cc (bezier-along-bezier-polyhedron-generate-front-or-back-faces (inc steps) (inc steps) steps))
-         (generate-bezier-along-bezier-polyhedron pp cc steps)
+        
+         
+         (union
+           
+           (generate-bezier-along-bezier-polyhedron outside-points-1 inside-points-1  steps)
+         (generate-bezier-along-bezier-polyhedron outside-points-2 inside-points-2 steps)
+          ;(generate-bezier-along-bezier-polyhedron top-left-surface-outer-points top-left-surface-inner-points steps)
+              (chained-hull-for-two-lists (plot-bezier-points
+                                                  (bezier-cubic
+                                                  screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
+                                                  screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+                                                  tps-65-top-left-control-point-outer
+                                                  tps-65-top-left-outer
+                                                  steps)
+                                                  (sphere 0.001)
+                                                  ) 
+                                                 (plot-bezier-points (reverse (take (inc steps) outside-points-1 )) (sphere 0.001))
+                                                 steps
+                                                 )
+          
+         ; (-# (plot-bezier-points (take-last (inc steps) top-left-surface-outer-points) (sphere 0.1)))
+        ;;(generate-bezier-along-bezier-polyhedron (concat (drop-last  (inc steps) top-left-surface-outer-points) outside-points-1) 
+        ;;                                          (concat (drop-last  (inc steps)   inside-points-1) top-left-surface-inner-points )
+        ;;                                          (inc (* steps 2))) 
+     
+         ;(polyhedron top-left-surface-inner-points (bezier-along-bezier-polyhedron-generate-front-or-back-faces (inc steps) (inc steps) steps))
+         (generate-bezier-along-bezier-polyhedron thumb-bl-tr-to-thumb-tl-tl-to-tps-65-bottom-left-outer thumb-bl-tr-to-thumb-tl-tl-to-tps-65-bottom-left-inner steps)
+         
          (generate-bezier-along-bezier-polyhedron-from-points-list-linear 
           (bezier-linear (first-column-cornerrow-bl :top) (thumb-tl-tr :top) steps)
-          r-out 
+          thumb-tl-tl-to-tps-65-bottom-left-outer 
           (bezier-linear  (thumb-tl-tr :bottom) (first-column-cornerrow-bl :bottom) steps) 
-          r-in 
+          thumb-tl-tl-to-tps-65-bottom-left-inner 
           steps
           )
          
-        ;;  (hull
-        ;;   (key-place 0 cornerrow web-post-bl)
-        ;;   (key-place 0 cornerrow web-post-br)
-        ;;   (thumb-tl-place web-post-tr)
-        ;;   (thumb-tr-place web-post-tl))
-        ;;   (generate-bezier-along-bezier-polyhedron-from-points-linear 
-        ;;    (thumb-tl-tr :top)(first-column-cornerrow-bl :top) 
-        ;;    (thumb-tl-tr :bottom) (first-column-cornerrow-bl :bottom) 
-        ;;  (thumb-tr-tl :top) (first-column-cornerrow-br :top)  
-        ;;    (thumb-tr-tl :bottom) (first-column-cornerrow-br :bottom)
-           
-        ;;    steps
-        ;;   )
+   
          (difference (generate-bezier-along-bezier-polyhedron-from-points-linear
           (first-column-cornerrow-bl :top) (first-column-cornerrow-br :top)  
           (thumb-tl-tr :top) (thumb-tr-tl :top)
@@ -2007,8 +2066,18 @@
          
          ;(translate (first (take-last (inc steps) outside-points-2)) (sphere 1))
         
-         ;(plot-bezier-points (take (inc steps) inside-points-2) (sphere 0.1))
-         ;(plot-bezier-points (take (inc steps) inside-points-2) (sphere 0.1))
+        ;;  (plot-bezier-points (take-last (inc steps) inside-points-1) (sphere 0.1))
+        ;;  (plot-bezier-points (bezier-cubic
+        ;;                       tps-65-top-left-outer
+        ;;                       tps-65-top-left-control-point-outer
+        ;;                       screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+        ;;                       screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
+        ;;                       steps) (sphere 0.1))
+        ;;  (-# (plot-bezier-points (bezier-linear
+        ;;                           screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
+        ;;                           tps-65-top-left-inner-higher
+        ;;                           steps) (sphere 0.1)))
+        ;;  (plot-bezier-points (take (inc steps) outside-points-1) (sphere 0.1))
          ;(plot-bezier-points (take (inc steps) inside-points-2) (sphere 0.1))
         ))) 
 (defn left-section-to-thumb-cluster-convex-walls [steps & {:keys [bottom-plate] :or {bottom-plate false}}]
@@ -2031,11 +2100,11 @@
         thumb-br-tl (wall-brace-polyhedron-curve-points thumb-br-place -1 0 "tl"  :degrees steps)
         outside-points (into [] (apply concat
                                        (for [index (range 0 (inc steps))
-                                             :let [thumb-bl-tl-outside (thumb-bl-tl :outer-points)
-                                                   thumb-bl-bl-outside (thumb-br-tl :outer-points)]]
+                                             :let [thumb-bl-tthumb-bl-to-tps-65-bottom-leftside (thumb-bl-tl :outer-points)
+                                                   thumb-bl-bthumb-bl-to-tps-65-bottom-leftside (thumb-br-tl :outer-points)]]
                                          (catmull-rom-spline-curve
-                                          (nth thumb-bl-bl-outside index)
-                                          (nth thumb-bl-tl-outside index)
+                                          (nth thumb-bl-bthumb-bl-to-tps-65-bottom-leftside index)
+                                          (nth thumb-bl-tthumb-bl-to-tps-65-bottom-leftside index)
                                           (nth screen-holder-right-outside-points index)
                                           (nth screen-holder-left-outside-points index)
                                           steps
@@ -2043,13 +2112,13 @@
 
         inside-points (into [] (apply concat
                                       (for [index (range 0 (inc steps))
-                                            :let [thumb-bl-tl-inside  (reverse (thumb-bl-tl :inner-points))
-                                                  thumb-br-tl-inside  (reverse (thumb-br-tl :inner-points))
+                                            :let [thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside  (reverse (thumb-bl-tl :inner-points))
+                                                  thumb-br-tthumb-bl-tr-to-tps-65-bottom-left-innerside  (reverse (thumb-br-tl :inner-points))
                                                   screen-holder-right-inside-points-reversed (reverse screen-holder-right-inside-points)
                                                   screen-holder-left-inside-points-reversed (reverse screen-holder-left-inside-points)]]
                                         (catmull-rom-spline-curve
-                                         (nth thumb-br-tl-inside index)
-                                         (nth thumb-bl-tl-inside index)
+                                         (nth thumb-br-tthumb-bl-tr-to-tps-65-bottom-left-innerside index)
+                                         (nth thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside index)
                                          (nth screen-holder-right-inside-points-reversed index)
                                          (nth screen-holder-left-inside-points-reversed index)
                                          steps
@@ -2362,51 +2431,52 @@
         third-row-web-post-tl-bottom (key-position 0 2 (mapv + web-post-translation-vector web-post-tl-translation-vector [0 0 (/ web-thickness -2)]))
         third-row-web-post-bl-bottom (key-position 0 2 (mapv + web-post-translation-vector web-post-bl-translation-vector [0 0 (/ web-thickness -2)]))
         number-of-slices 14
-        total-width (+ tps-65-width tps-65-tolerance)
+        total-width (+ tps-65-mount-width tps-65-tolerance)
         max-width-from-zero (/ total-width 2)
-        tps-65-width-slice  (/ total-width number-of-slices)
+        tps-65-mount-width-slice  (/ total-width number-of-slices)
         position-adjustment (fn [upper-or-lower] (mapv + oled-translation-vector
                                                        [0 (+ (tps-radius-compensation-adjust (- tps-65-mount-corner-radius)) (/ oled-post-size 2) -0.1) (/ oled-holder-thickness (cond (= upper-or-lower :upper) 2
                                                                                                                                                                                        (= upper-or-lower :lower) -2))]))
-
+        tps-65-mount-length-adjusted (+ tps-65-mount-length 0.5)
+        tps-65-mount-length-adjusted-bottom (- tps-65-mount-length 2)
         tps-65-point-to-connect-to-top-row-web-post-tl-top (transform-position (partial tps-65-translate-and-place-at-position [max-width-from-zero
-                                                                                                                                (- tps-65-corner-radius (/ tps-65-length 2))
+                                                                                                                                (- tps-65-corner-radius (/ tps-65-mount-length-adjusted 2))
                                                                                                                                 (- plate-thickness)])
                                                                                (position-adjustment :upper))
-        tps-65-point-to-connect-to-top-row-web-post-bl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 4))
-                                                                                                                                (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-top-row-web-post-bl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 4))
+                                                                                                                                (- tps-65-corner-radius (/ tps-65-mount-length-adjusted 2))
                                                                                                                                 (- plate-thickness)])
                                                                                (position-adjustment :upper))
-        tps-65-point-to-connect-to-middle-row-web-post-tl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 5))
-                                                                                                                                   (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-middle-row-web-post-tl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 5))
+                                                                                                                                   (- tps-65-corner-radius (/ tps-65-mount-length-adjusted 2))
                                                                                                                                    (- plate-thickness)]) (position-adjustment :upper))
-        tps-65-point-to-connect-to-middle-row-web-post-bl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 9))
-                                                                                                                                   (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-middle-row-web-post-bl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 9))
+                                                                                                                                   (- tps-65-corner-radius (/ tps-65-mount-length-adjusted 2))
                                                                                                                                    (- plate-thickness)]) (position-adjustment :upper))
-        tps-65-point-to-connect-to-third-row-web-post-tl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 10))
-                                                                                                                                  (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-third-row-web-post-tl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 10))
+                                                                                                                                  (- tps-65-corner-radius (/ tps-65-mount-length-adjusted 2))
                                                                                                                                   (- plate-thickness)]) (position-adjustment :upper))
-        tps-65-point-to-connect-to-third-row-web-post-bl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 14))
-                                                                                                                                  (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-third-row-web-post-bl-top (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 14))
+                                                                                                                                  (- tps-65-corner-radius (/ tps-65-mount-length 2))
                                                                                                                                   (- plate-thickness)]) (position-adjustment :upper))
 
         tps-65-point-to-connect-to-top-row-web-post-tl-bottom (transform-position (partial tps-65-translate-and-place-at-position [max-width-from-zero
-                                                                                                                                   (- tps-65-corner-radius (/ tps-65-length 2))
+                                                                                                                                   (- tps-65-corner-radius (/ tps-65-mount-length-adjusted 2))
                                                                                                                                    (- plate-thickness)]) (position-adjustment :lower))
-        tps-65-point-to-connect-to-top-row-web-post-bl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 4))
-                                                                                                                                   (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-top-row-web-post-bl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 4))
+                                                                                                                                   (- tps-65-corner-radius (/ tps-65-mount-length-adjusted-bottom 2))
                                                                                                                                    (- plate-thickness)]) (position-adjustment :lower))
-        tps-65-point-to-connect-to-middle-row-web-post-tl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 5))
-                                                                                                                                      (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-middle-row-web-post-tl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 5))
+                                                                                                                                      (- tps-65-corner-radius (/ tps-65-mount-length-adjusted-bottom 2))
                                                                                                                                       (- plate-thickness)]) (position-adjustment :lower))
-        tps-65-point-to-connect-to-middle-row-web-post-bl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 6))
-                                                                                                                                      (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-middle-row-web-post-bl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 6))
+                                                                                                                                      (- tps-65-corner-radius (/ tps-65-mount-length-adjusted-bottom 2))
                                                                                                                                       (- plate-thickness)]) (position-adjustment :lower))
-        tps-65-point-to-connect-to-third-row-web-post-tl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 10))
-                                                                                                                                     (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-third-row-web-post-tl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 10))
+                                                                                                                                     (- tps-65-corner-radius (/ tps-65-mount-length-adjusted-bottom 2))
                                                                                                                                      (- plate-thickness)]) (position-adjustment :lower))
-        tps-65-point-to-connect-to-third-row-web-post-bl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-width-slice 14))
-                                                                                                                                     (- tps-65-corner-radius (/ tps-65-length 2))
+        tps-65-point-to-connect-to-third-row-web-post-bl-bottom (transform-position (partial tps-65-translate-and-place-at-position [(- max-width-from-zero (* tps-65-mount-width-slice 14))
+                                                                                                                                     (- tps-65-corner-radius (/ tps-65-mount-length 2))
                                                                                                                                      (- plate-thickness)]) (position-adjustment :lower))
 
         thumb-tl-tl-web-post-top (transform-position (partial thumb-tl-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
@@ -2421,7 +2491,7 @@
                            top-row-web-post-bl-bottom tps-65-point-to-connect-to-top-row-web-post-bl-bottom
                            steps
                            :outside-upper-control-point-vector [0 0 -1] :outside-lower-control-point-vector [0 0 -1]
-                           :inside-upper-control-point-vector [0 0 -1] :inside-lower-control-point-vector [1 0 -1])
+                           :inside-upper-control-point-vector [0 0 0] :inside-lower-control-point-vector [1 0 -1])
         tps-65-to-top-and-middle-row (generate-bezier-along-bezier-polyhedron-from-points-linear
                                       tps-65-point-to-connect-to-top-row-web-post-bl-top top-row-web-post-bl-top
                                       tps-65-point-to-connect-to-middle-row-web-post-tl-top middle-row-web-post-tl-top
@@ -2464,13 +2534,22 @@
                                              thumb-tl-tr-web-post-bottom thumb-tl-tl-web-post-bottom
                                              steps
                                              :outside-upper-control-point-vector [0 0 -1] :outside-lower-control-point-vector [0 0 0]
-                                             :inside-upper-control-point-vector [0 0 -1] :inside-lower-control-point-vector [0 0 0])]
+                                             :inside-upper-control-point-vector [0 0 -1] :inside-lower-control-point-vector [0 0 0])
+        gap-fill (generate-bezier-along-bezier-polyhedron-from-points-linear
+                  tps-65-bottom-right-outer tps-65-point-to-connect-to-top-row-web-post-tl-top
+                  tps-65-bottom-left-outer tps-65-bottom-left-outer
+                  tps-65-point-to-connect-to-top-row-web-post-tl-bottom tps-65-bottom-right-inner 
+                  tps-65-bottom-left-inner tps-65-bottom-left-inner
+                  steps
+                  )
+        ] 
     (union
      tps-65-to-top-row
      tps-65-to-top-and-middle-row
      tps-65-to-middle-row
      tps-65-to-middle-and-third-row
      tps-65-to-third-row
+     gap-fill
      ;tps-65-to-third-row-and-thumb-tl-tl
      )))
 

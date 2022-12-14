@@ -522,7 +522,7 @@
                                                                  (rotate-y-fn tps-65-y-rotation)
        ;(rdy -7.5)
                                                                  (left-wall-plate-place 0 (+ left-wall-y-modifier -3) translate-fn rotate-x-fn rotate-z-fn)
-                                                                 (translate-fn [0 2 tps-65-z-position]))))
+                                                                 (translate-fn [0 3 tps-65-z-position]))))
 
 
 
@@ -604,7 +604,7 @@
                                                                  (rotate-z-fn (- tps-65-z-rotation))
                                                                  (rotate-y-fn -20)
                                                                  (rotate-x-fn -20)
-                                                                 (tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-width 2)),
+                                                                 (tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
                                                                                                           0,
                                                                                                           0] (- tps-65-mount-corner-radius-with-offset)  0
                                                                                                          translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
@@ -687,7 +687,7 @@
    (->> shape
         (rotate-z-fn -90)
         (rotate-y-fn 180)
-        (tps-65-translate-and-place-at-position [10 0 (- (+ tps-65-depth tps-65-depth-tolerance))] translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
+        (tps-65-translate-and-place-at-position [10.5 0 (- (+ (* tps-65-depth 2) tps-65-depth-tolerance tps-65-overlay-thickness))] translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
     ) 
    ) 
   )

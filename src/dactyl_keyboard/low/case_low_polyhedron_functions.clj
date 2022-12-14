@@ -1274,3 +1274,114 @@ web-post-point-top-coordinates (transform (web-post-position-top web-corner-tran
 (defn get-thumb-wall-brace-polyhedron-with-circular [bottom-plate] (if (true? bottom-plate) thumb-wall-brace-polyhedron-with-circular-outer-floor-linear thumb-wall-brace-polyhedron-with-circular))
 (defn get-wall-brace-catmull-rom-spline-fn [bottom-plate] (if (true? bottom-plate) wall-brace-catmull-rom-spline-floor wall-brace-catmull-rom-spline))
 (defn get-collect-fn [bottom-plate] (if (true? bottom-plate) concat union))
+
+(defn place-symbol [file {:keys [height place translation orientation-angle offset scale-x scale-y center z-rotation rotation] 
+                          :or {offset [0 0 0]}}]
+  (let [svg (call :import (format "file = \"%s\"" file) (format "center = %s" center))
+        ]
+    (->> svg 
+         (scale [scale-x scale-y 1]) 
+         (extrude-linear {:height height :center false})
+         (rdz orientation-angle)
+         rotation
+         (rdz z-rotation)
+         (translate (mapv + place offset translation))
+         )
+    )
+  )
+
+(defn place-2d-shape [shape {:keys [height place translation orientation-angle offset scale-x scale-y center z-rotation rotation]
+                          :or {offset [0 0 0]}}]
+  (let []
+    (->> shape
+         (scale [scale-x scale-y 1])
+         (extrude-linear {:height height :center false})
+         (rdz orientation-angle)
+         rotation
+         (rdz z-rotation)
+         (translate (mapv + place offset translation)))))
+
+(defn place-2d-shape-on-case-wall [shape {:keys [height place orientation-angle z-rotation offset scale-x scale-y center position wall-xy-offset]
+                                       :or {height 1 center true  orientation-angle 0 z-rotation 0 wall-xy-offset wall-xy-offset offset [0 0 0]}}]
+  (let [web-corner-translation-vector (get-web-corner-translation-vector position)
+        rotation (case position
+                   "tm" #(rdx -90 %)
+                   "bm" #(rdx 90 %)
+                   "lm" #(rdy -90 %)
+                   "rm" #(rdy 90 %))
+        z (/ (nth place 2) -2)
+        translation-fn (case position
+                         "tm" (fn [vector z-vector] [0 vector z-vector])
+                         "bm" (fn [vector z-vector] [0 (- vector) z-vector])
+                         "lm" (fn [vector z-vector] [(- vector) 0 z-vector])
+                         "rm" (fn [vector z-vector] [vector 0 z-vector]))
+        translation (mapv + web-corner-translation-vector (translation-fn (+ wall-thickness wall-xy-offset) z))]
+    (place-2d-shape shape  {:height height :place place :translation translation
+                        :orientation-angle orientation-angle
+                        :scale-x scale-x :scale-y scale-y :center center
+                        :z-rotation z-rotation :offset offset :rotation rotation})))
+
+(defn place-symbol-on-case-wall [file {:keys [height place orientation-angle z-rotation offset scale-x scale-y center position wall-xy-offset] 
+                                      :or {height 1 center true  orientation-angle 0 z-rotation 0 wall-xy-offset wall-xy-offset offset [0 0 0]}}]
+  (let [web-corner-translation-vector (get-web-corner-translation-vector position)
+        rotation (case position
+                   "tm" #(rdx -90 %)
+                   "bm" #(rdx 90 %)
+                   "lm" #(rdy -90 %)
+                   "rm" #(rdy 90 %)
+                   )
+        z (/ (nth place 2) -2)
+        translation-fn (case position
+                         "tm" (fn [vector z-vector] [0 vector z-vector])
+                         "bm" (fn [vector z-vector] [0 (- vector) z-vector])
+                         "lm" (fn [vector z-vector] [(- vector) 0 z-vector])
+                         "rm" (fn [vector z-vector][vector 0 z-vector])
+                         )
+        translation (mapv + web-corner-translation-vector (translation-fn (+ wall-thickness wall-xy-offset) z))] 
+    (place-symbol file {:height height :place place :translation translation 
+                        :orientation-angle orientation-angle
+                        :scale-x scale-x :scale-y scale-y :center center 
+                        :z-rotation z-rotation :offset offset :rotation rotation})
+    ) 
+  )
+
+ (defn place-symbol-on-thumb-wall [file {:keys [height place orientation-angle z-rotation offset scale-x scale-y center position wall-xy-offset]
+                                         :or {height 1 center true  orientation-angle 0 z-rotation 0 wall-xy-offset wall-xy-offset offset [0 0 0]}}]
+   (let [web-corner-translation-vector (get-web-corner-translation-vector position)
+         rotation (case position
+                    "tm" #(rdx -90 %)
+                    "bm" #(rdx 90 %)
+                    "lm" #(rdy -90 %)
+                    "rm" #(rdy 90 %))
+         z (/ (nth (transform-position place [0 0 0]) 2) -2)
+         translation-fn (case position
+                          "tm" (fn [vector z-vector] [vector 0 z-vector])
+                          "bm" (fn [vector z-vector] [(- vector) 0 z-vector])
+                          "lm" (fn [vector z-vector] [0 (- vector) z-vector])
+                          "rm" (fn [vector z-vector] [0 vector z-vector]))
+         translation (mapv + web-corner-translation-vector (translation-fn (+ wall-thickness wall-xy-offset) z))
+         svg (call :import (format "file = \"%s\"" file) (format "center = %s" center))]
+     (->> svg
+          (scale [scale-x scale-y 1])
+          (extrude-linear {:height height :center false})
+          (rdz orientation-angle)
+          rotation
+          (rdz z-rotation)
+          (translate (mapv + offset translation))
+          (place)
+          )
+     )
+   )
+
+ (defn place-symbol-on-key-wall [file {:keys [height column row orientation-angle z-rotation offset scale-x scale-y center position wall-xy-offset]
+                                          :or {height 1 center true column 0 row 0 orientation-angle 0 z-rotation 0 wall-xy-offset wall-xy-offset offset [0 0 0]}}]
+   (let [place (key-position column row [0 0 0])]
+     
+     (place-symbol-on-case-wall file {:height height :place place
+                         :orientation-angle orientation-angle
+                         :scale-x scale-x :scale-y scale-y :center center
+                         :z-rotation z-rotation :offset offset :wall-xy-offset wall-xy-offset
+                                      :position position}))
+   )
+ 
+

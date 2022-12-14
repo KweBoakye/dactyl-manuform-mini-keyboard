@@ -661,15 +661,15 @@ top-right-corner
 
     (key-place 0 (- cornerrow 1) web-post-bl)
     (key-place 0 cornerrow web-post-tl)
-    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
 
     (key-place 0 cornerrow web-post-tl)
-    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset-mod-neg)  (- tps-65-mount-corner-radius-with-offset-mod-neg) oled-post)
 
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset-mod-neg)  (- tps-65-mount-corner-radius-with-offset-mod-neg) oled-post)
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius)  (- tps-65-mount-corner-radius) oled-post)
-    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
 
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset-mod-neg)  (- tps-65-mount-corner-radius-with-offset-mod-neg) oled-post)
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius)  (- tps-65-mount-corner-radius) oled-post)
@@ -697,28 +697,28 @@ top-right-corner
  
  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset-mod-neg)  (- tps-65-mount-corner-radius-with-offset-mod-neg) oled-post)
  (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-right-position tps-65-mount-corner-radius-with-offset (- tps-65-mount-corner-radius-with-offset) oled-post)
-  (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+  (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
   )
   
-;    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-length 2) tps-65-corner-radius)) 0 0 (- tps-65-mount-corner-radius) oled-post)
+;    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-mount-length 2) tps-65-corner-radius)) 0 0 (- tps-65-mount-corner-radius) oled-post)
 ;(tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset)  (- tps-65-mount-corner-radius-with-offset) oled-post)
 ;    (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-left-position (- tps-65-mount-corner-radius-with-offset)  (- tps-65-mount-corner-radius-with-offset) oled-post)
 
 (triangle-hulls
    (key-place 0 (- cornerrow 1) web-post-bl)
    (key-place 0 (- cornerrow 1) web-post-tl)
-   (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+   (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
 
     (key-place 0 (- cornerrow 1) web-post-tl)
-    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
-    (tps-65-translate-and-place-with-radius-xyz  (/ tps-65-width 3) (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+    (tps-65-translate-and-place-with-radius-xyz  0 (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+    (tps-65-translate-and-place-with-radius-xyz  (/ tps-65-mount-width 3) (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
 
     (key-place 0 (- cornerrow 1) web-post-tl)
     (key-place 0 row-at-top-of-trackpad web-post-bl)
-    (tps-65-translate-and-place-with-radius-xyz  (/ tps-65-width 3) (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+    (tps-65-translate-and-place-with-radius-xyz  (/ tps-65-mount-width 3) (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
 
     (key-place 0 row-at-top-of-trackpad web-post-bl)
-    (tps-65-translate-and-place-with-radius-xyz  (/ tps-65-width 3) (- (- (/ tps-65-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
+    (tps-65-translate-and-place-with-radius-xyz  (/ tps-65-mount-width 3) (- (- (/ tps-65-mount-length 2) tps-65-mount-corner-radius)) 0 0 (- tps-65-mount-corner-radius-with-offset) oled-post)
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-right-position tps-65-mount-corner-radius-with-offset (- tps-65-mount-corner-radius-with-offset) oled-post)
 
     (key-place 0 row-at-top-of-trackpad web-post-bl)
@@ -756,7 +756,7 @@ top-right-corner
 
 (screen-holder-translate-and-place (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  0 oled-post)
 (screen-holder-translate-and-place (/ screen-holder-height 2) (/ (- screen-holder-width) 2)  0 oled-post)
-(tps-65-translate-and-place-with-radius-xyz (- (/ tps-65-width 2) tps-65-corner-radius) 0 0 tps-65-mount-corner-radius 0 oled-post)
+(tps-65-translate-and-place-with-radius-xyz (- (/ tps-65-mount-width 2) tps-65-corner-radius) 0 0 tps-65-mount-corner-radius 0 oled-post)
 )
   )
  
@@ -812,7 +812,7 @@ top-right-corner
    (hull
     (wall-bezier-1-xy (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0) 0 1 wall-xy-offset-thin oled-post)
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-left-position (- tps-65-mount-corner-radius-with-offset-mod)  tps-65-mount-corner-radius-with-offset oled-post)
-    (tps-65-translate-and-place-with-radius [0 (- (/ tps-65-length 2) tps-65-corner-radius) 0] 0  tps-65-mount-corner-radius-with-offset oled-post)
+    (tps-65-translate-and-place-with-radius [0 (- (/ tps-65-mount-length 2) tps-65-corner-radius) 0] 0  tps-65-mount-corner-radius-with-offset oled-post)
     (tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset oled-post)
     ;(wall-bezier-1-xy (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0) 0 1 wall-xy-offset-thin oled-post)
     (screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0 oled-post)
@@ -1193,13 +1193,16 @@ thumb-corners
                                   (key-position column row (map + (wall-locate2  1  0) [(/ mount-width 2) 0 0])))))]
     (->> (screw-insert-shape bottom-radius top-radius height)
          (translate (map + offset [(first position) (second position) (/ height 2)])))))
+; Hole Diameter C: 4.1-4.4
+(def screw-insert-bottom-radius (/ 4.4 2))
+(def screw-insert-top-radius (/ 4.4 2))
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height] 
-  (let [left-section-side (-# (screw-insert 0 0         bottom-radius top-radius height [(+  (- tps-65-length) (/ mount-width 4 ) ) (/ mount-height 8) 0]))
+  (let [left-section-side  (screw-insert 0 0         bottom-radius top-radius height [(+  (- tps-65-mount-length) (/ mount-width 2 ) screw-insert-bottom-radius) (/ mount-height 4) 0])
         ;left-section-bottom (screw-insert 0 lastrow   bottom-radius top-radius height [-50 7 0]) 
         first-col-top (screw-insert 0 0         bottom-radius top-radius height [0 (/ mount-height 3) 0])
-        thumb-bottom-left (screw-insert 0 lastrow   bottom-radius top-radius height [-18 -6.5 0])
-        thumb-bottom-right (screw-insert 1 lastrow         bottom-radius top-radius height [(/ mount-width 3) (/ mount-height 4) 0])
+        thumb-bottom-left (screw-insert 0 lastrow   bottom-radius top-radius height [(- (+ mount-width extra-width)) (- (+ mount-height extra-height screw-insert-bottom-radius)) 0])
+        thumb-bottom-right (screw-insert 1 lastrow         bottom-radius top-radius height [(/ mount-width 2) (/ mount-height 3) 0])
         top-mid (screw-insert 2 0  bottom-radius top-radius height [(/ mount-width -2) (/ mount-height -4) 0])
         top-right (screw-insert lastcol 0         bottom-radius top-radius height [0 (/ mount-height 2) 0])
         bottom-right (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
@@ -1211,7 +1214,7 @@ thumb-corners
      top-mid 
      thumb-bottom-right 
      top-right   
-     ;bottom-right
+     bottom-right
    
          ))
   )
@@ -1219,9 +1222,7 @@ thumb-corners
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)
 
-; Hole Diameter C: 4.1-4.4
-(def screw-insert-bottom-radius (/ 4.4 2))
-(def screw-insert-top-radius (/ 4.4 2))
+
 (def screw-insert-holes  (screw-insert-all-shapes screw-insert-bottom-radius screw-insert-top-radius screw-insert-height))
 
 ; Wall Thickness W:\t1.65

@@ -78,7 +78,7 @@
   )
 
 (defn IS31FL3743A-standoff-place [shape]
-  (translate [-65 -20 0] shape)
+  (translate [-66 -20 0] shape)
   )
 
 

@@ -44,6 +44,31 @@
                :when (check-last-row-middle-and-fourth-keys-only column row)] 
                 (key-place column row MxLEDBitPCB))))
 
+(def MxLEDBitPCB-placed-on-keywells
+  (union
+   (apply union
+         (for [column columns
+               row rows
+               :when (and 
+                      (check-last-row-middle-and-fourth-keys-only column row)
+                      (or (not= column 0) (not= row 2)))]
+           (key-place column row MxLEDBitPCB-holder-legs)))
+   (key-place 0 2 
+              (union
+               MxLEDBitPCB-holder-leg-1
+               MxLEDBitPCB-holder-leg-3 
+               ))
+   ))
+
+(def  MxLEDBitPCB-placed-on-thumbs
+  (union
+   (thumb-tr-place MxLEDBitPCB-holder-legs)
+   (thumb-tl-place MxLEDBitPCB-holder-legs)
+   (thumb-mr-place MxLEDBitPCB-holder-legs)
+   (thumb-bl-place MxLEDBitPCB-holder-legs)
+   (thumb-br-place MxLEDBitPCB-holder-legs)))
+
+
 (def kailh-hotswap-mx 
   (translate [0.75 -4.75 (- plate-thickness)] (import "../parts/Kailh Hotswap MX v22.stl")))
 
@@ -152,9 +177,13 @@
      thumb-type
      ;thumb-connector-type
      key-holes
+     MxLEDBitPCB-placed-on-keywells
+     MxLEDBitPCB-placed-on-thumbs
      (thumb-to-body-connecters-polyhedron steps)
      (left-section-to-thumb-cluster-convex-walls steps)
-     (left-section-to-thumb-cluster-convex-connecetors steps)
+     (difference
+      (left-section-to-thumb-cluster-convex-connecetors steps)
+      (key-place 0 2 MxLEDBitPCB))
      (thumb-connecters-polyhedron steps-low) ;renders
        (key-web-connecters-polyhedron steps-low)
      ;(EVQWGD001-place EVQWGD001-holder)
@@ -179,9 +208,9 @@
                                                 (rdz 120 (binding [*fn* 3] (cylinder 1 (+ tps-65-depth tps-65-depth-tolerance) :center false))))
         )
        ;(color [1 0 0 1] (rp2040-plus-place rp2040-plus-mount))
-      ;; (difference screw-insert-outers
-      ;;        screw-insert-holes
-      ;;        )
+      (difference screw-insert-outers
+             screw-insert-holes
+             )
        (vybronics-vl91022-place vybronics-vl91022-mount)
        (difference
         (cond
@@ -289,7 +318,7 @@
         front-wall-polyhedron-points (front-wall-polyhedron steps :bottom-plate true)
         right-wall-polyhedron-points (right-wall-polyhedron-catmull-rom-spline steps :bottom-plate true)
         bottom-plate-points (concat 
-                             back-wall-polyhedron-points
+                             back-wall-polyhedron-points 
                              left-section-back-points
                              back-left-wall-to-screen-points 
                                   screen-holder-bottom-left-outside-floor-point-and-screen-holder-bottom-right-outside-floor-point
@@ -298,9 +327,25 @@
                              polyhedron-thumb-walls-points
                                     front-wall-polyhedron-points
                                     right-wall-polyhedron-points
-                             )
-    
+                             ) 
+    max-x (apply max (map #(nth % 0) bottom-plate-points))
+    min-x (apply min (map #(nth % 0) bottom-plate-points))
+    x-distance (- max-x min-x)
+    max-y (apply max (map #(nth % 1) bottom-plate-points))
+        min-y (apply min (map #(nth % 1) bottom-plate-points))
+        y-distance (- max-y min-y)
+    max-z (apply max (map #(nth % 2) bottom-plate-points))
+min-z (apply min (map #(nth % 2) bottom-plate-points))
+        ;x-distance (- max-x min-z)
         ] 
+   (println "max-x " max-x)
+   (println "min-x " min-x)
+   (println "x-distance " x-distance)
+   (println "max-y " max-y)
+(println "min-y " min-y)
+   (println "y-distance " y-distance)
+   (println "max-z " max-z)
+(println "min-z " min-z)
    (union 
     (translate [0 0 -1.5](extrude-linear
    {:height 1.5 :center false :convexity 10} 
@@ -309,9 +354,17 @@
 )
   )
 )
-
+(def header  (translate [0 -12 (+ usb-jack-height (* rp2040-plus-thickness 2) 3)](rdz 90 (import "../parts/ImageToStl.com_pin header 1x16 th pitch 2.54mm.stl"))))
 (spit "things-low/bottom-plate-for-polyhedron-model.scad"
-      (write-scad bottom-plate-for-polyhedron-model)
+      (write-scad (union
+                   (difference 
+                    bottom-plate-for-polyhedron-model
+                    (translate [0 0 -10] screw-insert-screw-holes))
+                   (IS31FL3743A-standoff-place IS31FL3743A-fillet-standoffs)
+                   (drv2605l-place drv2605l-standoffs)
+                  (six-pin-ffc-adapter-place six-pin-ffc-adapter-standoffs)
+                 (rp2040-plus-place rp2040-plus-mount) 
+                   ))
       )
 
 
@@ -371,8 +424,18 @@ switches)))
 ;; (spit "things-low/tps-65-mount-cutout.scad"
 ;;       (write-scad tps-65-mount-cutout))
 
-;; (spit "things-low/tps-65-mount-test.scad"
-;;       (write-scad tps-65-mount-test))
+(spit "things-low/tps-65-mount-test.scad"
+      (write-scad (union
+                   (difference
+                   (tps-65-place tps-65-mount)
+                   (tps-65-place tps-65-mount-cutout))
+                   (vybronics-vl91022-place vybronics-vl91022-mount))))
+
+(spit "things-low/tps-65-mount-print-test.scad"
+      (write-scad (difference
+                     tps-65-mount
+                     tps-65-mount-cutout)
+                   ))
 
 ;; (spit "things-low/tps-65-mount-test-2.scad" 
 ;;       (write-scad 
@@ -408,6 +471,8 @@ switches)))
                    
 ;;                    )))
 
+(spit "things-low/vybronics-vl91022-mount-test.scad"
+      (write-scad vybronics-vl91022-mount))
 ;; (spit "things-low/drv2605l.scad"
 ;;       (write-scad drv2605l))
 
@@ -419,23 +484,19 @@ switches)))
 ;;        )
 
 
-;;  (spit "things-low/rp2040-plus-mount-test.scad"
-;;        (write-scad 
-;;         (difference
-;;          (union
+ (spit "things-low/rp2040-plus-mount-test.scad"
+       (write-scad 
+        (difference
+         (union
+           (rp2040-plus-place rp2040-plus-mount) 
+          ;;  (difference
+          ;;   (key-wall-brace-polyhedron 0 0 0 1 "tr" 0 0 0 1 "tl")
+          ;;   (usb-jack-place usb-jack-polyhedron))
+          )
 
-
-;;            (rp2040-plus-place rp2040-plus-mount)
-;;           (-# (rp2040-plus-place rp2040-plus))
-;;            (difference
-;;             (union (for [x (range 0 1)] (key-wall-brace x 0 0 1 oled-post-tl x       0 0 1 oled-post-tr))
-;;                    (for [x (range 1 1)] (key-wall-brace x 0 0 1 oled-post-tl (dec x) 0 0 1 oled-post-tr)))
-;;             (-# usb-jack))
-;;           )
-
-;;          ;(translate [ -40 20 (+ rp2040-plus-mount-height 20)] (cube 30 30 40))
-;;          (translate [0 0 -20] (cube 350 350 40))
-;;          )))
+         ;(translate [ -40 20 (+ rp2040-plus-mount-height 20)] (cube 30 30 40))
+         ;(translate [0 0 -20] (cube 350 350 40))
+         )))
 
 ;;  (spit "things-low/rp2040-plus.scad"
 ;;        (write-scad rp2040-plus))
@@ -446,19 +507,60 @@ switches)))
       (write-scad 
 
 (difference 
- (union
+ ;;(intersection
   
- aviator-assembly-polyhedron
+ 
+    (union
+  aviator-assembly-polyhedron
    (left-section-back 36)
-  )
+    
+    )
+  ;;  (->>
+  ;;        ;(cube 40 35  (* (+ wall-thickness wall-xy-offset) 2) )
+  ;;      (cube 28 30  (* (+ wall-thickness wall-xy-offset) 2))
+  ;;      (translate [-2 0 0])
+  ;;      aviator-place-shape)
+  ;;)
    
  aviator-assembly-diffs
 
  )
+
+
  
 ;(aviator-place-shape (translate  [9.5 -10.75 (- aviator-plug-connecter-length) ] (rdy -90 gx16)))
  
        ))
+
+(spit "things-low/aviator-ring-test.scad"
+      (write-scad
+       (difference
+        (translate [0 0 1.5] (cube 25 23 3))
+        (translate [0 0 0] (binding [*fn* 6] (cylinder (/ (+ aviator-plug-connecter-ring-diameter 4) 2) 3 :center false))))))
+
+(spit "things-low/aviator-assembly-buttons-test.scad"
+      (write-scad
+
+       (difference
+        (intersection
+
+
+         (union
+          aviator-assembly-polyhedron
+          (left-section-back 36))
+         (-# (->>
+         ;(cube 40 35  (* (+ wall-thickness wall-xy-offset) 2) )
+          (cube 11 27  (* (+ wall-thickness wall-xy-offset) 2))
+          (translate [0 -8 0])
+          (aviator-neck-support-place (- aviator-assembly-left-or-right-translation))))
+         )
+
+        aviator-assembly-diffs)
+      
+
+;(aviator-place-shape (translate  [9.5 -10.75 (- aviator-plug-connecter-length) ] (rdy -90 gx16)))
+       ))
+
 ;; (spit "things-low/back-wall-test.scad"
 ;;       (write-scad back-wall)
 ;;       )
@@ -748,15 +850,92 @@ switches)))
         MxLEDBitPCB-holder-legs
         )))
 
-  ;; (spit "things-low/back-wall-polyhedron.scad"
-  ;;       (write-scad (union 
-  ;;                    (difference 
-  ;;                    (back-wall-polyhedron 36)
-  ;;                    (usb-jack-place usb-jack-polyhedron))
-  ;;                    (rp2040-plus-place rp2040-plus-mount)
-  ;;                    (-# (left-section-back 36))
-  ;;                    ))
-  ;;       )
+(spit "things-low/MxLEDBitPCB-holder-legs-test.scad"
+      (write-scad
+       (union
+        MxLEDBitPCB-holder-legs
+        single-plate
+        
+         (-#(->>
+          (difference
+         (cube MxLEDBitPCB-holder-width (+ MxLEDBitPCB-holder-length (* MxLEDBitPCB-holder-leg-thickness 2)) (+ plate-thickness 0.5))
+           (cube (+ keyswitch-width 3) (+ keyswitch-height 3) (+ plate-thickness 0.5)))
+           (translate [0 0 (+ (/ plate-thickness 2) (/ MxLEDBitPCB-holder-leg-z-coordinate 4) 0.3)]))) 
+        )
+       ))
+
+(def abe-dua "../svg/Abe_dua.svg")
+(def hw3-me-dua "../svg/HWEMUDUA.svg")
+(def nea-onnim-no-sua-a-ohu "../svg/Nea_onnim_no_sua_a_ohu.svg")
+(def nkyinkyim "../svg/nkyinkyim.svg")
+(def odenkyem "../svg/Odenkyem.svg")
+(def okuafo-pa "../svg/Okuafo pa.svg")
+
+  (spit "things-low/back-wall-polyhedron.scad"
+       (let [corner-position (calculate-point-between-points   (assoc screen-holder-top-right-outside-point 2 (/ (nth screen-holder-top-right-outside-point 2) 2))
+                                                               (assoc (transform-position thumb-bl-place web-post-tl-translation-vector) 2 (/ (nth (transform-position thumb-bl-place web-post-tl-translation-vector) 2) 2)) [0 0 0])
+             angle (assoc screen-holder-top-right-outside-point 2 (/ (nth screen-holder-top-right-outside-point 2) 2))
+             ]
+         (write-scad (union 
+                      ;; (place-symbol "../Ananse-Ntontan.svg" {:z-rotation 45 :height 2 :center true :scale-x 0.15 :scale-y 0.15 :rotation #(rdx 90 %)
+                      ;;                                        :place (transform-position thumb-br-place  [0 0 0]) :orientation-angle 0
+                      ;;                                        :translation (mapv + web-post-bm-translation-vector [(- (+ wall-thickness wall-xy-offset)) 0 (/ (nth (transform-position thumb-br-place [0 0 0]) 2) -2)] )})
+                     (place-symbol-on-key-wall "../Ananse-Ntontan.svg" 
+                                               {:column 1 :row 0 :scale-x 0.15 :offset [-2 0 0]
+                                                :scale-y 0.15 :position "tm" :z-rotation 5 })
+                    ;;  (place-symbol-on-case-wall "../Ananse-Ntontan.svg"
+                    ;;                            {:place (transform-position  thumb-br-place [0 0 0]) :scale-x 0.15 :offset [0 -2 0]
+                    ;;                             :scale-y 0.15 :position "bm" :z-rotation 0})
+                     (place-symbol-on-key-wall "../FUNTUNFUNEFU-DENKYEMFUNEFU.svg"
+                                                   {:column 0 :row 0  :offset [-2 0 0]
+                                                    :scale-x 0.10 :scale-y 0.10 :position "tm" :z-rotation 5})
+                     (place-symbol-on-key-wall "../FUNTUNFUNEFU-DENKYEMFUNEFU.svg"
+                                               {:column 4 :row 2  :offset [-2 0 0]
+                                                :scale-x 0.10 :scale-y 0.10 :position "bm" :z-rotation pinky-splay})
+                     (place-symbol-on-key-wall nea-onnim-no-sua-a-ohu
+                                               {:column 4 :row 2  :offset [-2 0 0]
+                                                :scale-x 0.05 :scale-y 0.05 :position "rm" :z-rotation 0})
+                     (place-symbol-on-thumb-wall abe-dua
+                                               {:place thumb-br-place  :offset [(/ mount-width 2) (+ (/ mount-height -2) extra-height) 0]
+                                                :scale-x 0.05 :scale-y 0.05 :position "bm" :z-rotation 0})
+                     (place-symbol-on-thumb-wall hw3-me-dua
+                                                 {:place thumb-br-place  :offset [(+ (/ mount-width -2) extra-width) extra-height 0]
+                                                  :scale-x 0.1 :scale-y 0.1 :position "lm" :z-rotation 0})
+                     (place-symbol-on-thumb-wall "../FUNTUNFUNEFU-DENKYEMFUNEFU.svg"
+                                                 {:place thumb-tr-place  :offset [0 (+ (/ mount-height -2) extra-height)  0]
+                                                  :scale-x 0.05 :scale-y 0.05 :position "rm" :z-rotation 0})
+                     (place-symbol-on-thumb-wall nkyinkyim
+                                                 {:place thumb-mr-place  :offset [(/ mount-width 2) (+ (/ mount-height -2) extra-height) 0]
+                                                  :scale-x 0.05 :scale-y 0.05 :position "bm" :z-rotation 0 })
+                     (place-symbol-on-thumb-wall odenkyem
+                                                 {:height 1.5 :place thumb-bl-place  :offset [(+ (/ mount-width -2) extra-width) (* extra-height 2) 0]
+                                                  :scale-x 0.1 :scale-y 0.1 :position "lm" :z-rotation 0 :orientation-angle -90})
+                      (place-symbol okuafo-pa {:z-rotation -15 :height 2 :center true :scale-x 0.15 :scale-y 0.15 :rotation #(rdx 75 %)
+                                                             :place corner-position :orientation-angle 0
+                                                             :translation (mapv +  [0 -4 0] )})
+                     
+                     ;;  (->>(call :import "file = \"../Ananse-Ntontan.svg\"" "center = true")
+                    ;;   (scale [0.2 0.2 1])
+                    ;;   (extrude-linear {:height 4 :center false})
+                    ;;   (rdx -90)
+                    ;;   (translate (mapv + (key-position 1 0 [0 0 0])  web-post-tm-translation-vector [0 (+ wall-thickness wall-xy-offset ) (/ (nth (key-position 1 0 [0 0 0]) 2) -2)])) 
+                    ;;   )
+                     (difference 
+                      (union 
+                       (back-wall-polyhedron 36)
+                       ;(left-section-back 36)
+                       )
+                      (usb-jack-place usb-jack-polyhedron))
+                     (polyhedron-thumb-walls-for-convex-cluster 36)
+                     (front-wall-polyhedron 36)
+                     (polyhedron-left-section 36)
+                      (left-section-to-thumb-cluster-convex-walls 36)
+                     (right-wall-polyhedron-catmull-rom-spline 36)
+(left-section-to-thumb-cluster-convex-connecetors 36)
+                    ;;  (rp2040-plus-place rp2040-plus-mount)
+                      ;; (left-section-back 36)
+                     )))
+        )
   
 ;;   (spit "things-low/usb-jack-test.scad"
 ;;         (write-scad (union 
@@ -776,22 +955,30 @@ switches)))
        (union
         ;(front-wall-polyhedron 36)
         (back-left-wall-to-screen 36)
-        (thumb-to-body-connecters-polyhedron 36)
+        ;(thumb-to-body-connecters-polyhedron 36)
         ;(thumb-connecters-polyhedron 12)
         ;(polyhedron-thumb-walls 36)
         (polyhedron-thumb-walls-for-convex-cluster 36)
         (left-section-to-thumb-cluster-convex-walls 36)
-        ;(screen-holder-place-side screen-holder)
-        (tps-65-place tps-65-mount)
+        (difference
+         (union 
+          (left-section-back 36)
+          aviator-assembly-polyhedron)
+         aviator-assembly-diffs)
+        (screen-holder-place-side screen-holder)
+         (difference
+          (tps-65-place tps-65-mount)
+          (tps-65-place tps-65-mount-cutout))
         ;(e-place EVQWGD001-holder)
         ;(e-place EVQWGD001)
         (left-section-to-thumb-cluster-convex-connecetors 36)
-        (right-side-polyhedron 36)
-        (key-web-connecters-polyhedron 12)
-        (thumb-connecters-polyhedron 12)
-        key-holes
-        thumb-type
-        dsa-thumbcaps
+        ;(right-side-polyhedron 36)
+        ;(key-web-connecters-polyhedron 12)
+        ;(thumb-connecters-polyhedron 12)
+        ;key-holes
+        ;thumb-type
+         ;dsa-thumbcaps
+        ;(import "../parts/top-left-surface.stl")
         ) 
        )
       )
@@ -896,11 +1083,29 @@ switches)))
 
   ;;           ))))
 
+(spit "things-low/vybronics-vl91022-mount-hole-cover.scad"
+      (write-scad vybronics-vl91022-mount-hole-cover))
 (spit "things-low/currently-editing.scad"
       (write-scad
        (include "front-and-thumb-wall-test.scad"))
       )
 
+
+
+
+(spit "things-low/MxLEDBitPCB-on-keywell.scad"
+      (write-scad 
+       (let [steps-low 8]
+         (union
+        MxLEDBitPCB-placed-on-keywells
+MxLEDBitPCB-placed-on-thumbs
+          (key-place 0 2 MxLEDBitPCB)
+        key-holes
+        (thumb-connecters-polyhedron steps-low) ;renders
+       (key-web-connecters-polyhedron steps-low)
+          thumb-type
+        
+        ))))
 (spit "things-low/right-side-polyhedron.scad"
       (write-scad
        (union

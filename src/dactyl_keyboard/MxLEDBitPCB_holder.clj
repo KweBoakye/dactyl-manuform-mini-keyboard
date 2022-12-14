@@ -75,7 +75,12 @@
     (cube MxLEDBitPCB-holder-leg-thickness MxLEDBitPCB-holder-leg-thickness (/ MxLEDBitPCB-holder-leg-depth 2))
     (translate [0 0 (/ MxLEDBitPCB-holder-leg-depth 4)]))
     MxLEDBitPCB-holder-crush-rib
-    MxLEDBitPCB-holder-leg-hook) 
+    MxLEDBitPCB-holder-leg-hook
+    (->>
+     (cube MxLEDBitPCB-holder-leg-thickness MxLEDBitPCB-holder-leg-thickness (/ MxLEDBitPCB-holder-leg-depth 2)) 
+     (translate [0 0 (- MxLEDBitPCB-holder-leg-z-coordinate)])
+     )
+    ) 
   )
  
 (def MxLEDBitPCB-holder-leg-1

@@ -14,10 +14,10 @@
 (def rp2040-plus-width 21.00)
 (def rp2040-plus-length 51.5)
 (def rp2040-plus-thickness 1.15)
-(def rp2040-plus-pin-below-depth 1.5)
-(def rp2040-plus-usb-connecter-width 8.95)
-(def rp2040-plus-usb-connecter-height 3.6)
-(def rp2040-plus-usb-connecter-length 7.5)
+(def rp2040-plus-pin-below-depth 3)
+(def rp2040-plus-usb-connecter-width 9.5)
+(def rp2040-plus-usb-connecter-height 4)
+(def rp2040-plus-usb-connecter-length 8)
 (def rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge 1)
 (def rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter 6.17)
 (def rp2040-plus-horizontal-distance-from-left-edge-to-usb-connecter (- rp2040-plus-width rp2040-plus-usb-connecter-width rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter))
@@ -39,13 +39,17 @@
 (def rp2040-plus-battery-connecter-width 9.00)
 (def rp2040-plus-battery-connecter-horizontal-distance-from-side-of-board (/ (- rp2040-plus-width rp2040-plus-battery-connecter-width) 2))
 (def rp2040-plus-dupont-pitch 2.54)
-(def rp2040-plus-dupont-margin 0.25)
+(def rp2040-plus-dupont-margin 0.75)
 (def rp2040-plus-dupont-count-per-side 20)
-(def rp2040-plus-dupont-cutout-height 1.35)
+(def rp2040-plus-dupont-cutout-height 2.5)
 (def rp2040-plus-dupont-cutout-width 3)
 (def rp2040-plus-dupont-cutout-length (+ (* rp2040-plus-dupont-pitch rp2040-plus-dupont-count-per-side) (* 2 rp2040-plus-dupont-margin)))
 
-(def rp2040-plus-dupont-cutout [rp2040-plus-dupont-cutout-width rp2040-plus-dupont-cutout-length rp2040-plus-dupont-cutout-height])
+(def rp2040-plus-dupont-cutout 
+  (->>
+   (cube rp2040-plus-dupont-cutout-width rp2040-plus-dupont-cutout-length rp2040-plus-dupont-cutout-height)
+   (translate [0 0 (- (+ rp2040-plus-mount-depth  (/ (- usb-jack-height rp2040-plus-usb-connecter-height) 2)) (/ rp2040-plus-dupont-cutout-height 2))])))
+
 
 
 (def rp2040-plus-body
@@ -60,7 +64,9 @@
    ;(import "USB_Type_C_Female_Connector.stl")
    ;(rdz 180)
    (cube rp2040-plus-usb-connecter-width rp2040-plus-usb-connecter-length rp2040-plus-usb-connecter-height)
-   (translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter) (+ (/ rp2040-plus-length 2) (/ rp2040-plus-usb-connecter-length -2) rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge) (+ (/ rp2040-plus-usb-connecter-height 2) rp2040-plus-thickness)]) 
+   (translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter)
+               (+ (/ rp2040-plus-length 2) (/ rp2040-plus-usb-connecter-length -2) rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge)
+               (+ (/ rp2040-plus-usb-connecter-height 2) rp2040-plus-thickness)]) 
    ;(translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter) (- (/ rp2040-plus-length 2) 4) -1] )
    ))
 ;(- (/ rp2040-plus-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter)
@@ -77,6 +83,11 @@
    (translate [0 (- (/ rp2040-plus-length 2) (/ rp2040-plus-button-cutout-length 2) rp2040-plus-button-cutout-vertical-distance-from-top-of-board) (+ (/ rp2040-plus-button-cutout-height 2) rp2040-plus-thickness)])
    )
   )
+
+(def rp2040-plus-centre-cutout
+  (->>
+   (cube rp2040-plus-button-cutout-width rp2040-plus-length rp2040-plus-button-cutout-height)
+   (translate [0 0 (+ (/ rp2040-plus-button-cutout-height -2)  rp2040-plus-mount-depth  (/ (- usb-jack-height rp2040-plus-usb-connecter-height) 2))])))
 
 (def rp2040-plus-position [0 0 (+ rp2040-plus-mount-depth rp2040-plus-thickness (/ (- usb-jack-height rp2040-plus-usb-connecter-height) 2))])
 (def rp2040-plus
@@ -120,14 +131,29 @@
    )
   )
 
+(def rp2040-plus-usb-c-connecter-wider-cutout
+  (->>
+   ;(import "USB_Type_C_Female_Connector.stl")
+   ;(rdz 180)
+   (cube rp2040-plus-width (* rp2040-plus-usb-connecter-length 2) rp2040-plus-thickness)
+   (translate [0
+               (+ (/ rp2040-plus-length 2) (- rp2040-plus-usb-connecter-length) )
+               (- (+ rp2040-plus-mount-depth  (/ (- usb-jack-height rp2040-plus-usb-connecter-height) 2)) (/ rp2040-plus-thickness 2))])
+   ;(translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter) (- (/ rp2040-plus-length 2) 4) -1] )
+   ))
+
 (def rp2040-plus-mount
   (difference
-   rp2040-plus-mount-body
-   (translate [0 0 (/ (- rp2040-plus-mount-depth rp2040-plus-mount-thickness) 2)] (cube rp2040-plus-width rp2040-plus-length (- rp2040-plus-mount-depth rp2040-plus-mount-thickness)))
+    rp2040-plus-mount-body
+   (translate [(+ (/ rp2040-plus-width -2) (/ rp2040-plus-dupont-cutout-width 2)) 0 0] rp2040-plus-dupont-cutout)
+(translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-dupont-cutout-width 2)) 0 0] rp2040-plus-dupont-cutout)       
+   (translate [0 0 (/ (- rp2040-plus-mount-depth rp2040-plus-mount-thickness) 2)] (cube (- rp2040-plus-width (* rp2040-plus-dupont-cutout-width 2.25)) rp2040-plus-length (- rp2040-plus-mount-depth rp2040-plus-mount-thickness)))
    ;rp2040-plus-cutout
     (translate rp2040-plus-position (cube rp2040-plus-width rp2040-plus-mount-length (+ rp2040-plus-mount-thickness (/ rp2040-plus-thickness 2))))
    rp2040-plus
    rp2040-plus-mount-front-cutout
+   rp2040-plus-centre-cutout
+   rp2040-plus-usb-c-connecter-wider-cutout
    ;(-# rp2040-plus-connecter-cutout)
    )
   )
