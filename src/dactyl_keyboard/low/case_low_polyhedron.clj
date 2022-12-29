@@ -1506,6 +1506,7 @@
 (defn back-wall-polyhedron [steps & {:keys [bottom-plate] :or {bottom-plate false}}]
   (let [key-wall-brace-polyhedron-fn (get-key-wall-brace-polyhedron-fn bottom-plate)
         wall-brace-cubic-fn (get-wall-brace-cubic-fn bottom-plate)
+        wall-brace-quadratic-fn (get-wall-brace-quadratic-fn bottom-plate)
         zero-to-ncols-fn (fn [x] (key-wall-brace-polyhedron-fn x 0 0 1 "tr" x 0 0 1 "tl"))
         two-to-last-col-fn (fn [x]
                              (wall-brace-cubic-fn
@@ -1522,6 +1523,11 @@
                            :place2 (partial key-place x 0) :dx2 0 :dy2 1 :post-position-2 "tr" :rad-or-deg2 :radians
                            :xy1 wall-xy-offset :xymid1 wall-xy-offset-mid :xymid2  wall-xy-offset-thin :xy2 wall-xy-offset
                            :steps steps}))
+        back-corner     (wall-brace-quadratic-fn
+                (partial key-place 0 0) 0 1 "tl" :radians
+                (partial key-place 0 0) -1 1 "tl" :radians
+                tps-65-bottom-right 1 1 "centre" :degrees
+                steps)
         col-0-fn (fn [x] (key-wall-brace-polyhedron-fn (inc x) 0 0 1 "tl" x 0 0 1 "tr"))
         collect-fn (get-collect-fn bottom-plate)]
     (collect-fn
@@ -1534,6 +1540,7 @@
      (zero-to-ncols-fn 1)
      (col-0-fn 0)
      (zero-to-ncols-fn 0)
+     back-corner
  ;   (for [x (range 0 ncols)] (key-wall-brace-polyhedron x 0 0 1 "tr" x 0 0 1 "tl"))
 
 
@@ -1646,9 +1653,18 @@
      :thumb-mr-bl-to-br (thumb-wall-brace-polyhedron-fn  thumb-mr-place  0 -1 "bl" thumb-mr-place  0 -1 "br" :steps steps)
      :thumb-tr-br-to-tr (thumb-wall-brace-polyhedron-fn thumb-tr-place  1 0 "br" thumb-tr-place  1 -1 "tr" :xy1 wall-xy-offset :xy2 wall-xy-offset-mid :steps steps)}))
 
+(defn points-for-curved-wall-from-thumb-br-bl-to-mr-br [steps]
+  {:place1 thumb-br-place :dx1 0 :dy1 -1  :post-position-1 "bl" :rad-or-deg1 :degrees
+   :place-mid1 thumb-br-place :dxmid1 0  :dymid1 -1  :post-position-mid1 "br" :rad-or-degmid1 :degrees
+   :place-mid2 thumb-mr-place :dxmid2 0 :dymid2 -1 :post-position-mid2  "bl" :rad-or-degmid2 :degrees
+   :place2 thumb-mr-place :dx2 0 :dy2 -1  :post-position-2 "br" :rad-or-deg2 :degrees
+   :xy1 wall-xy-offset :xymid1 wall-xy-offset :xymid2 wall-xy-offset :xy2 wall-xy-offset :steps steps}
+  )
+
 (defn thumb-walls-polyhedron-for-convex-cluster [steps & {:keys [bottom-plate] :or {bottom-plate false}}]
   (let [thumb-wall-brace-polyhedron-fn (get-thumb-wall-brace-polyhedron-fn bottom-plate)
         wall-brace-catmull-rom-spline-fn (get-wall-brace-catmull-rom-spline-fn bottom-plate)
+        wall-brace-cubic-fn (get-wall-brace-cubic-fn bottom-plate)
         point-fn (fn [place dx dy post-position  rad-or-deg xy] {:place place :dx dx :dy dy :post-position post-position :rad-or-deg rad-or-deg :xy xy})]
     {;:thumb-bl-tl-to-bl (thumb-wall-brace-polyhedron-fn thumb-bl-place -1  0 "tl" thumb-bl-place -1  0 "bl" :steps steps)
     ;:thumb-bl-to-br (thumb-wall-brace-polyhedron-fn thumb-bl-place -1  0 "bl" thumb-br-place -1  0 "tl" :steps steps)
@@ -1664,6 +1680,15 @@
                                                           (point-fn thumb-br-place 0 -1 "br" :degrees wall-xy-offset)
                                                           (point-fn thumb-mr-place 0 -1 "bl" :degrees wall-xy-offset)
                                                           steps :alpha-type :uniform :t1 0.5 :t2 0.75)
+     
+ :thumb-br-bl-to-mr-br 
+    ;;  (wall-brace-catmull-rom-spline-fn (point-fn thumb-br-place -1 0 "bl" :degrees wall-xy-offset)
+    ;;                                                      (point-fn thumb-br-place 0 -1 "bl" :degrees wall-xy-offset)
+    ;;                                                      (point-fn thumb-mr-place 0 -1 "br" :degrees wall-xy-offset)
+    ;;                                                      (point-fn thumb-mr-place 1 0 "br" :degrees wall-xy-offset)
+    ;;                                                      steps :alpha-type :uniform :t1 0.5 :t2 0.75
+    ;;                                                      )
+(wall-brace-cubic-fn (points-for-curved-wall-from-thumb-br-bl-to-mr-br steps))
     ;(thumb-wall-brace-polyhedron-fn thumb-br-place  0 -1 "bl" thumb-br-place  0 -1 "br" :steps steps)
      :thumb-br-to-mr (wall-brace-catmull-rom-spline-fn (point-fn thumb-br-place 0 -1 "bl" :degrees wall-xy-offset)
                                                        (point-fn thumb-br-place 0 -1 "br" :degrees wall-xy-offset)
@@ -2186,12 +2211,26 @@
                                    (thumb-tr-tr-points :wall-locate3-point)
                                    (thumb-tr-tr-points :wall-locate3-point-floor)
                                    steps)
+        thumb-tr-tr-curve-outside-double-steps (bezier-quintic
+                                   (thumb-tr-tr-points :web-post-position-top)
+                                   (thumb-tr-tr-points :wall-locate1-point)
+                                   (thumb-tr-tr-points :wall-locate-1-to-3-curve-for-polyhedron-control-point)
+                                   (thumb-tr-tr-points :wall-locate-1-to-3-curve-for-polyhedron-second-control-point)
+                                   (thumb-tr-tr-points :wall-locate3-point)
+                                   (thumb-tr-tr-points :wall-locate3-point-floor)
+                                   (* steps 2))
         thumb-tr-tr-curve-inside-adjusted (bezier-cubic
                                            (mapv + (thumb-tr-tr-points :web-post-position-bottom) [0 0 (/ web-thickness -1)])
                                            (thumb-tr-tr-points :wall-locate-2-top)
                                            (thumb-tr-tr-points :wall-locate-2-bottom)
                                            (thumb-tr-tr-points :wall-locate-2-bottom-floor)
                                            steps)
+        thumb-tr-tr-curve-inside-adjusted-double-steps (bezier-cubic
+                                            (thumb-tr-tr-points :web-post-position-bottom)
+                                           (thumb-tr-tr-points :wall-locate-2-top)
+                                           (thumb-tr-tr-points :wall-locate-2-bottom)
+                                           (thumb-tr-tr-points :wall-locate-2-bottom-floor)
+                                           (* steps 2))
         thumb-tr-tr-curve (wall-brace-polyhedron-curve-points thumb-tr-place 1 0 "tr" :degrees wall-xy-offset-thin steps)
         index-br-points (wall-brace-polyhedron-points (partial key-place 1 cornerrow) 1 0 "br" :radians wall-xy-offset-thin)
         index-br-curve (wall-brace-polyhedron-curve-points (partial key-place 1 cornerrow) 1 -0.1 "br" :radians wall-xy-offset-medium-thin steps)
@@ -2219,8 +2258,9 @@
                                       thumb-tr-tr-bottom index-br-bottom
                                       (thumb-tr-tl :bottom) (index-bl :bottom)
                                       steps
-                                      ;:outside-upper-control-point-vector  thumb-tr-to-index-br-top-control-vector
-                                      :inside-upper-control-point-vector thumb-tr-to-index-br-bottom-control-vector)
+                                      :outside-upper-control-point-vector  [0 2 10]
+                                      :inside-upper-control-point-vector [0 -0.5 12]
+                                      )
         thumb-tr-rm-to-index-polyhedron (generate-bezier-along-bezier-polyhedron-from-points-list-linear
                                          thumb-tr-to-index-br-top (thumb-tr-mr-curve :outer-points)
                                          thumb-tr-to-index-br-bottom (thumb-tr-mr-curve :inner-points)
@@ -2244,9 +2284,31 @@
         ;;                               )
 
         thumb-tr-to-index-false-wall-brace-plyhedron (generate-bezier-along-bezier-polyhedron-from-points-list-linear
-                                                      (reverse (index-br-curve :inner-points)) (reverse thumb-tr-tr-curve-inside-adjusted)
-                                                      (index-br-curve :outer-points) thumb-tr-tr-curve-outside
+                                                      (reverse (index-br-curve :outer-points)) (reverse (index-br-curve :inner-points))
+                                                      thumb-tr-tr-curve-outside  thumb-tr-tr-curve-inside-adjusted 
                                                       steps)
+             ss (generate-bezier-along-bezier-polyhedron-from-points-list-linear
+                ;(reverse ((wall-brace-polyhedron-curve-points (partial key-place 1 cornerrow) 1 -0.1 "br" :radians wall-xy-offset-medium-thin (* steps 2)) :inner-points))
+                (concat (drop-last (reverse (index-br-curve :inner-points)))
+                        (bezier-linear  index-br-bottom  thumb-tr-tr-bottom steps))
+                (reverse thumb-tr-tr-curve-inside-adjusted-double-steps)
+                (concat (drop-last (bezier-quadratic thumb-tr-tr-top (calculate-point-between-points thumb-tr-tr-top  index-br-top [0 2 10]) index-br-top steps))
+                        (index-br-curve :outer-points)) thumb-tr-tr-curve-outside-double-steps
+                (* steps 2))
+        ;;(generate-bezier-along-bezier-polyhedron-from-points-list-linear
+            ;;     ;(reverse ((wall-brace-polyhedron-curve-points (partial key-place 1 cornerrow) 1 -0.1 "br" :radians wall-xy-offset-medium-thin (* steps 2)) :inner-points))
+            ;;      (concat (drop-last (reverse (index-br-curve :inner-points))) 
+            ;;              (bezier-quadratic  index-br-bottom (calculate-point-between-points thumb-tr-tr-bottom index-br-bottom [0 0 0]) thumb-tr-tr-bottom steps))
+            ;;     (reverse thumb-tr-tr-curve-inside-adjusted-double-steps)
+            ;;     (concat (drop-last (bezier-quadratic thumb-tr-tr-top (calculate-point-between-points thumb-tr-tr-top  index-br-top [0 2 12]) index-br-top steps))
+            ;;             (index-br-curve :outer-points)) thumb-tr-tr-curve-outside-double-steps
+            ;;     (* steps 2))
+        ;; (polyhedron  (into [](concat 
+        ;;                              (index-br-curve :outer-points)
+        ;;                              thumb-tr-tr-curve-outside-double-steps 
+        ;;                      (drop-last (bezier-quadratic thumb-tr-tr-top (calculate-point-between-points thumb-tr-tr-top  index-br-top [0 2 0]) index-br-top steps))
+        ;;                      ))
+        ;;         (bezier-along-bezier-polyhedron-generate-front-or-back-faces (inc (* steps 2)) (inc (* steps 2)) (* steps 2)))                                          
 
 
         thumb-tr-rm-to-tr-to-index-br-polyhedron (generate-bezier-along-bezier-polyhedron-from-points-list-linear
@@ -2280,14 +2342,15 @@
                                                                     steps)
         polyhedrons (union
 
-                     thumb-tr-to-index-false-wall-brace-plyhedron
-                     thumb-tr-to-index-polyhedron
-
+                    ;thumb-tr-to-index-false-wall-brace-plyhedron
+                     
+                     thumb-tr-to-index-polyhedron 
+                     ss
 
 
 
                      index-bl-to-inner-br-to-thumb-tr-tl-polyhedron
-                     ;inner-index-bl-to-br-thumb-tr-tl-to-thumb-tl-tr-polyhedron
+                     inner-index-bl-to-br-thumb-tr-tl-to-thumb-tl-tr-polyhedron
                      )]
     (if (true? bottom-plate) thumb-tr-to-index-false-wall-brace-floor-points polyhedrons)))
 
@@ -2304,13 +2367,26 @@
                                                               thumb-br-place "tl" :degrees
                                                               steps)
         thumb-bl-bl-top (transform-position thumb-bl-place (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "bl"))))
-        thumb-bl-bl-bottom (transform-position thumb-bl-place (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "bl"))))] (union
+        thumb-bl-bl-bottom (transform-position thumb-bl-place (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "bl"))))
+        curve-from-thumb-br-bl-to-mr-br-points (wall-brace-cubic-polyhedron-curves (points-for-curved-wall-from-thumb-br-bl-to-mr-br 36))
+thumb-br-bl-to-br (web-post-linear thumb-br-place "bl" :degrees thumb-br-place "br" :degrees 12)
+thumb-br-br-to-mr-bl (web-post-linear thumb-br-place "br" :degrees thumb-mr-place "bl" :degrees 12)
+thumb-mr-bl-to-br (web-post-linear thumb-mr-place "bl" :degrees thumb-mr-place "br" :degrees 12)
+thumb-bl-to-mr-linear-top (concat (drop-last (thumb-br-bl-to-br :top))
+                                  (drop-last (thumb-br-br-to-mr-bl :top))
+                                  (thumb-mr-bl-to-br :top))
+thumb-bl-to-mr-linear-bottom  (concat
+                               (drop-last (thumb-mr-bl-to-br :bottom))
+                               (drop-last (thumb-br-br-to-mr-bl :bottom))
+                               (thumb-br-bl-to-br :bottom))
+        ] (union
 
                                                                                                                                                      (generate-bezier-to-point-polyhedron
-                                                                                                                                                      (thumb-mr-br-to-thumb-tr-br-curve :top)
+                                                                                                                                                      (take 35 (thumb-mr-br-to-thumb-tr-br-curve :top))
                                                                                                                                                       thumb-mr-tr-top
-                                                                                                                                                      (reverse (thumb-mr-br-to-thumb-tr-br-curve :bottom))
+                                                                                                                                                      (reverse (take-last 35 (thumb-mr-br-to-thumb-tr-br-curve :bottom)))
                                                                                                                                                       thumb-mr-tr-bottom)
+                                                                                                                                                     
 
                                                                                                                                                      (generate-bezier-to-point-polyhedron
                                                                                                                                                       (thumb-bl-tl-to-br-tl-curve :top)
@@ -2362,7 +2438,24 @@
                                                                                                                                                      (generate-polyhedron-thumb-web-connecters
                                                                                                                                                       thumb-br-place "tr" thumb-mr-place "tl"
                                                                                                                                                       thumb-br-place "br" thumb-mr-place "bl"
-                                                                                                                                                      :steps steps))))
+                                                                                                                                                      :steps steps)
+                                                                                                                                                     
+                                                                                                                                                     (chained-hull-for-four-lists
+                                                                                                                                                      (plot-bezier-points
+                                                                                                                                                       thumb-bl-to-mr-linear-top
+                                                                                                                                                       (sphere 0.001))
+                                                                                                                                                      (plot-bezier-points
+                                                                                                                                                       (curve-from-thumb-br-bl-to-mr-br-points :web-post-top-curve)
+                                                                                                                                                       (sphere 0.001))
+                                                                                                                                                      (plot-bezier-points
+                                                                                                                                                       (reverse thumb-bl-to-mr-linear-bottom)
+                                                                                                                                                       (sphere 0.001))
+                                                                                                                                                      (plot-bezier-points
+                                                                                                                                                       (reverse (curve-from-thumb-br-bl-to-mr-br-points :web-post-bottom-curve))
+                                                                                                                                                       (sphere 0.001))
+                                                                                                                                                      36)
+                                                                                                                                                     
+                                                                                                                                                     )))
 
 
 (defn key-web-connecters-polyhedron [steps]
@@ -2483,14 +2576,23 @@
         thumb-tl-tl-web-post-bottom (transform-position (partial thumb-tl-place) (mapv + web-post-tl-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
         thumb-tl-tr-web-post-top (transform-position (partial thumb-tl-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness 2)]))
         thumb-tl-tr-web-post-bottom (transform-position (partial thumb-tl-place) (mapv + web-post-tr-translation-vector web-post-translation-vector [0 0 (/ web-thickness -2)]))
-
+        
+        
+        tt (generate-bezier-along-bezier-polyhedron-from-points-linear
+            top-row-web-post-tl-top tps-65-bottom-right-outer
+            top-row-web-post-tl-bottom tps-65-bottom-right-inner 
+            tps-65-point-to-connect-to-top-row-web-post-tl-top top-row-web-post-tl-top 
+            tps-65-point-to-connect-to-top-row-web-post-tl-bottom top-row-web-post-tl-bottom  
+            steps                                                     
+            ;:outside-lower-control-point-vector [0 0 -1]
+            )
         tps-65-to-top-row (generate-bezier-along-bezier-polyhedron-from-points-linear
                            tps-65-point-to-connect-to-top-row-web-post-tl-top top-row-web-post-tl-top
                            tps-65-point-to-connect-to-top-row-web-post-bl-top top-row-web-post-bl-top
                            top-row-web-post-tl-bottom tps-65-point-to-connect-to-top-row-web-post-tl-bottom
                            top-row-web-post-bl-bottom tps-65-point-to-connect-to-top-row-web-post-bl-bottom
                            steps
-                           :outside-upper-control-point-vector [0 0 -1] :outside-lower-control-point-vector [0 0 -1]
+                           :outside-upper-control-point-vector [0 0 0] :outside-lower-control-point-vector [0 0 -1]
                            :inside-upper-control-point-vector [0 0 0] :inside-lower-control-point-vector [1 0 -1])
         tps-65-to-top-and-middle-row (generate-bezier-along-bezier-polyhedron-from-points-linear
                                       tps-65-point-to-connect-to-top-row-web-post-bl-top top-row-web-post-bl-top
@@ -2544,6 +2646,7 @@
                   )
         ] 
     (union
+     tt
      tps-65-to-top-row
      tps-65-to-top-and-middle-row
      tps-65-to-middle-row
@@ -2567,13 +2670,7 @@
     ;;                         (partial key-place 0 0) 0 1 "tl" :radians
     ;;                         steps)
 
-
-
-     (wall-brace-quadratic-fn
-      (partial key-place 0 0) 0 1 "tl" :radians
-      (partial key-place 0 0) -1 1 "tl" :radians
-      tps-65-bottom-right 1 1 "centre" :degrees
-      steps)
+      
      (wall-brace-polyhedron-fn tps-65-bottom-right 1 1 "centre" :degrees
                                tps-65-top-right 1 0 "centre" :degrees
                                steps)
@@ -2611,13 +2708,14 @@
      ;(thumb-corners-polyhedron-for-convex-cluster-map :thumb-br-tl-corner)
      (thumb-walls-polyhedron-for-convex-cluster-map :thumb-br-tl-to-bl)
      (thumb-corners-polyhedron-for-convex-cluster-map :thumb-br-bl-corner)
-     (thumb-walls-polyhedron-for-convex-cluster-map :thumb-br-bl-to-br)
-     (thumb-walls-polyhedron-for-convex-cluster-map :thumb-br-to-mr)
-     ;(thumb-corners-polyhedron-for-convex-cluster-map :thumb-br-bl-to-bm-corner)
-     ;(thumb-corners-polyhedron-for-convex-cluster-map :thumb-br-bl-to-mr-bl-corner)
-     ;(thumb-corners-polyhedron-for-convex-cluster-map :thumb-mr-bl-corner)
-     (thumb-walls-polyhedron-for-convex-cluster-map :thumb-mr-bl-to-br)
+     
+     ;(thumb-walls-polyhedron-for-convex-cluster-map :thumb-br-bl-to-br)
 
+    ; (thumb-walls-polyhedron-for-convex-cluster-map :thumb-br-to-mr)
+
+     ;(thumb-walls-polyhedron-for-convex-cluster-map :thumb-mr-bl-to-br)
+
+     (thumb-walls-polyhedron-for-convex-cluster-map :thumb-br-bl-to-mr-br)
      (thumb-corners-polyhedron-for-convex-cluster-map :thumb-mr-br-corner)
      (thumb-corners-polyhedron-for-convex-cluster-map :thumb-mr-to-thumb-tr-corner)
      (thumb-corners-polyhedron-for-convex-cluster-map :thumb-tr-br-corner)

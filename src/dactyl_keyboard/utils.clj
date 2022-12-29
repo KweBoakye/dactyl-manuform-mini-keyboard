@@ -8,6 +8,9 @@
 (defn deg2rad [degrees]
   (* (/ degrees 180) pi))
 
+(defn rad2deg [radians]
+  (/ (* radians 180) pi))
+
 (def is-preview false)
 
 (def sphere-preview-fn-value 8)
@@ -900,3 +903,6 @@
     [(+ p0x (* t s1x) ) (+ p0y (* t s1y))]
     )
   )
+
+(defn radius-of-chord [chord-length angle-in-radians]
+  (/ (/ chord-length 2) (Math/sin (/ angle-in-radians 2))))

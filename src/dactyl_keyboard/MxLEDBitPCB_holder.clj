@@ -115,4 +115,9 @@ MxLEDBitPCB-holder-leg-3
    ) 
   )
 
+(def MxLEDBitPCB-clearance
+  (->>
+   (cube (+ MxLEDBitPCB-holder-width 0.5) (+ MxLEDBitPCB-holder-length 0.5) (+ MxLEDBitPCB-holder-thickness 2))
+   (translate [0 0 (- (/ (+ MxLEDBitPCB-holder-thickness ) 2) (/ plate-thickness 2) 0.85 0.25)])
+   ))
   

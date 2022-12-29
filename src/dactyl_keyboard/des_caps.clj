@@ -9,7 +9,8 @@
             [dactyl-keyboard.low.thumbs-low :refer :all]
             [dactyl-keyboard.low.shape-parameters-low :refer :all]))
 
-(defn des-translate [shape] (translate [0 0 (+ plate-thickness 6.5)] shape))
+(def des-height (+ plate-thickness 6.5))
+(defn des-translate [shape] (translate [0 0 des-height] shape))
 (defn des-thumb-translate [shape] (rdz 90 (des-translate shape)))
 (def des-r1 (des-translate (import "../parts/caps/DES-R1.stl")))
 (def des-r2 (des-translate (import "../parts/caps/DES-R2.stl")))
@@ -20,6 +21,12 @@
 (def des-kyria-r1t1 (des-thumb-translate(import "../parts/caps/DES-kyria-R1T1.stl")))
 (def des-kyria-r1t2 (des-thumb-translate (import "../parts/caps/DES-kyria-R1T2.stl")))
 (def des-kyria-r1t3 (des-thumb-translate (import "../parts/caps/DES-kyria-R1T3.stl")))
+(def des-cornelus-c1r (des-translate (import "../parts/caps/C1R.stl")))
+(def des-cornelus-c2r (des-translate (import "../parts/caps/C2R_fixed.stl")))
+(def des-cornelus-c3r (des-translate (import "../parts/caps/C3R.stl")))
+(def des-cornelus-c1l (des-translate (import "../parts/caps/C1L.stl")))
+(def des-cornelus-c2l (des-translate (import "../parts/caps/C2L.stl")))
+(def des-cornelus-c3l (des-translate (import "../parts/caps/C3L.stl")))
 
 (defn des-scooped [row]
   (case row 
@@ -56,3 +63,12 @@
    (thumb-mr-place des-kyria-r1t0)
    (thumb-bl-place des-kyria-r1t2)
    (thumb-br-place des-kyria-r1t2)))
+
+(def des-cornelius-thumbs
+  (union
+   (thumb-tr-place des-cornelus-c1r)
+(thumb-tl-place des-cornelus-c2r)
+(thumb-mr-place des-cornelus-c2r)
+(thumb-bl-place des-cornelus-c3r)
+(thumb-br-place des-cornelus-c3r)
+   ))

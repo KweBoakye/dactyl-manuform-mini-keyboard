@@ -118,9 +118,9 @@
                                :else [0 0 0]))
 
 (def thumb-offsets [6 -3 7])
-(def thumb-fan-radius 70)
-(def thumb-fan-angle 17.5)
-(def thumb-well-radius 85)
+;(def thumb-fan-radius 70)
+(def thumb-fan-angle 15)
+;(def thumb-well-radius 85)
 (def thumb-well-angle 10)
 (def thumb-alpha 15)
 (def thumb-beta 3.75)

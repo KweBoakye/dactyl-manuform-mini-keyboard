@@ -14,6 +14,7 @@
  (def tps-65-mount-width (+ tps-65-width 2))
  (def tps-65-mount-length (+ tps-65-length 2))
  (def tps-65-tolerance 0.2)
+ (def tps-65-cutout-tolerance 0.4)
  (def tps-65-depth-tolerance (/ tps-65-depth 10))
  (def tps-65-depth-with-tolerance  (+ tps-65-depth tps-65-depth-tolerance tps-65-depth-tolerance))
  (def tps-65-width-with-tolerance  (+ tps-65-mount-width tps-65-tolerance 0.8))
@@ -149,6 +150,27 @@
    (- tps-65-corner-radius (/ tps-65-length 2)),
    0])
 
+(def tps-65-cutout-corner-cylinder-top-left-position
+  [(- tps-65-corner-radius (/ tps-65-width 2) tps-65-cutout-tolerance),
+   (- (+ (/ tps-65-length 2) tps-65-cutout-tolerance) tps-65-corner-radius),
+   0])
+
+(def tps-65-cutout-corner-cylinder-top-right-position
+  [(- (+ (/ tps-65-width 2) tps-65-cutout-tolerance) tps-65-corner-radius),
+   (- (+ (/ tps-65-length 2) tps-65-cutout-tolerance) tps-65-corner-radius),
+   0])
+
+
+(def tps-65-cutout-corner-cylinder-bottom-left-position
+  [(- tps-65-corner-radius (/ tps-65-width 2) tps-65-cutout-tolerance),
+   (- tps-65-corner-radius (/ tps-65-length 2) tps-65-cutout-tolerance),
+   0])
+
+(def tps-65-cutout-corner-cylinder-bottom-right-position
+  [(- (+ (/ tps-65-width 2) tps-65-cutout-tolerance) tps-65-corner-radius),
+   (- tps-65-corner-radius (/ tps-65-length 2) tps-65-cutout-tolerance),
+   0])
+
 
  
  (def tps-65-mount-corner-cylinder-top-left
@@ -174,18 +196,39 @@
 
 (def tps-65-corner-cylinder-bottom-right
   (translate tps-65-corner-cylinder-bottom-right-position tps-65-mount-corner-cylinder))
+
+(def tps-65-cutout-corner-cylinder-top-left
+  (translate tps-65-cutout-corner-cylinder-top-left-position tps-65-mount-corner-cylinder))
+
+(def tps-65-cutout-corner-cylinder-top-right
+  (translate tps-65-cutout-corner-cylinder-top-right-position tps-65-mount-corner-cylinder))
+
+(def tps-65-cutout-corner-cylinder-bottom-left
+  (translate tps-65-cutout-corner-cylinder-bottom-left-position tps-65-mount-corner-cylinder))
+
+(def tps-65-cutout-corner-cylinder-bottom-right
+  (translate tps-65-cutout-corner-cylinder-bottom-right-position tps-65-mount-corner-cylinder))
  
  (def tps-65-mount-main-cutout 
    (->>
     (hull
-    tps-65-corner-cylinder-top-left
-    tps-65-corner-cylinder-top-right
-    tps-65-corner-cylinder-bottom-left
-    tps-65-corner-cylinder-bottom-right
+    tps-65-cutout-corner-cylinder-top-left
+    tps-65-cutout-corner-cylinder-top-right
+    tps-65-cutout-corner-cylinder-bottom-left
+    tps-65-cutout-corner-cylinder-bottom-right
     )
     (translate [0 0 (/ (+ tps-65-trackpad-only-thickness tps-65-depth-tolerance tps-65-overlay-thickness) -2)])
     ) 
-   ) 
+   )
+
+(def tps-65-mount-main-cutout-smaller
+  (->>
+   (hull
+    tps-65-corner-cylinder-top-left
+    tps-65-corner-cylinder-top-right
+    tps-65-corner-cylinder-bottom-left
+    tps-65-corner-cylinder-bottom-right)
+   (translate [0 0 (/ (+ tps-65-trackpad-only-thickness tps-65-depth-tolerance tps-65-overlay-thickness) -2)])))
 
 (def tps-65-component-cutout
   (->>
@@ -210,11 +253,11 @@
    (translate [0 0 (- (/ (+ tps-65-depth tps-65-depth-tolerance) -2) 0.5)])))
 (def tps-65-mount-cutout
   (->>(union
-   tps-65-mount-main-cutout
+   tps-65-mount-main-cutout    
    ;tps-65-component-cutout
    ;tps-65-connecter-cutout
    ;(translate [0 0 (- 0.2 tps-65-connecter-height)] tps-65-connecter-cutout)
-       ct
+       (translate [0 0 -1] ct)
        )
    (translate [0 0 0])
    ))
@@ -262,11 +305,13 @@
          )
    )
  
- (def tps-65-)
+ 
 
   (def tps-65-mount 
     
-    (->> tps-65-mount-body
+    (->> (union 
+          tps-65-mount-body
+          (translate [0 0 -0.5] (extrude-linear {:height 0.5 :center false} tps-65-mount-base)))
     ;(call-module-with-block "fillet" {:fillet tps-65-corner-radius :size [(+ (- tps-65-mount-width (* tps-65-corner-radius 2)) (* tps-65-mount-corner-radius-with-offset 2)) 
     ;                       (+ (- tps-65-mount-length (* tps-65-corner-radius 2)) (* tps-65-mount-corner-radius-with-offset 2)) 
     ;                       tps-65-depth-with-tolerance] :edges "EDGES_Z_ALL" :$fn 24}

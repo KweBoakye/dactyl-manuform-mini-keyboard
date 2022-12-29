@@ -40,8 +40,8 @@
                                    (- plate-thickness (/ web-thickness 2))]))]
     (union top-plate (mirror [0 0 0] top-plate))))
 
-(defn thumb-place-convex ([column row shape] 
-                          (thumb-place-convex column row translate rdx rdy rdz  shape))
+(defn thumb-place-convex-old ([column row shape]
+                          (thumb-place-convex-old column row translate rdx rdy rdz  shape))
   ([column row translate-fn rotate-x-fn  rotate-y-fn rotate-z-fn  shape]
    (let [cap-top-height (+ plate-thickness sa-profile-key-height)
 
@@ -54,61 +54,115 @@
                              (Math/sin (/ (deg2rad thumb-beta) 2)))
                           cap-top-height)
          extra-translation (if (and (= column 1) (= row 1))  [0  (/ mount-height 4) 0] [0 0 0])
+         thumb-fan-radius-old 70
+         thumb-well-radius-old 85
+         thumb-fan-angle-old 17.5
          #_(+ (/ (/ (+ pillar-width 5) 2)
                  (Math/sin (/ (deg2rad beta) 2)))
               cap-top-height)]
-    (->> shape
+     (->> shape
          ;(rotate-z-fn -45) 
          ;(rotate-z-fn  -90)
-         (rotate-x-fn 4.5)
-         (rotate-y-fn (/ 180 -14))
-         (rotate-z-fn 7.5)
-         
+          (rotate-x-fn 4.5)
+          (rotate-y-fn (/ 180 -14))
+          (rotate-z-fn 7.5)
 
-         (translate-fn [0 0   (- row-radius)])
 
-         (rotate-y-fn (* thumb-alpha  row))
+          (translate-fn [0 0   (- row-radius)])
 
-         (translate-fn [0 0 (+ row-radius)])
-         
-                   (translate-fn [0 (+ thumb-fan-radius) 0])
- (rotate-z-fn (* thumb-fan-angle    row)); (* (inc row) 7))  
+          (rotate-y-fn (* thumb-alpha  row))
 
- (translate-fn [0 (- thumb-fan-radius) 0])
-         (translate-fn (rotate-around-z-in-degrees (* 1 (* thumb-fan-angle  row))
-                                                   (mapv + [(+ (* (/ (+ mount-width) 1)  row) (/  extra-width 2) (* (/ (+ mount-width extra-width) 2)  column)) 
-                                                   (* (* (/ (+ mount-height extra-height) -4) (if (zero? row) 0 1)) column);(* (/ (+ mount-height extra-height) 2) row)
-                                                    (+ (- (* plate-thickness row)) (- (* plate-thickness column)))] extra-translation)))
+          (translate-fn [0 0 (+ row-radius)])
+
+          (translate-fn [0 (+ thumb-fan-radius-old) 0])
+          (rotate-z-fn (* thumb-fan-angle-old    row)); (* (inc row) 7))  
+
+          (translate-fn [0 (- thumb-fan-radius-old) 0])
+          (translate-fn (rotate-around-z-in-degrees (* 1 (* thumb-fan-angle-old  row))
+                                                    (mapv + [(+ (* (/ (+ mount-width) 1)  row) (/  extra-width 2) (* (/ (+ mount-width extra-width) 2)  column))
+                                                             (* (* (/ (+ mount-height extra-height) -4) (if (zero? row) 0 1)) column);(* (/ (+ mount-height extra-height) 2) row)
+                                                             (+ (- (* plate-thickness row)) (- (* plate-thickness column)))] extra-translation)))
         ;;  (translate-fn (rotate-around-z-in-degrees (* 1 (* thumb-fan-angle  row))
         ;;                                            [(* (/ (+ mount-width extra-width) 2)  column)
         ;;                                           (* (* (/ (+ mount-height extra-height) -4) (if (zero? row) 0 1)) column)
         ;;                                             0]))
         ;;  (translate-fn (rotate-around-z-in-degrees (* 1 (* thumb-fan-angle  row)) extra-translation))
-         
-         
-                  
-         (translate-fn [0 0 (- column-radius)])
-         (rotate-x-fn (* (- thumb-beta) column))
+
+
+
+          (translate-fn [0 0 (- column-radius)])
+          (rotate-x-fn (* (- thumb-beta) column))
 ;(rotate-x-fn fan-tilt)
-         (translate-fn [0 0 (+ column-radius)])
-(translate-fn [0 0 (- thumb-well-radius)])
+          (translate-fn [0 0 (+ column-radius)])
+          (translate-fn [0 0 (- thumb-well-radius-old)])
 
-(rotate-y-fn  thumb-well-angle)
-(translate-fn [0 0 thumb-well-radius])
-         
-
+          (rotate-y-fn  thumb-well-angle)
+          (translate-fn [0 0 thumb-well-radius-old])
 
 
-         (rotate-x-fn 7.5)
-          (rotate-y-fn -20)
-          (rotate-z-fn 2.5)
-        ;;  (translate-fn (rotate-around-z-in-degrees (* 1 (* fan-angle (dec row)))
-        ;;                                            [(* (/ (+ mount-width extra-width) 1) (dec row)) 0 0]))
-                   (translate-fn thumborigin-convex)
+
+
+           (rotate-x-fn 7.5)
+           (rotate-y-fn -20)
+           (rotate-z-fn 2.5)
+        
+           (translate-fn thumborigin-convex)
            (translate-fn [0 (/ (+ mount-height extra-height) -2)
-                          0;(- (+ (/ cap-top-height 2) ))
-                          ]) 
-         ;(translate-fn [0 0 cap-top-height])
+                          0
+                          ])
+ 
+          ))))
+
+
+(defn thumb-place-convex ([column row shape] 
+                          (thumb-place-convex column row translate rdx rdy rdz  shape))
+  ([column row translate-fn rotate-x-fn  rotate-y-fn rotate-z-fn  shape]
+   (let [cap-top-height (+ plate-thickness sa-profile-key-height)
+
+          row-radius (+ (/ (/ (+ mount-height extra-height) 2)
+                           (Math/sin (/ (deg2rad thumb-alpha) 2)))
+                        cap-top-height)
+
+
+column-radius (+ (/ (/ (+ mount-width extra-width) 2)
+                    (Math/sin (/ (deg2rad thumb-beta) 2)))
+                 cap-top-height)
+         thumb-fan-radius (fn [column](+ (radius-of-chord (+ mount-width ) (deg2rad thumb-fan-angle)) 
+                                         (+ 
+                                          ;(* (+ mount-height extra-height) column)
+                                          (/ (+ mount-height extra-height) 2))))
+         thumb-well-radius (- (radius-of-chord (+ mount-width) (deg2rad (+ thumb-well-angle ))) (+ cap-top-height))
+         max-thumb-rows 3
+         extra-translation (if (and (= column 1) (= row 1))  [0  (/ mount-height 4) 0] [0 0 0])
+         #_(+ (/ (/ (+ pillar-width 5) 2)
+                 (Math/sin (/ (deg2rad beta) 2)))
+              cap-top-height)]
+    (->> shape 
+          
+         (translate-fn [0 (+ (thumb-fan-radius column)) 0])
+
+(rotate-z-fn (* thumb-fan-angle (dec row)))
+         (translate-fn [0 0 (- (* (abs (dec row)) (/ plate-thickness 1)))])
+
+(translate-fn [0 (- (thumb-fan-radius column)) 0])
+         (translate-fn [0
+                        0 (- cap-top-height)])
+
+(rotate-y-fn (* (+  20 ) (dec row)))
+(translate-fn [0 0 cap-top-height])
+         (translate-fn [0 0 (- column-radius)])
+(rotate-x-fn (* (- thumb-beta) column))
+(translate-fn [0 0 column-radius])
+         
+         (rotate-x-fn 7.5)
+           (rotate-y-fn (/ 180 -14))
+           (rotate-z-fn 30)
+        
+          (translate-fn [(- (+ (* (/ max-thumb-rows 2) (+ mount-width extra-width)) (/ mount-width 2) )) (/ mount-height -2) (/ cap-top-height -2)]) 
+        (translate-fn thumborigin-convex)
+           (translate-fn [extra-width (/ (+ mount-height extra-height) -2)
+                            (* column (- plate-thickness))
+                           ]) 
 
          ))))
 

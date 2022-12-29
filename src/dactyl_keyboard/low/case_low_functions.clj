@@ -15,6 +15,7 @@
             [dactyl-keyboard.oled :refer :all]
              [dactyl-keyboard.tps-65 :refer :all]
             [dactyl-keyboard.EVQWGD001 :refer :all]
+            [dactyl-keyboard.vybronics-vl91022 :refer :all]
             ))
 
 (defn bottom-translate [points-list]
@@ -687,7 +688,9 @@
    (->> shape
         (rotate-z-fn -90)
         (rotate-y-fn 180)
-        (tps-65-translate-and-place-at-position [10.5 0 (- (+ (* tps-65-depth 2) tps-65-depth-tolerance tps-65-overlay-thickness))] translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
+        (tps-65-translate-and-place-at-position [(/ vybronics-vl91022-y-axis 2)
+                                                 0
+                                                 (- (+ (* tps-65-depth 2) tps-65-depth-tolerance tps-65-overlay-thickness))] translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
     ) 
    ) 
   )
