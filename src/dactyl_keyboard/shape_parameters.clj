@@ -4,7 +4,7 @@
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Shape parameters ;;

@@ -6,7 +6,7 @@
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.shape-parameters :refer :all]
             [dactyl-keyboard.plate :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 
 (def tent-ball-rad 7)

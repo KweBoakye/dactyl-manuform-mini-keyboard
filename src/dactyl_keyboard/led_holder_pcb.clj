@@ -3,7 +3,7 @@
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;  3D Printed PCB ;;

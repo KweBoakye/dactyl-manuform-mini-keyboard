@@ -7,7 +7,7 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
             [dactyl-keyboard.utils :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;from https://github.com/oysteinkrog/dactyl-manuform-mini-keyboard
 

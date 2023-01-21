@@ -9,7 +9,7 @@
              [dactyl-keyboard.hand :refer :all]
             [dactyl-keyboard.case :refer :all]
             [dactyl-keyboard.tenting-hardware :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;
 ;; Palm Rest ;;

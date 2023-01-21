@@ -3,7 +3,7 @@
 (:require [clojure.core.matrix :refer [array matrix mmul]]
           [scad-clj.scad :refer :all]
           [scad-clj.model :refer :all]
-          [unicode-math.core :refer :all]))
+          ))
 
 (def led-width 3.5)
 (def led-length 2.8)

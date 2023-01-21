@@ -1,9 +1,11 @@
 (ns dactyl-keyboard.low.dactyl-low
   (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
+  (:require [clojure.core.matrix :refer [ mmul shape to-vector coerce]]
+          ;   [chisel.curves :as chisel-curves :refer [direct-nurbs-evaluation  b-spline clamped-b-spline direct-nurbs-evaluation]]
+           ; [chisel.protocols :as chisel-protocols :refer [PParametricCurve]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
-            [unicode-math.core :refer :all]
+             
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
@@ -36,6 +38,8 @@
             [dactyl-keyboard.des-caps :refer :all]
             [dactyl-keyboard.cornelius-thumbs-with-sprues :refer :all]
             ))
+
+;(set-current-implementation :vectorz)
 
 
 (def MxLEDBitPCB-placed
@@ -191,6 +195,31 @@
                   MxLEDBitPCB-holder-leg-2))
  )
 
+(def abe-dua "../svg/Abe_dua.svg")
+(def hw3-me-dua "../svg/HWEMUDUA.svg")
+(def nea-onnim-no-sua-a-ohu "../svg/Nea_onnim_no_sua_a_ohu.svg")
+(def nkyinkyim "../svg/nkyinkyim.svg")
+(def odenkyem "../svg/Odenkyem.svg")
+(def okuafo-pa "../svg/Okuafo pa.svg")
+
+(def FUNTUNFUNEFU-DENKYEMFUNEFU-on-left-section-front
+  (let [corner-position (calculate-point-between-points   (assoc screen-holder-top-right-outside-point 2 (/ (nth screen-holder-top-right-outside-point 2) 2))
+                                                          (assoc (transform-position thumb-bl-place web-post-tl-translation-vector) 2 (/ (nth (transform-position thumb-bl-place web-post-tl-translation-vector) 2) 2)) [0 0 0])]
+    (place-symbol "../FUNTUNFUNEFU-DENKYEMFUNEFU.svg" {:z-rotation -20 :height 3 :center true :scale-x 0.15 :scale-y 0.14 :rotation #(rdx 80 %)
+                                                     :place corner-position :orientation-angle -45
+                                                     :translation (mapv +  (rotate-around-z-in-degrees -20 [-2 -2 0]))})))
+(def Ananse-Ntontan-on-thumb-bl
+  (place-symbol-on-thumb-wall "../Ananse-Ntontan.svg"
+                              {:height 3 :place thumb-bl-place
+                               :offset (map + [(+ (/ mount-width -2) extra-width) (* extra-height 2) 0] (rotate-around-z-in-degrees -11 [0 3 0]))
+                               :scale-x 0.125 :scale-y 0.125 :position "lm" :z-rotation -11 :orientation-angle 0 :rotation #(rdy 5 %)}))
+
+(def oodenkyem-on-thumb-br 
+  (place-symbol-on-thumb-wall odenkyem
+                                 {:place thumb-br-place :height 2 :orientation-angle -85
+                                  :offset (map + [(+ (/ mount-width -2) extra-width) (* extra-height 2) 0] [1 4 0])
+                                  :scale-x 0.07 :scale-y 0.07 :position "lm" :z-rotation 0 :rotation #(rdy 10 %)}))
+
 (def model-polyhedron
   (let [steps 36
       steps-low 8
@@ -209,14 +238,15 @@
       (thumb-to-body-connecters-polyhedron steps)
       (thumb-tr-place MxLEDBitPCB-clearance)
 (key-place 0 2 MxLEDBitPCB-clearance))
-     
-     
+     FUNTUNFUNEFU-DENKYEMFUNEFU-on-left-section-front
+     oodenkyem-on-thumb-br
+     Ananse-Ntontan-on-thumb-bl
      (left-section-to-thumb-cluster-convex-walls steps)
      (difference
-      (left-section-to-thumb-cluster-convex-connecetors steps)
+      (left-section-to-thumb-cluster-convex-connecters steps)
       (key-place 0 2 MxLEDBitPCB-clearance))
      
-     (thumb-connecters-polyhedron steps-low) ;renders
+     (thumb-connecters-polyhedron 36) ;renders
        (key-web-connecters-polyhedron steps-low)
      ;(EVQWGD001-place EVQWGD001-holder)
      (front-wall-connecters-polyhedron steps);renders
@@ -343,7 +373,7 @@
   (let [steps 36
     steps-low 8
     steps-mid 16 
-    back-wall-polyhedron-points    (back-wall-polyhedron steps :bottom-plate true)
+    back-wall-polyhedron-points    (back-wall-polyhedron-catmull-rom steps :bottom-plate true)
     left-section-back-points    (left-section-back steps :bottom-plate true)
     back-left-wall-to-screen-points (back-left-wall-to-screen steps :bottom-plate true)
         screen-holder-bottom-left-outside-floor-point-and-screen-holder-bottom-right-outside-floor-point [ screen-holder-bottom-left-outside-floor-point screen-holder-bottom-right-outside-floor-point]
@@ -357,9 +387,9 @@
                              left-section-back-points
                              back-left-wall-to-screen-points 
                                   screen-holder-bottom-left-outside-floor-point-and-screen-holder-bottom-right-outside-floor-point
-                                    left-section-front-polyhedron-bottom-points
-                             thumb-connecters-polyhedron-points       
+                                    left-section-front-polyhedron-bottom-points 
                              polyhedron-thumb-walls-points
+                             thumb-connecters-polyhedron-points
                                     front-wall-polyhedron-points
                                     right-wall-polyhedron-points
                              ) 
@@ -386,7 +416,9 @@
    {:height 1.5 :center false :convexity 10} 
       (polygon (map drop-last bottom-plate-points)) 
      )) 
-)
+  ;  (println polyhedron-thumb-walls-points)
+) 
+   
   )
 )
 (def header  (translate [0 -12 (+ usb-jack-height (* rp2040-plus-thickness 2) 3)](rdz 90 (import "../parts/ImageToStl.com_pin header 1x16 th pitch 2.54mm.stl"))))
@@ -732,44 +764,46 @@ switches)))
 
 
 
-(spit "things-low/left-curve-test.scad"
+;; (spit "things-low/left-curve-test.scad"
 
-      (write-scad
-       (difference (union
-        ;(screen-holder-place-side screen-holder)
-       ;(curved-corner-xy 1 0 1 1 0 1 (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) oled-post wall-xy-offset)
-       ;(-# (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-right-position tps-65-mount-corner-radius-with-offset (- tps-65-mount-corner-radius-with-offset)) 1 1 oled-post (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 1 0 oled-post wall-xy-offset wall-xy-offset))
-       ;;  (difference 
-       ;;   (tps-65-place tps-65-base)
-       ;;   (tps-65-place tps-65-mount-cutout)
-       ;;   )
-                    (translate [0 0 -1.5] bottom-plate-for-polyhedron-model)
-                    (polyhedron-thumb-walls 36)
-                    (back-left-wall-to-screen 36)
-                    (EVQWGD001-place EVQWGD001-holder)
-       ; (EVQWGD001-place EVQWGD001)
-                    thumb-type
-                    (left-section-back 36)
-                    under-screen
-       ; dsa-thumbcaps
-        ;screen-to-EVQWGD001
-       ;;  (difference (screen-holder-place-side screen-holder)
-       ;;             (screen-holder-place-side screen-holder-cut) )
+;;       (write-scad
+;;        (difference (union
+;;         ;(screen-holder-place-side screen-holder)
+;;        ;(curved-corner-xy 1 0 1 1 0 1 (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) oled-post wall-xy-offset)
+;;        ;(-# (wall-brace-xy (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-bottom-right-position tps-65-mount-corner-radius-with-offset (- tps-65-mount-corner-radius-with-offset)) 1 1 oled-post (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position tps-65-mount-corner-radius-with-offset  tps-65-mount-corner-radius-with-offset) 1 0 oled-post wall-xy-offset wall-xy-offset))
+;;        ;;  (difference 
+;;        ;;   (tps-65-place tps-65-base)
+;;        ;;   (tps-65-place tps-65-mount-cutout)
+;;        ;;   )
+;;                     (difference screw-insert-outers
+;;                                 screw-insert-holes)
+;;                    ; (translate [0 0 0] bottom-plate-for-polyhedron-model)
+;;                     (polyhedron-thumb-walls-for-convex-cluster 36)
+;;                     (back-left-wall-to-screen 36)
+                    
+;;        ; (EVQWGD001-place EVQWGD001)
+;;                     thumb-type
+;;                     (left-section-back 36)
+;;                     under-screen
+;;        ; dsa-thumbcaps
+;;         ;screen-to-EVQWGD001
+;;        ;;  (difference (screen-holder-place-side screen-holder)
+;;        ;;             (screen-holder-place-side screen-holder-cut) )
 
-       ;(right-side-polyhedron 36) 
-                    (left-section-front-polyhedron 36)
-        ;(left-section-back 36)
-        ;; thumb-walls-polyhedron
-        ;;  thumb-corners-polyhedron
-        ;;  thumb-tweeners-polyhedron
-                    (union
-                     (for [column [0]
-                           row (range 0 (cond (= column 3) nrows :else (- nrows 1)))]        (key-place column row single-plate)))
-        ;(-# (thumb-wall-brace thumb-bl-place -1  0 oled-post-tl thumb-bl-place -1  0 oled-post-bl thumb-bl-rotate thumb-bl-rotate))
-                    ;under-screen
-                    )
-        ;(translate [0 0 -20] (cube 350 350 40))
-                   )))
+;;        ;(right-side-polyhedron 36) 
+;;                     ;(left-section-front-polyhedron 36)
+;;         ;(left-section-back 36)
+;;         ;; thumb-walls-polyhedron
+;;         ;;  thumb-corners-polyhedron
+;;         ;;  thumb-tweeners-polyhedron
+;;                     (union
+;;                      (for [column [0]
+;;                            row (range 0 (cond (= column 3) nrows :else (- nrows 1)))]        (key-place column row single-plate)))
+;;         ;(-# (thumb-wall-brace thumb-bl-place -1  0 oled-post-tl thumb-bl-place -1  0 oled-post-bl thumb-bl-rotate thumb-bl-rotate))
+;;                     ;under-screen
+;;                     )
+;;         ;(translate [0 0 -20] (cube 350 350 40))
+;;                    )))
 
 ;; (spit "things-low/between-trackpad-and-keys.scad"
 ;;       (write-scad 
@@ -799,74 +833,74 @@ switches)))
 
 
 
-(spit "things-low/thumb-wall-test.scad"
-     (let[curve-points (wall-brace-cubic-polyhedron-curves (points-for-curved-wall-from-thumb-br-bl-to-mr-br 36))
-          thumb-br-bl-to-br (web-post-linear thumb-br-place "bl" :degrees thumb-br-place "br" :degrees 12)
-          thumb-br-br-to-mr-bl (web-post-linear thumb-br-place "br" :degrees thumb-mr-place "bl" :degrees 12)
-          thumb-mr-bl-to-br (web-post-linear thumb-mr-place "bl" :degrees thumb-mr-place "br" :degrees 12)
-          thumb-bl-to-mr-linear-top (concat (drop-last (thumb-br-bl-to-br :top))
-                                            (drop-last (thumb-br-br-to-mr-bl :top))
-                                            (thumb-mr-bl-to-br :top))
-          thumb-bl-to-mr-linear-bottom  (concat 
-                                                 (drop-last (thumb-mr-bl-to-br :bottom) )
-                                            (drop-last (thumb-br-br-to-mr-bl :bottom))
-                                         (thumb-br-bl-to-br :bottom)
-                                         ) 
-          ] 
-      (write-scad
-       (union
-        thumb-type
-      ;;    (generate-bezier-along-bezier-polyhedron-from-points-list-linear 
-      ;;     thumb-bl-to-mr-linear-top (curve-points :web-post-top-curve)
-      ;;     thumb-bl-to-mr-linear-bottom (curve-points :web-post-bottom-curve)
-      ;;     36)
-      ;;   (thumb-br-place switch-model)
-      ;;   (thumb-mr-place switch-model)
-      ;;   (chained-hull-for-four-lists 
-      ;;    (plot-bezier-points 
-      ;;     thumb-bl-to-mr-linear-top
-      ;;     (sphere 0.001)
-      ;;     )
-      ;;    (plot-bezier-points
-      ;;     (curve-points :web-post-top-curve)
-      ;;     (sphere 0.001))
-      ;;    (plot-bezier-points
-      ;;    (reverse thumb-bl-to-mr-linear-bottom)
-      ;;     (sphere 0.001))
-      ;;    (plot-bezier-points
-      ;;     (reverse (curve-points :web-post-bottom-curve))
-      ;;     (sphere 0.001))
-      ;;    36
-      ;;    )
+;; (spit "things-low/thumb-wall-test.scad"
+;;      (let[curve-points (wall-brace-cubic-polyhedron-curves (points-for-curved-wall-from-thumb-br-bl-to-mr-br 36))
+;;           thumb-br-bl-to-br (web-post-linear thumb-br-place "bl" :degrees thumb-br-place "br" :degrees 12)
+;;           thumb-br-br-to-mr-bl (web-post-linear thumb-br-place "br" :degrees thumb-mr-place "bl" :degrees 12)
+;;           thumb-mr-bl-to-br (web-post-linear thumb-mr-place "bl" :degrees thumb-mr-place "br" :degrees 12)
+;;           thumb-bl-to-mr-linear-top (concat (drop-last (thumb-br-bl-to-br :top))
+;;                                             (drop-last (thumb-br-br-to-mr-bl :top))
+;;                                             (thumb-mr-bl-to-br :top))
+;;           thumb-bl-to-mr-linear-bottom  (concat 
+;;                                                  (drop-last (thumb-mr-bl-to-br :bottom) )
+;;                                             (drop-last (thumb-br-br-to-mr-bl :bottom))
+;;                                          (thumb-br-bl-to-br :bottom)
+;;                                          ) 
+;;           ] 
+;;       (write-scad
+;;        (union
+;;         thumb-type
+;;       ;;    (generate-bezier-along-bezier-polyhedron-from-points-list-linear 
+;;       ;;     thumb-bl-to-mr-linear-top (curve-points :web-post-top-curve)
+;;       ;;     thumb-bl-to-mr-linear-bottom (curve-points :web-post-bottom-curve)
+;;       ;;     36)
+;;       ;;   (thumb-br-place switch-model)
+;;       ;;   (thumb-mr-place switch-model)
+;;       ;;   (chained-hull-for-four-lists 
+;;       ;;    (plot-bezier-points 
+;;       ;;     thumb-bl-to-mr-linear-top
+;;       ;;     (sphere 0.001)
+;;       ;;     )
+;;       ;;    (plot-bezier-points
+;;       ;;     (curve-points :web-post-top-curve)
+;;       ;;     (sphere 0.001))
+;;       ;;    (plot-bezier-points
+;;       ;;    (reverse thumb-bl-to-mr-linear-bottom)
+;;       ;;     (sphere 0.001))
+;;       ;;    (plot-bezier-points
+;;       ;;     (reverse (curve-points :web-post-bottom-curve))
+;;       ;;     (sphere 0.001))
+;;       ;;    36
+;;       ;;    )
         
-      ;;    (generate-bezier-to-point-polyhedron
-      ;;     (take 12(curve-points :web-post-top-curve)) ((web-post-point thumb-br-place "br" :degrees) :top)
-      ;;     (reverse (take-last 12 (curve-points :web-post-bottom-curve))) ((web-post-point thumb-br-place "br" :degrees) :bottom)
-      ;;     )
-      ;;    (generate-bezier-to-point-polyhedron
-      ;;     (take 15 (take-last 26(curve-points :web-post-top-curve))) ((web-post-point thumb-br-place "br" :degrees) :top)
-      ;;     (reverse (take-last 15 (take 26 (curve-points :web-post-bottom-curve)))) ((web-post-point thumb-br-place "br" :degrees) :bottom))
-      ;;   (generate-bezier-to-point-polyhedron
-      ;;    (take 15 (take-last 26 (curve-points :web-post-top-curve))) ((web-post-point thumb-mr-place "bl" :degrees) :top)
-      ;;    (reverse (take-last 15 (take 26 (curve-points :web-post-bottom-curve)))) ((web-post-point thumb-mr-place "bl" :degrees) :bottom))
+;;       ;;    (generate-bezier-to-point-polyhedron
+;;       ;;     (take 12(curve-points :web-post-top-curve)) ((web-post-point thumb-br-place "br" :degrees) :top)
+;;       ;;     (reverse (take-last 12 (curve-points :web-post-bottom-curve))) ((web-post-point thumb-br-place "br" :degrees) :bottom)
+;;       ;;     )
+;;       ;;    (generate-bezier-to-point-polyhedron
+;;       ;;     (take 15 (take-last 26(curve-points :web-post-top-curve))) ((web-post-point thumb-br-place "br" :degrees) :top)
+;;       ;;     (reverse (take-last 15 (take 26 (curve-points :web-post-bottom-curve)))) ((web-post-point thumb-br-place "br" :degrees) :bottom))
+;;       ;;   (generate-bezier-to-point-polyhedron
+;;       ;;    (take 15 (take-last 26 (curve-points :web-post-top-curve))) ((web-post-point thumb-mr-place "bl" :degrees) :top)
+;;       ;;    (reverse (take-last 15 (take 26 (curve-points :web-post-bottom-curve)))) ((web-post-point thumb-mr-place "bl" :degrees) :bottom))
         
-      ;;   (generate-bezier-to-point-polyhedron
-      ;;      (take-last 12 (curve-points :web-post-top-curve)) ((web-post-point thumb-mr-place "bl" :degrees) :top)
-      ;;      (reverse (take 12 (curve-points :web-post-bottom-curve))) ((web-post-point thumb-mr-place "bl" :degrees) :bottom))
+;;       ;;   (generate-bezier-to-point-polyhedron
+;;       ;;      (take-last 12 (curve-points :web-post-top-curve)) ((web-post-point thumb-mr-place "bl" :degrees) :top)
+;;       ;;      (reverse (take 12 (curve-points :web-post-bottom-curve))) ((web-post-point thumb-mr-place "bl" :degrees) :bottom))
         
-        ;MxLEDBitPCB-holder-legs-placed-on-keywells
+;;         ;MxLEDBitPCB-holder-legs-placed-on-keywells
         
         
-        ;(thumb-tr-place MxLEDBitPCB-holder-legs)
+;;         ;(thumb-tr-place MxLEDBitPCB-holder-legs)
         
-        (polyhedron-thumb-walls-for-convex-cluster 36)
-        (thumb-connecters-polyhedron 36)
-        ;front-wall-polyhedron
+;;         (polyhedron-thumb-walls-for-convex-cluster 36)
+;;         (thumb-connecters-polyhedron 36)
+;;         ;front-wall-polyhedron
         
-      ;;   (key-place 1 2 (union
-      ;;                   dsa-cap
-      ;;                   single-plate))
-        ))))
+;;       ;;   (key-place 1 2 (union
+;;       ;;                   dsa-cap
+;;       ;;                   single-plate))
+;;         ))))
 
 ;; (spit "things-low/render-test.scad"
 ;;       (write-scad
@@ -932,45 +966,40 @@ switches)))
 ;;        )
 ;;       )
 
-(spit "things-low/right-wall-test.scad"
-      (write-scad
-       (union 
-        ; (right-wall-polyhedron 36)
-        (right-wall-polyhedron-catmull-rom-spline 36)
-       key-holes
-       )))
+;; (spit "things-low/right-wall-test.scad"
+;;       (write-scad
+;;        (union 
+;;         ; (right-wall-polyhedron 36)
+;;         (right-wall-polyhedron-catmull-rom-spline 36)
+;;        key-holes
+;;        )))
 
-(spit "things-low/switch-test.scad"
-      (write-scad
-       (union
-        (-# single-plate)
-        switch-model
-        (-# dsa-cap)
-        (translate [0.75 -4.75 (- plate-thickness)](-# (import "../parts/Kailh Hotswap MX v22.stl")))
-        MxLEDBitPCB
-        MxLEDBitPCB-holder-legs
-        )))
+;; (spit "things-low/switch-test.scad"
+;;       (write-scad
+;;        (union
+;;         (-# single-plate)
+;;         switch-model
+;;         (-# dsa-cap)
+;;         (translate [0.75 -4.75 (- plate-thickness)](-# (import "../parts/Kailh Hotswap MX v22.stl")))
+;;         MxLEDBitPCB
+;;         MxLEDBitPCB-holder-legs
+;;         )))
 
-(spit "things-low/MxLEDBitPCB-holder-legs-test.scad"
-      (write-scad
-       (union
-        MxLEDBitPCB-holder-legs
-        single-plate
+;; (spit "things-low/MxLEDBitPCB-holder-legs-test.scad"
+;;       (write-scad
+;;        (union
+;;         MxLEDBitPCB-holder-legs
+;;         single-plate
         
-         (-#(->>
-          (difference
-         (cube MxLEDBitPCB-holder-width (+ MxLEDBitPCB-holder-length (* MxLEDBitPCB-holder-leg-thickness 2)) (+ plate-thickness 0.5))
-           (cube (+ keyswitch-width 3) (+ keyswitch-height 3) (+ plate-thickness 0.5)))
-           (translate [0 0 (+ (/ plate-thickness 2) (/ MxLEDBitPCB-holder-leg-z-coordinate 4) 0.3)]))) 
-        )
-       ))
+;;          (-#(->>
+;;           (difference
+;;          (cube MxLEDBitPCB-holder-width (+ MxLEDBitPCB-holder-length (* MxLEDBitPCB-holder-leg-thickness 2)) (+ plate-thickness 0.5))
+;;            (cube (+ keyswitch-width 3) (+ keyswitch-height 3) (+ plate-thickness 0.5)))
+;;            (translate [0 0 (+ (/ plate-thickness 2) (/ MxLEDBitPCB-holder-leg-z-coordinate 4) 0.3)]))) 
+;;         )
+;;        ))
 
-(def abe-dua "../svg/Abe_dua.svg")
-(def hw3-me-dua "../svg/HWEMUDUA.svg")
-(def nea-onnim-no-sua-a-ohu "../svg/Nea_onnim_no_sua_a_ohu.svg")
-(def nkyinkyim "../svg/nkyinkyim.svg")
-(def odenkyem "../svg/Odenkyem.svg")
-(def okuafo-pa "../svg/Okuafo pa.svg")
+
 
   (spit "things-low/back-wall-polyhedron.scad"
        (let [corner-position (calculate-point-between-points   (assoc screen-holder-top-right-outside-point 2 (/ (nth screen-holder-top-right-outside-point 2) 2))
@@ -996,16 +1025,15 @@ switches)))
                     ;;  (place-symbol-on-key-wall nea-onnim-no-sua-a-ohu
                     ;;                            {:column 4 :row 2  :offset [-2 0 0]
                     ;;                             :scale-x 0.05 :scale-y 0.05 :position "rm" :z-rotation 0})
-                      (place-symbol-on-thumb-wall odenkyem
-                                                {:place thumb-br-place :height 2 :orientation-angle -85 
-                                                 :offset (map + [(+ (/ mount-width -2) extra-width) (* extra-height 2) 0] [1 0 0]) 
-                                                 :scale-x 0.1 :scale-y 0.1 :position "lm" :z-rotation 0 :rotation #(rdy -10 %)})
+                      
                     ;;  (place-2d-shape-on-thumb-wall (square 441.2 441.2)
                     ;;                               {:place thumb-br-place  :offset [(/ mount-width 2) (+ (/ mount-height -2) extra-height) 0]
                     ;;                                :scale-x 0.05 :scale-y 0.05 :position "bm" :z-rotation 0})
+                      oodenkyem-on-thumb-br
+                      Ananse-Ntontan-on-thumb-bl
                      (place-symbol-on-thumb-wall hw3-me-dua
                                                  {:place thumb-br-place  :offset [(+ (/ mount-width -2) extra-width) extra-height 0]
-                                                  :scale-x 0.1 :scale-y 0.1 :position "lm" :z-rotation 0})
+                                                  :scale-x 0.05 :scale-y 0.05 :position "lm" :z-rotation 0})
                      (place-symbol-on-thumb-wall "../FUNTUNFUNEFU-DENKYEMFUNEFU.svg"
                                                  {:place thumb-tr-place  :offset [0 (+ (/ mount-height -2) extra-height)  0]
                                                   :scale-x 0.05 :scale-y 0.05 :position "rm" :z-rotation 0})
@@ -1013,13 +1041,10 @@ switches)))
                                                  {:place thumb-mr-place  :offset [(/ mount-width 2) (+ (/ mount-height -2) extra-height 0.5) 0]
                                                   :scale-x 0.05 :scale-y 0.05 :position "bm" :z-rotation 0 })
                      
-                      (place-symbol-on-thumb-wall "../Ananse-Ntontan.svg"
-                                                  {:height 3 :place thumb-bl-place  
-                                                   :offset (map + [(+ (/ mount-width -2) extra-width) (* extra-height 2) 0] (rotate-around-z-in-degrees -15 [1.5 1 0]))
-                                                   :scale-x 0.2 :scale-y 0.2 :position "lm" :z-rotation -12.5 :orientation-angle 0 :rotation #(rdy -10 %)})
-                      (place-symbol "../FUNTUNFUNEFU-DENKYEMFUNEFU.svg" {:z-rotation -25 :height 3 :center true :scale-x 0.15 :scale-y 0.14 :rotation #(rdx 80 %)
-                                                             :place corner-position :orientation-angle -45
-                                                             :translation (mapv +  (rotate-around-z-in-degrees -20 [-2 -4 0]) )})
+                      
+                      ;; (place-symbol "../FUNTUNFUNEFU-DENKYEMFUNEFU.svg" {:z-rotation -20 :height 3 :center true :scale-x 0.15 :scale-y 0.14 :rotation #(rdx 80 %)
+                      ;;                                        :place corner-position :orientation-angle -45
+                      ;;                                        :translation (mapv +  (rotate-around-z-in-degrees -20 [-2 -2 0]) )})
                      
                      ;;  (->>(call :import "file = \"../Ananse-Ntontan.svg\"" "center = true")
                     ;;   (scale [0.2 0.2 1])
@@ -1039,13 +1064,13 @@ switches)))
                     ;;                                 {:place thumb-mr-place  :offset [(/ mount-width 2) (+ (/ mount-height -2) extra-height 0.5) 0]
                     ;;                                  :scale-x 0.075 :scale-y 0.075 :position "bm" :z-rotation 0}))
                      ;(front-wall-polyhedron 36)
-                      (difference
-                       (back-wall-polyhedron 36)
-                       (usb-jack-place usb-jack-polyhedron))
-                     (polyhedron-left-section 36)
-                      (left-section-to-thumb-cluster-convex-walls 36)
+                      ;; (difference
+                      ;;  (back-wall-polyhedron 36)
+                      ;;  (usb-jack-place usb-jack-polyhedron))
+                     ;(polyhedron-left-section 36)
+                     ; (left-section-to-thumb-cluster-convex-walls 36)
                      ;(right-wall-polyhedron-catmull-rom-spline 36)
-                     (left-section-to-thumb-cluster-convex-connecetors 36)
+                     ;(left-section-to-thumb-cluster-convex-connecetors 36)
                     ;;  (rp2040-plus-place rp2040-plus-mount)
                       ;; (left-section-back 36)
                      )))
@@ -1067,15 +1092,21 @@ switches)))
 (spit "things-low/front-and-thumb-wall-test.scad"
       (write-scad
        (union
-        ;(front-wall-polyhedron 36)
+        (front-wall-polyhedron 36)
+        key-holes
         ;(back-left-wall-to-screen 36)
         ;(thumb-to-body-connecters-polyhedron 36)
-        ;(thumb-connecters-polyhedron 12)
+        (thumb-connecters-polyhedron 36)
         ;(polyhedron-thumb-walls 36)
         (polyhedron-thumb-walls-for-convex-cluster 36)
-        (left-section-to-thumb-cluster-convex-walls 36)
+      
         
-        (left-section-to-thumb-cluster-convex-connecetors 36)
+        
+        ;(key-place 1 2 dsa-cap)
+        ;(left-section-to-thumb-cluster-convex-walls 36)
+        ;(back-left-wall-to-screen 36)
+        ;(screen-holder-place-side screen-holder)
+       ;(left-section-to-thumb-cluster-convex-connecters 36)
         ;(right-side-polyhedron 36)
         ;(key-web-connecters-polyhedron 12)
         ;(thumb-connecters-polyhedron 12)
@@ -1111,59 +1142,59 @@ switches)))
 
 
   
-(spit "things-low/key-placement-test.scad"
-      (write-scad
-       (project
-        (union
-        key-holes
-        thumb-type
-        ))
-       )
-      )
-  (spit "things-low/key-test.scad"
-        (write-scad 
-         (union
-          (union 
-          ;switches
-         ; (thumb-1x-layout switch-model)
-          ;(thumb-15x-layout switch-model)
-          MxLEDBitPCB-placed
-          ;(thumb-1x-layout MxLEDBitPCB)
-;(thumb-15x-layout MxLEDBitPCB)
-           ;(place-per-key MxLEDBitPCB-holder-legs)
+;; (spit "things-low/key-placement-test.scad"
+;;       (write-scad
+;;        (project
+;;         (union
+;;         key-holes
+;;         thumb-type
+;;         ))
+;;        )
+;;       )
+;;   (spit "things-low/key-test.scad"
+;;         (write-scad 
+;;          (union
+;;           (union 
+;;           ;switches
+;;          ; (thumb-1x-layout switch-model)
+;;           ;(thumb-15x-layout switch-model)
+;;           MxLEDBitPCB-placed
+;;           ;(thumb-1x-layout MxLEDBitPCB)
+;; ;(thumb-15x-layout MxLEDBitPCB)
+;;            ;(place-per-key MxLEDBitPCB-holder-legs)
           
-          key-holes
-          ;kailh-hotswap-mx-thumbs
-          ;(-# (thumb-bl-place oled-post-tl))
-          ;(key-web-connecters-polyhedron 12)
-          ;(des-caps {:style :des-scooped})
-          des-thumbs
-          ;dsa-caps
-          dsa-thumbcaps
-          ;(place-per-key kailh-hotswap-mx)
-          ;(thumb-place-convex 0 0 oled-post-tr)
-          ;(color WHI (thumb-place-convex 0 0 single-plate))
-          ;(color RED (thumb-place-convex 0 1 single-plate))
-          ;(color GRE (thumb-place-convex 0 2 single-plate))
-          ;(color CYA (thumb-place-convex 1 0 single-plate))
-          ;(color MAG (thumb-place-convex 1 1 single-plate))
-          ;(color PUR (thumb-place-convex 1 2 single-plate))
-          ;(color WHI (thumb-place-convex 0 0 dsa-cap))
-          (color RED (thumb-place-convex 0 1 dsa-cap))
-          (color GRE (thumb-place-convex 0 2 dsa-cap))
-          ;(color CYA (thumb-place-convex 1 0 dsa-cap))
-         ; (color MAG (thumb-place-convex 1 1 dsa-cap))
-          ;(color PUR (thumb-place-convex 1 2 dsa-cap))
-          (e-place EVQWGD001)
-          (e-place EVQWGD001-holder)
-          thumb-type
-          (thumb-1x-layout MxLEDBitPCB)
-          (thumb-15x-layout MxLEDBitPCB)
-          ;(right-side-polyhedron 36)
-          (tps-65-place tps-65-mount)
-          (thumb-connecters-polyhedron 12))
-         ;  (translate [0 0 -20] (cube 350 350 40))
-          )))
+;;           key-holes
+;;           ;kailh-hotswap-mx-thumbs
+;;           ;(-# (thumb-bl-place oled-post-tl))
+;;           ;(key-web-connecters-polyhedron 12)
+;;           ;(des-caps {:style :des-scooped})
+;;           des-thumbs
+;;           ;dsa-caps
+;;           dsa-thumbcaps
+;;           ;(place-per-key kailh-hotswap-mx)
+;;           ;(thumb-place-convex 0 0 oled-post-tr)
+;;           ;(color WHI (thumb-place-convex 0 0 single-plate))
+;;           ;(color RED (thumb-place-convex 0 1 single-plate))
+;;           ;(color GRE (thumb-place-convex 0 2 single-plate))
+;;           ;(color CYA (thumb-place-convex 1 0 single-plate))
+;;           ;(color MAG (thumb-place-convex 1 1 single-plate))
+;;           ;(color PUR (thumb-place-convex 1 2 single-plate))
+;;           ;(color WHI (thumb-place-convex 0 0 dsa-cap))
+;;           (color RED (thumb-place-convex 0 1 dsa-cap))
+;;           (color GRE (thumb-place-convex 0 2 dsa-cap))
+;;           ;(color CYA (thumb-place-convex 1 0 dsa-cap))
+;;          ; (color MAG (thumb-place-convex 1 1 dsa-cap))
+;;           ;(color PUR (thumb-place-convex 1 2 dsa-cap))
+;;           (e-place EVQWGD001)
+;;           (e-place EVQWGD001-holder)
+;;           thumb-type
+;;           (thumb-1x-layout MxLEDBitPCB)
+;;           (thumb-15x-layout MxLEDBitPCB)
+;;           ;(right-side-polyhedron 36)
+;;           (tps-65-place tps-65-mount)
+;;           (thumb-connecters-polyhedron 12))
+;;          ;  (translate [0 0 -20] (cube 350 350 40))
+;;           )))
   
   ;; (spit "things-low/des-test.scad"
   ;;       (write-scad
@@ -1187,77 +1218,261 @@ switches)))
 
   ;;           ))))
 
-(spit "things-low/vybronics-vl91022-mount-hole-cover.scad"
-      (write-scad vybronics-vl91022-mount-hole-cover))
-(spit "things-low/currently-editing.scad"
-      (write-scad
-       (include "front-and-thumb-wall-test.scad"))
-      )
+;; (spit "things-low/vybronics-vl91022-mount-hole-cover.scad"
+;;       (write-scad vybronics-vl91022-mount-hole-cover))
+;; (spit "things-low/currently-editing.scad"
+;;       (write-scad
+;;        (include "front-and-thumb-wall-test.scad"))
+;;       )
 
 
 
 
-(spit "things-low/MxLEDBitPCB-on-keywell.scad"
-      (write-scad 
-       (let [steps-low 8
-             old-thumb #(union
-                          (thumb-place-convex-old 0 0 %)
-                          (thumb-place-convex-old 0 1 %)
-                          (thumb-place-convex-old 0 2 %)
-                          (thumb-place-convex-old 1 1 %)
-                          (thumb-place-convex-old 1 2 %))
-             original-thumb #(union
-                              (thumb-tr-place-standard %)
-                              (thumb-tl-place-standard %)
-                              (thumb-mr-place-standard %)
-                              (thumb-bl-place-standard %)
-                              (thumb-br-place-standard %) 
-                              )]
-         (union
- ;       MxLEDBitPCB-placed-on-keywells
-;MxLEDBitPCB-placed-on-thumbs
-  ;        (key-place 0 2 MxLEDBitPCB) 
-          key-holes
-         ; (thumb-connecters-polyhedron steps-low) ;renders
-          ;(key-web-connecters-polyhedron steps-low)
+;; (spit "things-low/MxLEDBitPCB-on-keywell.scad"
+;;       (write-scad 
+;;        (let [steps-low 8
+;;              old-thumb #(union
+;;                           (thumb-place-convex-old 0 0 %)
+;;                           (thumb-place-convex-old 0 1 %)
+;;                           (thumb-place-convex-old 0 2 %)
+;;                           (thumb-place-convex-old 1 1 %)
+;;                           (thumb-place-convex-old 1 2 %))
+;;              original-thumb #(union
+;;                               (thumb-tr-place-standard %)
+;;                               (thumb-tl-place-standard %)
+;;                               (thumb-mr-place-standard %)
+;;                               (thumb-bl-place-standard %)
+;;                               (thumb-br-place-standard %) 
+;;                               )]
+;;          (union
+;;  ;       MxLEDBitPCB-placed-on-keywells
+;; ;MxLEDBitPCB-placed-on-thumbs
+;;   ;        (key-place 0 2 MxLEDBitPCB) 
+;;           key-holes
+;;          ; (thumb-connecters-polyhedron steps-low) ;renders
+;;           ;(key-web-connecters-polyhedron steps-low)
           
-;;           (thumb-place-convex 0 3 single-plate)
-;;           (thumb-place-convex 0 3 dsa-cap)
-;;           (thumb-place-convex 1 3 single-plate)
-;; (thumb-place-convex 1 3 dsa-cap)
-          (left-section-to-thumb-cluster-convex-connecetors  36) 
-          ;dsa-thumbcaps
-          dsa-caps
-          des-cornelius-thumbs
-     ;     (des-caps  {:style :des-scooped})
-          thumb-type
-          (-# (original-thumb (union
-                      single-plate
-                      dsa-cap)))
-          ))))
-(spit "things-low/right-side-polyhedron.scad"
-      (write-scad
-       (union
-        ;(right-side-polyhedron 36)
-        (difference 
-    (union
-  aviator-assembly-polyhedron
-   (left-section-back 36) 
-    ) 
- aviator-assembly-diffs
-        )
-        (vybronics-vl91022-place vybronics-vl91022-mount)
-         (difference
-          (tps-65-place tps-65-mount)
-          (tps-65-place tps-65-mount-cutout))
+;; ;;           (thumb-place-convex 0 3 single-plate)
+;; ;;           (thumb-place-convex 0 3 dsa-cap)
+;; ;;           (thumb-place-convex 1 3 single-plate)
+;; ;; (thumb-place-convex 1 3 dsa-cap)
+;;           (left-section-to-thumb-cluster-convex-connecters  36) 
+;;           ;dsa-thumbcaps
+;;           dsa-caps
+;;           des-cornelius-thumbs
+;;      ;     (des-caps  {:style :des-scooped})
+;;           thumb-type
+;;           (-# (original-thumb (union
+;;                       single-plate
+;;                       dsa-cap)))
+;;           ))))
+;; (spit "things-low/right-side-polyhedron.scad"
+;;       (write-scad
+;;        (union
+;;         ;(right-side-polyhedron 36)
+;;         (difference 
+;;     (union
+;;   aviator-assembly-polyhedron
+;;    (left-section-back 36) 
+;;     ) 
+;;  aviator-assembly-diffs
+;;         )
+;;         (vybronics-vl91022-place vybronics-vl91022-mount)
+;;          (difference
+;;           (tps-65-place tps-65-mount)
+;;           (tps-65-place tps-65-mount-cutout))
         
-        ;(-# key-holes)
-        )))
+;;         ;(-# key-holes)
+;;         )))
 
-(spit "things-low/cornelius-thumbs-with-sprues-right.scad"
-      (write-scad right-with-sprues))
+;; (spit "things-low/cornelius-thumbs-with-sprues-right.scad"
+;;       (write-scad right-with-sprues))
 
-(spit "things-low/cornelius-thumbs-with-sprues-left.scad"
-      (write-scad left-with-sprues))
+;; (spit "things-low/cornelius-thumbs-with-sprues-left.scad"
+;;       (write-scad left-with-sprues))
+
+(spit "things-low/back-wall-polyhedron-catmull-rom-test.scad" 
+      (write-scad (union
+                    (difference
+                     (back-wall-polyhedron-catmull-rom 36)
+                       (usb-jack-place usb-jack-polyhedron))
+                   ;key-holes
+                   (left-section-back 36)
+                   (right-wall-polyhedron-catmull-rom-spline 36)
+                   aviator-assembly-polyhedron
+                   (rp2040-plus-place rp2040-plus-mount)
+                   ;bottom-plate-for-polyhedron-model
+                   )))
+
+(spit "things-low/generate-bezier-along-bezier-polyhedron-all-side-test.scad"
+      (let [steps 36
+            min-z 0
+            max-z 10
+            min-y -5
+            max-y 5
+            min-x -5
+            max-x 5
+            top-outside (bezier-linear [min-x min-y max-z] [max-x min-y max-z] steps)
+            top-inside (bezier-linear  [max-x max-y max-z] [min-x max-y max-z]   steps)
+            bottom-outside (bezier-linear [min-x min-y min-z] [max-x min-y min-z] steps)
+            bottom-inside (bezier-linear   [max-x max-y min-z] [min-x max-y min-z]  steps)
+            outer-points (into [] 
+                               (apply concat 
+                                      (for [index (range 0 (inc steps))] 
+                                        (bezier-linear 
+                                         (nth top-outside index) 
+                                         (nth bottom-outside index) 
+                                         steps) 
+                                        )))
+            inner-points (into []
+                               (apply concat
+                                      (for [index (range 0 (inc steps))]
+                                        (bezier-linear
+                                         (nth top-inside index)
+                                         (nth bottom-inside index)
+                                         steps))))
+            wall-left (wall-brace-polyhedron-curve-points (partial key-place 0 1) 0 -1 "bl" :radians steps)
+            wall-right (wall-brace-polyhedron-curve-points (partial key-place 0 1) 0 -1 "br" :radians steps)
+            wall-outer (into []
+                             (apply concat
+                                    (for [index (range 0 (inc steps))]
+                                      (bezier-linear 
+                                       (nth (wall-right :outer-points) index)
+                                       (nth (wall-left :outer-points) index)
+                                       steps))))
+            wall-inner (into []
+                             (apply concat
+                                    (for [index (range 0 (inc steps))
+                                          :let [left (reverse (wall-left :inner-points))
+                                                right (reverse (wall-right :inner-points))]]
+                                      (bezier-linear 
+                                       (nth right index)
+                                       (nth  left index) 
+                                       steps))))
+            spline-test (cubic-hermite-spline-curve-segment [0 0 0] [1 1 1] [1 0 0] [0 1 0] 20)
+            curve-1 (bezier-quadratic [-2 2 0] [-2 0 0] [-1 0 0] 20)
+            
+            test-m [[4 7]
+                    [2 6]]
+            test-m-inv (/ 1 (- (* (nth (nth test-m 0) 0) (nth (nth test-m 0) 0))))
+            basis-inv (matrix-inverse [[(/ -3  1) 0 (/ 3 1) 0 0]
+                                       [1 4 1 0 0]
+                                       [0 1 4 1 0]
+                                       [0 0 1 4 1]
+                                       [0 0 (/ -3 1) 0 (/ 3 1)]])
+            basis (generate-basis-matrix-to-find-cubic-uniform-b-spline-points-from-knots 2)
+            basis-2 (calculate-non-vanishing-basis-functions 3
+                                                             1 3.0 [0 0 0 0 1 1 1 1])
+            ;nurbs-test (mapv #(subvec (coerce :persistent-vector %) 0 3) (b-spline-wrapper [[0 0 0 1] [0 1 0 1] [1 0 1 0.5] [2 1 2 1] [2 0 2 1]] 2 [0 0 0 (/ 1 3) (/ 2 3) 1 1 1] false 11))
+            ] 
+        
+        (write-scad 
+      ; (wall-brace-polyhedron  (partial key-place 0 1) 0 -1 "bl" :radians (partial key-place 0 1) 0 -1 "br" :radians wall-xy-offset wall-xy-offset true steps)
+        ;;  (wall-brace-quadratic-polyhedron (partial key-place 1 cornerrow) 1 -0.1 "br" :radians
+        ;;                           (partial key-place 2 cornerrow) 0.25 -1 "bl" :radians
+        ;;                           (partial key-place 2 cornerrow) 0 -1 "bm" :radians
+        ;;                           wall-xy-offset-medium-thin wall-xy-offset-thin wall-xy-offset-thin
+        ;;                                   true
+        ;;                           steps)
+        ;;  (wall-brace-quadratic-polyhedron (partial key-place 2 cornerrow) 1 -1 "bl" :radians
+        ;;                           (partial key-place 2 cornerrow) 0 -1 "br" :radians
+        ;;                           (partial key-place 3 cornerrow) -1 0 "bl" :radians
+        ;;                           wall-xy-offset-thin wall-xy-offset-thin wall-xy-offset-mid
+        ;;                           steps)
+        ;;  (wall-brace-catmull-rom-spline 
+        ;;   (points-fn-deg thumb-tr-place 1 0 "br" wall-xy-offset)
+        ;;   (points-fn-deg thumb-tr-place 1 -1 "tr" wall-xy-offset-mid) 
+        ;;  (points-fn-rad  (partial key-place 1 cornerrow) 1 0.2 "br"   wall-xy-offset-thin)
+        ;;   (points-fn-rad (partial key-place 2 cornerrow) 1 -1 "bl" wall-xy-offset-thin)
+        ;;   ;(points-fn-rad  (partial key-place 2 cornerrow) 0 -1 "br" wall-xy-offset-thin)
+        ;;   ;(points-fn-rad  (partial key-place 3 cornerrow) -1 0 "bl" wall-xy-offset-mid)
+        ;;   steps
+        ;;   :web-post-top-style :curved :extra-points-for-sides-and-top-and-bottom true)
+        ;;  (wall-brace-catmull-rom-spline
+        ;;   ;(points-fn-deg thumb-tr-place 1 0 "br" wall-xy-offset)
+        ;;   (points-fn-deg thumb-tr-place 1 -1 "tr" wall-xy-offset-mid)
+        ;;   (points-fn-rad  (partial key-place 1 cornerrow) 1 0.2 "br"   wall-xy-offset-thin)
+        ;;   (points-fn-rad (partial key-place 2 cornerrow) 1 -1 "bl" wall-xy-offset-thin)
+        ;;   (points-fn-rad  (partial key-place 2 cornerrow) 0 -1 "br" wall-xy-offset-thin)
+        ;;   ;(points-fn-rad  (partial key-place 3 cornerrow) -1 0 "bl" wall-xy-offset-mid)
+        ;;   steps
+        ;;   ;:web-post-top-style :curved
+        ;;   :extra-points-for-sides-and-top-and-bottom true)
+      ;;  (key-place 1 cornerrow (union
+      ;;                          dsa-cap
+      ;;                          single-plate))
+         ;(generate-bezier-along-bezier-polyhedron-all-sides wall-outer wall-inner steps)
+         ;(generate-bezier-along-bezier-polyhedron-all-sides outer-points inner-points steps)
+        ;;  (plot-bezier-points spline-test (sphere 0.05))
+        ;;  (plot-bezier-points (cubic-hermite-tension-spline-curve [0 0 0] [2 0 0] [2 1 0] [2 -1 0] 0.5 20) (sphere 0.05))
+        ;;  (plot-bezier-points (cubic-hermite-tension-spline-curve [0 0 0] [2 0 0] [2 1 0] [2 -1 0] 1 20) (sphere 0.05))
+        ;;  (plot-bezier-points (cubic-hermite-tension-spline-curve [0 0 0] [2 0 0] [2 1 0] [2 -1 0] 2 20) (sphere 0.05))
+        ;;  (color [1 0 0 1] (plot-bezier-points curve-1 (sphere 0.05)))
+        ;;  (color [1 0 0 1] (plot-bezier-points (bezier-linear [1 1 1] [1 2 1] 20) (sphere 0.05)) )
+        ;;  (color [0 1 0 1](plot-bezier-points (bezier-cubic [-2 6 0] [-1 4 0] [1 4 0] [2 6 0] 20) (sphere 0.05)))
+        ;;  (plot-bezier-points (catmull-rom-spline-as-bezier-cubic [-2 6 0] [-1 4 0] [1 4 0] [2 6 0]  20) (sphere 0.05))
+         ;(plot-bezier-points (quadratic-uniform-b-spline [[1 0 0] [1 1 0] [2 1 0] [2 0 0]] 20) (sphere 0.05))
+         ;(plot-bezier-points (quadratic-uniform-b-spline-through-terminal-endpoint [[1 0 0] [1 1 0] [2 1 0] [2 0 0]] 40) (sphere 0.05))
+         ;(plot-bezier-points (cubic-uniform-b-spline [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 20) (sphere 0.05))
+         ;(plot-bezier-points (cubic-uniform-b-spline [[0 0 0] [1 1 0] [1 1 0] [1 1 0] [2 0 0]] 20) (sphere 0.05))
+         ;(plot-bezier-points (cubic-uniform-b-spline-through-terminal-endpoints [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 40) (sphere 0.05))
+         ;(plot-bezier-points (cubic-uniform-b-spline-closed [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 50) (sphere 0.05))
+         ;(plot-bezier-points (cubic-b-spline-with-tension [[0 0 0] [0 1 0] [1 1 0]  [1 0 0]] 3 20) (sphere 0.05))
+         ;(plot-bezier-points (cubic-b-spline-with-tension [[0 0 0] [0 1 0] [1 1 0]  [1 0 0]] 5 20) (sphere 0.05))
+         ;(plot-bezier-points (cubic-b-spline-with-tension [[0 0 0] [0 1 0] [1 1 0]  [1 0 0]] 0 20) (sphere 0.05))
+        
+       ;  (plot-bezier-points (quartic-uniform-b-spline-segment [0 0 0] [1 1 0] [4 4 0] [8 2 0] [12 0 0] 20) (sphere 0.05))
+        ; (plot-bezier-points (bezier-cubic [-5 0 0] [-2.5 5 0] [2.5 5 0] [5 0 0] 10) (sphere 0.05))
+         ;(color [1 0 0 1](plot-bezier-points (n-degree-bezier-curve [[-5 0 0] [-2.5 5 0] [2.5 5 0] [5 0 0]] 10) (sphere 0.05)))
+         
+         ;(plo(n-degree-bezier-curve [[-5 0 0] [0 5 0] [5 0 0]] 10))
+         ;(for [index (range 0 (inc 3)) ](println (bezier-basis-fn-times-point 3 index [0 0 0] 0)))
+         ;(hermite-straight-segment [10 10 1] [20 10 1] [12 10 1] [24 10 1] steps)
+       ;  (println (det (identity-matrix 2)))
+         ;(println (matrix-inverse  [[4 7] [2 6]]))
+       ;(println (mmul [[4 7 7] [2 6 7] [2 4 3]] (matrix-inverse [[4 7 7] [2 6 7] [2 4 3]]) ))
+      ;;  (println (determinant [[4 -2 1]
+      ;;                         [5 0 3]
+      ;;                         [-1 2 6]]))
+      ;;    (println (element-apply  (mmul  [[4 -2 1]
+      ;;                     [5 0 3]
+      ;;                     [-1 2 6]]
+      ;;                    (matrix-inverse [[4 -2 1]
+      ;;                              [5 0 3]
+      ;;                              [-1 2 6]])) 
+      ;;                             #(Math/round %)))
+        ; (for [p basis-inv] (println p))
+        ;(println (element-apply (mmul [[0.25] [(/ 1 6)] [1] [(/ 11 6)] [0.25]] basis-inv ) #(Math/round %)))
+          ;;  (for [p basis-inv]
+          ;;  (println   (reduce + (mapv * p (mapv #(* % 6)  (into [] (apply concat [[0.5] [(/ 1 6)] [1] [(/ 11 6)] [0.5]]))))))
+          ;;   )
+          ;(plot-bezier-points (cubic-uniform-b-spline [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 10) (sphere 0.05))
+          ;(plot-bezier-points (kochanek-bartels-spline-curve [[-1 -1 0] [0 0 0]  [4 6 0] [10 -1 0] [11 -2 0]] 40 :tension-values [0 -1 0] :continuinity-values [0 0 0] :bias-values [0 0 0] ) (sphere 0.05))
+        ; (color [1 0 0 1](plot-bezier-points (cubic-uniform-b-spline-through-points [0.5 0.5 0] [ [(/ 1 6) (/ 5 6) 0] [1 1 0] [(/ 11 6) (/ 5 6) 0] ] [0.5 -0.5 0] 10) (sphere 0.05)))
+         ;(for [b basis] (println b))
+        ;(plot-bezier-points (bezier-cubic [-2 6 0] [-1 4 0] [1 4 0] [2 6 0] 20) (sphere 0.05))
+         ;(color [0 1 0 1] (plot-bezier-points (reparametrized-cubic-bezier-curve [-2 6 0] [-1 4 0] [1 4 0] [2 6 0] 1 1.5 10) (sphere 0.05)))
+         
+         ;(plot-bezier-points (linear-non-uniform-b-spline-segment [-5 -5 0] [5 -5 0] 20) (sphere 0.05))
+         ;(println (shape [[0 0 0 0.5] [0 1 0 0.5] [1 0 0 0.5] [2 1 0 0.5] [2 0 0 0.5]]))
+         ;(plot-bezier-points nurbs-test (sphere 0.05))
+      ;   (mapv (partial println) nurbs-test)
+        ;;  (mapv (partial println)  (chisel-protocols/polyline (chisel-curves/b-spline {:control-points [[0.0 0.0 0.0 1.0] [1.0 1.0 1.0 1.0] [2.0 2.0 2.0 0.5] [3.0 1.0 3.0 1.0] [4.0 0.0 4.0 1.0]]
+        ;;                                                                               :order 2 :knot-vector [0 0 0 0.333 0.666 1 1 1] :reversed-evaluation? false}) 11))
+        ;;  (for [index (range 0 11)
+        ;;        :let [i (/ index 10)]]
+        ;;    (println (direct-nurbs-evaluation i 2 [[0.0 0.0 0.0 1.0] [1.0 1.0 1.0 1.0] [2.0 2.0 2.0 0.5] [3.0 1.0 3.0 1.0] [4.0 0.0 4.0 1.0]] [0 0 0 0.333 0.666 1 1 1] ))
+        ;;    )
+         ;[[0.0 0.0 0.0 1.0] [0.0 1.0 0.0 1.0] [1.0 0.0 1.0 0.5] [2.0 1.0 2.0 1.0] [2.0 0.0 2.0 1.0]]
+        ;;  (println (for [i (range 0 11)]
+        ;;             (nip i 2 [0 0 0 1 2 3 4 4 5 5 5] (/ 5 2))))
+         
+        (println (calculate-knot-span-index 3 3 1 [0 0 0 0 1 1 1 1]))
+        ;(println basis-2)
+           (doseq [basis-function basis-2]
+             (println basis-function)
+             ) 
+         (println (calculate-nurbs-curve-point 3 3 [0 0 0 0 1 1 1 1] [[-4 -4 0 1] [-2 4 0 1] [2 -4 0 1] [4 4 0 1]] 1))
+         )))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch

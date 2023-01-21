@@ -5,7 +5,7 @@
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 ;;;;;;;;;;;;;;;;
 ;; SA Keycaps ;;
 ;;;;;;;;;;;;;;;;

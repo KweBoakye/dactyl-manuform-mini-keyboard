@@ -7,7 +7,7 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.oled :refer :all]
             [dactyl-keyboard.case :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 (def encoder-pos (add-vec (left-wall-plate-position 0 -1.75) [-6 -7 0]))
 (def encoder-rot-x oled-mount-rotation-x-old)

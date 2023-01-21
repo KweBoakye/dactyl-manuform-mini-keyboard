@@ -30,7 +30,7 @@
             [dactyl-keyboard.led-holder-pcb :refer :all]
             [dactyl-keyboard.joystick :refer :all]
             [dactyl-keyboard.pimoroni-haptic-mount :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 
 

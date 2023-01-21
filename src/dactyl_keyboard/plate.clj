@@ -13,7 +13,7 @@
             [dactyl-keyboard.trackball :refer :all]
             [dactyl-keyboard.case :refer :all]
             [dactyl-keyboard.screw-inserts :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 (def bottom-plate-thickness 2.6)
 

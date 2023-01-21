@@ -4,7 +4,7 @@
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 
 ;;;;;;;;;;
@@ -59,7 +59,7 @@
    fingers
    (rotate (deg2rad -45) [1 0 0] palm)))
 
-(defn buckle [& {:keys [triangle-length triangle-width buckle-width-adjust buckle-width buckle-thickness buckle-length buckle-end-length buckle-height include-middle end-supports?] :or [end-supports? true]}]
+(defn buckle [& {:keys [triangle-length triangle-width  buckle-width buckle-thickness buckle-length buckle-end-length buckle-height include-middle ]}]
   (let
    [buckle-end-width (- buckle-width (* 2 buckle-thickness))
     palm-buckle-triangle (polygon [[0 triangle-length] [triangle-width 0] [0 0]])

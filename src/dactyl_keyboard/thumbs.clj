@@ -9,7 +9,7 @@
             [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Default Thumb ;;

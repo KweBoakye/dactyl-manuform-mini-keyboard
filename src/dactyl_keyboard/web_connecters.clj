@@ -7,7 +7,7 @@
             [dactyl-keyboard.shape-parameters :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.placement-functions :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; Web Connectors ;;

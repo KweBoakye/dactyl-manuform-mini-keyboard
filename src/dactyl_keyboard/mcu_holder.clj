@@ -9,7 +9,7 @@
             [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.case :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;(def usb-holder-position (map + [(+ 18.8 holder-offset) 18.7 1.3] [(first usb-holder-ref) (second usb-holder-ref) 2]))
 ;(def usb-holder-space  (rotate (deg2rad 90) [1 0 0](translate (map + usb-holder-position [-1.5 (* -1 wall-thickness) 2.9]) (cube 28.666 30 12.4))))

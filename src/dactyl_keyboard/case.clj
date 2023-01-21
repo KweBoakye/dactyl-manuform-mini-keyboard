@@ -12,7 +12,7 @@
             [dactyl-keyboard.oled :refer :all]
             [dactyl-keyboard.trackball :refer :all]
             [dactyl-keyboard.joycon-joystick :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;
 ;; Case ;;

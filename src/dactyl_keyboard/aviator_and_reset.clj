@@ -7,7 +7,7 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.case :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ; code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
 (def aviator-start (map + [-40 -12  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))

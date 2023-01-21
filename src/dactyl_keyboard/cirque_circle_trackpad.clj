@@ -9,7 +9,7 @@
             ;[dactyl-keyboard.placement-functions :refer :all]
             ;[dactyl-keyboard.web-connecters :refer :all]
            ; [dactyl-keyboard.case :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Cirque Circle Trackpad ;;

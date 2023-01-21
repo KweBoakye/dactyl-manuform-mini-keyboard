@@ -11,7 +11,7 @@
              [dactyl-keyboard.cirque-circle-trackpad :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
             [dactyl-keyboard.low.thumbs-low :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 (defn cirque-place [shape]
   (->> shape

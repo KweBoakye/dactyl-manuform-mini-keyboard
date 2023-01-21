@@ -6,7 +6,7 @@
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
             [dactyl-keyboard.thumbs :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Joycon Joystick ;;

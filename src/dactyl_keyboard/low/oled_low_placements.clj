@@ -32,6 +32,7 @@
 (def oled-post-tl-translation-vector  [(+ (/ mount-width -1.95) oled-post-adj) (- (/ mount-height 1.95) oled-post-adj) 0] )
 (def oled-post-bl-translation-vector  [(+ (/ mount-width -1.95) oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0])
 (def oled-post-br-translation-vector  [(- (/ mount-width 1.95)  oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0])
+(def oled-post-tm-translation-vector  [0 (- (/ mount-height 1.95) oled-post-adj) 0])
 (def oled-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) oled-post-adj) 0])
 (def oled-post-rm-translation-vector  [(- (/ mount-width 1.95)  oled-post-adj) 0 0])
 (def oled-post-lm-translation-vector  [(+ (/ mount-width -1.95)  oled-post-adj) 0 0])
@@ -52,6 +53,7 @@
 (def curve-post-tl-translation-vector  [(+ (/ mount-width -1.95) curve-post-adj) (- (/ mount-height 1.95) curve-post-adj) 0] )
 (def curve-post-bl-translation-vector  [(+ (/ mount-width -1.95) curve-post-adj) (+ (/ mount-height -1.95) curve-post-adj) 0] )
 (def curve-post-br-translation-vector  [(- (/ mount-width 1.95)  curve-post-adj) (+ (/ mount-height -1.95) curve-post-adj) 0] )
+(def curve-post-tm-translation-vector  [0 (- (/ mount-height 1.95) curve-post-adj) 0])
 (def curve-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) curve-post-adj) 0])
 (def curve-post-rm-translation-vector  [(- (/ mount-width 1.95)  curve-post-adj) 0 0])
 (def curve-post-lm-translation-vector  [(+ (/ mount-width -1.95)  curve-post-adj) 0 0])
@@ -90,6 +92,7 @@
     "tl" oled-post-tl-translation-vector
     "bl" oled-post-bl-translation-vector
     "br" oled-post-br-translation-vector
+    "tm" oled-post-tm-translation-vector
     "bm" oled-post-bm-translation-vector
     "rm" oled-post-rm-translation-vector
     "lm" oled-post-lm-translation-vector
@@ -101,6 +104,7 @@
     "tl" curve-post-tl-translation-vector
     "bl" curve-post-bl-translation-vector
     "br" curve-post-br-translation-vector
+    "tm" curve-post-tm-translation-vector
     "bm" curve-post-bm-translation-vector
     "rm" curve-post-rm-translation-vector
     "lm" curve-post-lm-translation-vector

@@ -8,7 +8,7 @@
             ;[dactyl-keyboard.placement-functions :refer :all]
             ;[dactyl-keyboard.web-connecters :refer :all]
            ; [dactyl-keyboard.case :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 (def sprue-height 1.5)
 (def sprue-width 1.5)

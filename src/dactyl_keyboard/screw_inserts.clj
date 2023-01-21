@@ -8,7 +8,7 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.case :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ; Screw insert definition & position
 (defn screw-insert-shape [bottom-radius top-radius height]

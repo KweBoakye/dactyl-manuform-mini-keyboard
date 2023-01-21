@@ -3,7 +3,7 @@
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
-            [unicode-math.core :refer :all]
+            
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
@@ -165,6 +165,8 @@
   ([place1 dx1 dy1 post-position-1 rad-or-deg1 place2 dx2 dy2 post-position-2 rad-or-deg2 steps]
    (wall-brace-polyhedron place1 dx1 dy1 post-position-1 rad-or-deg1 place2 dx2 dy2 post-position-2 rad-or-deg2 wall-xy-offset wall-xy-offset steps))
   ([place1 dx1 dy1 post-position-1 rad-or-deg1 place2 dx2 dy2 post-position-2 rad-or-deg2 xy1 xy2 steps]
+   (wall-brace-polyhedron place1 dx1 dy1 post-position-1 rad-or-deg1 place2 dx2 dy2 post-position-2 rad-or-deg2 xy1 xy2 false steps))
+  ([place1 dx1 dy1 post-position-1 rad-or-deg1 place2 dx2 dy2 post-position-2 rad-or-deg2 xy1 xy2 extra-points-for-sides-and-top-and-bottom steps]
    (let [wall-brace-polyhedron-curves-map (wall-brace-polyhedron-curves place1 dx1 dy1 post-position-1 rad-or-deg1 place2 dx2 dy2 post-position-2 rad-or-deg2 xy1 xy2 steps)
 
 
@@ -188,10 +190,12 @@
                                                 (nth (wall-brace-polyhedron-curves-map :wall-locate2-bottom-curve) index)
                                                 (nth (wall-brace-polyhedron-curves-map :wall-locate2-bottom-floor-curve) index)
                                                 steps))))
-         smoother-wall-polyhedron (polyhedron (concat outer-points inner-points)
+         smoother-wall-polyhedron (if extra-points-for-sides-and-top-and-bottom
+                                    (generate-bezier-along-bezier-polyhedron-all-sides outer-points inner-points steps)
+                                   (polyhedron (concat outer-points inner-points)
                                               (generate-bezier-along-bezier-polyhedron-faces
                                                outer-points inner-points
-                                               steps))]
+                                               steps)))]
          ;wall-polyhedron 
      smoother-wall-polyhedron)))
 
@@ -590,16 +594,16 @@ web-post-position-bottom-curve (bezier-quadratic (wall-brace-polyhedron-circular
         outer-control-points-2 (data-to-wall-brace-polyhedron-points outer-control-data-2)
         web-post-top-curve (case web-post-top-style 
                              :linear (bezier-linear (points-1 :web-post-position-top) (points-2 :web-post-position-top) steps)
-                             :curved (catmull-rom-spline-curve (outer-control-points-1 :web-post-position-top) (points-1 :web-post-position-top) (points-2 :web-post-position-top) (outer-control-points-2 :web-post-position-top) steps :alphaType alpha-type :t1 t1 :t2 t2)) 
-        wall-locate1-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate1-point) (points-1 :wall-locate1-point) (points-2 :wall-locate1-point) (outer-control-points-2 :wall-locate1-point) steps :alphaType alpha-type :t1 t1 :t2 t2)
-        wall-locate-1-to-3-curve-for-polyhedron-control-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-1-to-3-curve-for-polyhedron-control-point) (points-1 :wall-locate-1-to-3-curve-for-polyhedron-control-point) (points-2 :wall-locate-1-to-3-curve-for-polyhedron-control-point) (outer-control-points-2 :wall-locate-1-to-3-curve-for-polyhedron-control-point) steps :alphaType alpha-type :t1 t1 :t2 t2)
-        wall-locate-1-to-3-curve-for-polyhedron-second-control-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (points-1 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (points-2 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (outer-control-points-2 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) steps :alphaType alpha-type :t1 t1 :t2 t2)
-        wall-locate3-curve  (catmull-rom-spline-curve (outer-control-points-1 :wall-locate3-point) (points-1 :wall-locate3-point) (points-2 :wall-locate3-point) (outer-control-points-2 :wall-locate3-point) steps :alphaType alpha-type :t1 t1 :t2 t2)
-        wall-locate3-floor-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate3-point-floor) (points-1 :wall-locate3-point-floor) (points-2 :wall-locate3-point-floor) (outer-control-points-2 :wall-locate3-point-floor) steps :alphaType alpha-type :t1 t1 :t2 t2) 
-        wall-locate2-bottom-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-2-bottom) (points-1 :wall-locate-2-bottom) (points-2 :wall-locate-2-bottom) (outer-control-points-2 :wall-locate-2-bottom) steps :alphaType alpha-type :t1 t1 :t2 t2)
+                             :curved (catmull-rom-spline-curve (outer-control-points-1 :web-post-position-top) (points-1 :web-post-position-top) (points-2 :web-post-position-top) (outer-control-points-2 :web-post-position-top) steps :alphaType alpha-type    )) 
+        wall-locate1-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate1-point) (points-1 :wall-locate1-point) (points-2 :wall-locate1-point) (outer-control-points-2 :wall-locate1-point) steps :alphaType alpha-type    )
+        wall-locate-1-to-3-curve-for-polyhedron-control-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-1-to-3-curve-for-polyhedron-control-point) (points-1 :wall-locate-1-to-3-curve-for-polyhedron-control-point) (points-2 :wall-locate-1-to-3-curve-for-polyhedron-control-point) (outer-control-points-2 :wall-locate-1-to-3-curve-for-polyhedron-control-point) steps :alphaType alpha-type    )
+        wall-locate-1-to-3-curve-for-polyhedron-second-control-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (points-1 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (points-2 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (outer-control-points-2 :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) steps :alphaType alpha-type    )
+        wall-locate3-curve  (catmull-rom-spline-curve (outer-control-points-1 :wall-locate3-point) (points-1 :wall-locate3-point) (points-2 :wall-locate3-point) (outer-control-points-2 :wall-locate3-point) steps :alphaType alpha-type    )
+        wall-locate3-floor-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate3-point-floor) (points-1 :wall-locate3-point-floor) (points-2 :wall-locate3-point-floor) (outer-control-points-2 :wall-locate3-point-floor) steps :alphaType alpha-type    ) 
+        wall-locate2-bottom-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-2-bottom) (points-1 :wall-locate-2-bottom) (points-2 :wall-locate-2-bottom) (outer-control-points-2 :wall-locate-2-bottom) steps :alphaType alpha-type    )
         wall-locate2-bottom-floor-curve ;(map translate-to-floor wall-locate2-bottom-curve) 
-        (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-2-bottom-floor) (points-1 :wall-locate-2-bottom-floor) (points-2 :wall-locate-2-bottom-floor) (outer-control-points-2 :wall-locate-2-bottom-floor) steps :alphaType alpha-type :t1 t1 :t2 t2)
-        wall-locate2-top-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-2-top) (points-1 :wall-locate-2-top) (points-2 :wall-locate-2-top) (outer-control-points-2 :wall-locate-2-top) steps :alphaType alpha-type :t1 t1 :t2 t2)
+        (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-2-bottom-floor) (points-1 :wall-locate-2-bottom-floor) (points-2 :wall-locate-2-bottom-floor) (outer-control-points-2 :wall-locate-2-bottom-floor) steps :alphaType alpha-type    )
+        wall-locate2-top-curve (catmull-rom-spline-curve (outer-control-points-1 :wall-locate-2-top) (points-1 :wall-locate-2-top) (points-2 :wall-locate-2-top) (outer-control-points-2 :wall-locate-2-top) steps :alphaType alpha-type    )
         web-post-bottom-curve (bezier-linear  (points-2 :web-post-position-bottom) (points-1 :web-post-position-bottom) steps)
 
         ]
@@ -644,12 +648,13 @@ web-post-position-bottom-curve (bezier-quadratic (wall-brace-polyhedron-circular
     )
   )
 (defn wall-brace-catmull-rom-spline 
-  [outer-control-data-1 point-data-1 point-data-2 outer-control-data-2 steps & {:keys [alpha-type t1 t2 web-post-top-style] :or {alpha-type :centripetal t1 (/ 1 3) t2 (/ 2 3) web-post-top-style :linear} }]
+  [outer-control-data-1 point-data-1 point-data-2 outer-control-data-2 steps & {:keys [alpha-type t1 t2 web-post-top-style extra-points-for-sides-and-top-and-bottom] :or {alpha-type :centripetal t1 (/ 1 3) t2 (/ 2 3) web-post-top-style :linear extra-points-for-sides-and-top-and-bottom false} }]
   (let [points (wall-brace-catmull-rom-spline-points outer-control-data-1 point-data-1 point-data-2 outer-control-data-2 steps :alpha-type alpha-type :t1 t1 :t2 t2 :web-post-top-style web-post-top-style)]
-    (polyhedron (concat (points :outer-points) (points :inner-points))
+    (if extra-points-for-sides-and-top-and-bottom (generate-bezier-along-bezier-polyhedron-all-sides (points :outer-points) (points :inner-points) steps)
+      (polyhedron (concat (points :outer-points) (points :inner-points))
               (generate-bezier-along-bezier-polyhedron-faces
                (points :outer-points) (points :inner-points)
-               steps))) 
+               steps)))) 
   )
 
 (defn wall-brace-catmull-rom-spline-floor 
@@ -973,6 +978,14 @@ web-post-point-top-coordinates (transform (web-post-position-top web-corner-tran
   ([place1 dx1 dy1  post-position-1 rad-or-deg1
     place-mid1 dxmid1 dymid1  post-position-mid1 rad-or-degmid1
     place2 dx2 dy2  post-position-2 rad-or-deg2 xy1 xy-mid1 xy2 steps]
+   (wall-brace-quadratic-polyhedron
+    place1 dx1 dy1  post-position-1 rad-or-deg1
+    place-mid1 dxmid1 dymid1  post-position-mid1 rad-or-degmid1
+    place2 dx2 dy2  post-position-2 rad-or-deg2
+     xy1 xy-mid1 xy2 false steps))
+  ([place1 dx1 dy1  post-position-1 rad-or-deg1
+    place-mid1 dxmid1 dymid1  post-position-mid1 rad-or-degmid1
+    place2 dx2 dy2  post-position-2 rad-or-deg2 xy1 xy-mid1 xy2 extra-points-for-sides-and-top-and-bottom steps]
    (let [transform-1 (get-transform-fn rad-or-deg1 place1)
          transform-mid1 (get-transform-fn rad-or-degmid1 place-mid1)
          transform-2 (get-transform-fn rad-or-deg2 place2)
@@ -1078,10 +1091,11 @@ web-post-point-top-coordinates (transform (web-post-position-top web-corner-tran
                                                 (nth wall-locate2-bottom-curve index)
                                                 (nth wall-locate2-bottom-floor-curve index)
                                                 steps))))
-         wall-brace-quadratic-polyhedron (polyhedron (concat outer-points inner-points)
+         wall-brace-quadratic-polyhedron (if extra-points-for-sides-and-top-and-bottom (generate-bezier-along-bezier-polyhedron-all-sides outer-points inner-points steps) 
+                                           (polyhedron (concat outer-points inner-points)
                                                      (generate-bezier-along-bezier-polyhedron-faces
                                                       outer-points inner-points
-                                                      steps))]
+                                                      steps)))]
      wall-brace-quadratic-polyhedron)))
 
 (defn wall-brace-cubic-polyhedron-floor-outer [{:keys [place1 dx1 dy1  post-position-1 rad-or-deg1
@@ -1258,6 +1272,9 @@ web-post-point-top-coordinates (transform (web-post-position-top web-corner-tran
        bottom-right-place bottom-right-post-position :degrees :steps steps)
        )
 
+     (defn points-fn [place dx dy post-position  rad-or-deg xy] {:place place :dx dx :dy dy :post-position post-position :rad-or-deg rad-or-deg :xy xy})
+     (defn points-fn-rad [place dx dy post-position xy] (points-fn place dx dy post-position :radians xy))
+     (defn points-fn-deg [place dx dy post-position  xy] (points-fn place dx dy post-position :degrees xy))
 
 (defn get-wall-brace-polyhedron-fn [bottom-plate] (if (true? bottom-plate) wall-brace-polyhedron-outer-floor-linear wall-brace-polyhedron))
 (defn get-wall-brace-polyhedron-circular-fn [bottom-plate] (if (true? bottom-plate) wall-brace-polyhedron-circular-outer-floor-linear wall-brace-polyhedron-circular))

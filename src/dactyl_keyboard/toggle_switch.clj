@@ -7,7 +7,7 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.oled :refer :all]
             [dactyl-keyboard.case :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   Toggle Switch        ;;

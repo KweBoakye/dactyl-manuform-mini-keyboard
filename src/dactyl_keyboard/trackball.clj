@@ -9,7 +9,7 @@
             [dactyl-keyboard.placement-functions :refer :all]
              [dactyl-keyboard.thumbs :refer :all]
             [dactyl-keyboard.hotswap :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;
 ;; Trackball ;;

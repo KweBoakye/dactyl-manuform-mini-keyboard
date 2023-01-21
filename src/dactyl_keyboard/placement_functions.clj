@@ -7,7 +7,7 @@
             [dactyl-keyboard.shape-parameters :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
-            [unicode-math.core :refer :all]))
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Placement Functions ;;

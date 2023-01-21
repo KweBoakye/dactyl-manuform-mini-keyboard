@@ -9,7 +9,7 @@
              ;[dactyl-keyboard.low.case-low :refer :all]
              [dactyl-keyboard.low.case-low-functions :refer :all]
              [dactyl-keyboard.low.shape-parameters-low :refer :all]
-             [unicode-math.core :refer :all]
+            ; 
              [dactyl-keyboard.tps-65 :refer :all]
             [dactyl-keyboard.metal-tactile-button :refer :all] 
              ))
@@ -814,7 +814,7 @@ aviator-neck-support-right
   ;      (translate [(+ 4  (first aviator-start)) (- (second aviator-start) 1) (/ (+ 44 aviator-diameter 0) 2)]))
   ;    ; thinner wall
    (->> (union (binding [*fn* 36] (cylinder [(/ resetswitch-diameter 2) (/ resetswitch-diameter 2)] 20))) ;; depth here matters; has been eyeballed
-        (rotate (/ π 2) [1 0 0])
+        (rotate (/ Math/PI 2) [1 0 0])
         (translate [(+ 32 (first resetswitch-start)) (- (second resetswitch-start) 2) (/ (+ 8 aviator-diameter 0) 2)]))))
 
 (def resetswitch-hole (translate aviator-position
