@@ -1363,6 +1363,10 @@ switches)))
             basis (generate-basis-matrix-to-find-cubic-uniform-b-spline-points-from-knots 2)
             basis-2 (calculate-non-vanishing-basis-functions 3
                                                              1 3.0 [0 0 0 0 1 1 1 1])
+            nurbs-test   (nurbs-with-homogenous-coordinates [[0 0 0 1] [0 1 0 1] [5 0 0 5] [2 1 0 1] [2 0 0 1]] 2 [0 0 0 1 2 3 3 3] 20)
+            nurps-segment-1 (nurbs-segment 4 2 [0 0 0 1 2 3 3 3] [[0 0 0 1] [0 1 0 1] [1 0 0 1]] 20)
+             nurps-segment-2 (nurbs-segment 4 2 [0 0 0 1 2 3 3 3] [[0 0 0 1] [0 1 0 1] [1 0 0 1] [2 1 0 1] [2 0 0 1]] 20 :u-start 1.0)
+           ; nurbs-test-size (count nurbs-test)
             ;nurbs-test (mapv #(subvec (coerce :persistent-vector %) 0 3) (b-spline-wrapper [[0 0 0 1] [0 1 0 1] [1 0 1 0.5] [2 1 2 1] [2 0 2 1]] 2 [0 0 0 (/ 1 3) (/ 2 3) 1 1 1] false 11))
             ] 
         
@@ -1467,12 +1471,17 @@ switches)))
         ;;  (println (for [i (range 0 11)]
         ;;             (nip i 2 [0 0 0 1 2 3 4 4 5 5 5] (/ 5 2))))
          
-        (println (calculate-knot-span-index 3 3 1 [0 0 0 0 1 1 1 1]))
-        ;(println basis-2)
-           (doseq [basis-function basis-2]
-             (println basis-function)
-             ) 
-         (println (calculate-nurbs-curve-point 3 3 [0 0 0 0 1 1 1 1] [[-4 -4 0 1] [-2 4 0 1] [2 -4 0 1] [4 4 0 1]] 1))
-         )))
+        ;; (println (calculate-knot-span-index 3 3 1 [0 0 0 0 1 1 1 1]))
+        ;; ;(println basis-2)
+        ;;    (doseq [basis-function basis-2]
+        ;;      (println basis-function)
+        ;;      ) 
+        ;;  (println (calculate-nurbs-curve-point 3 3 [0 0 0 0 1 1 1 1] [[-4 -4 0 1] [-2 4 0 1] [2 -4 0 1] [4 4 0 1]] 1))
+        (println nurbs-test)
+        (for [index (range 0 (count nurbs-test))]
+          (color [1 (/ index (count nurbs-test)) 0 1](translate (nth nurbs-test index) (sphere 0.05)))
+          )
+         ;(plot-bezier-points nurbs-test (sphere 0.05)) 
+        )))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch

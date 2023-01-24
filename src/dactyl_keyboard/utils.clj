@@ -1,6 +1,7 @@
 (ns dactyl-keyboard.utils
  (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [ mmul set-current-implementation mul mget]]
+            [clojure.math :refer [ceil]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             ;[chisel.curves :as chisel-curves :refer [direct-nurbs-evaluation  b-spline clamped-b-spline]]
@@ -1011,6 +1012,10 @@
   
 ;;   )
 
+(defn w [control-points weights]
+  (mapv #(conj %1 %2) control-points weights)
+  )
+
 (defn calculate-knot-span-index [n p u U]
   "calculates i - the knot span index
    is Algorithm A2.1 FindSpan from p68 of the nurbs book
@@ -1018,18 +1023,44 @@
     p - spline degree
     u - parametric point
     U - knot sequence"
-  (cond (= u (nth U (inc n))) n
+  ;-(println "calculate-knot-span-index " "n is " n " p is " p " u is " u " U is " U)
+  (let [close (fn [a b] (< (abs (- a b)) 1e-10))]
+    (cond (close  u  (double (nth U (inc n))))  n
+        (> u (nth U (inc n))) n
+        (< u (nth U p)) p
         :else
-        (loop [low p
-               high (inc n)
-               mid (Math/floor (/ (+ low high) 2))]
-          (println "low is" low)
-          (println "mid is" mid)
-          (println "high is" high)
-          (if (or (< u (nth U mid)) (>= u (nth U (inc mid))))
-            (if (< u (nth U mid)) (recur low mid (Math/floor (/ (+ low mid) 2)))
-                (recur mid high (Math/floor (/ (+ mid high) 2))))
-            mid))))
+           (loop [low p
+                  high (+ n 1)] (let [mid (int (Math/floor (/ (+ low high) 2.0)))]
+                                  (if (or (< u (nth U mid)) (>= u (nth U (inc mid))))
+                                    (if (< u (nth U mid))
+                                      (recur low mid)
+                                      (recur mid high))
+                                    mid)))
+        ;; (loop [low p
+        ;;        high (inc n)
+        ;;        mid (Math/floor (/ (+ low high) 2))]
+        ;;   ;(if (not= mid 3.0)(println "low is " low " high is " high " mid is " mid))
+        ;;   (if (or (< u (nth U mid)) (>= u (nth U (inc mid))))
+        ;;     (if (< u (nth U mid)) (recur low mid (Math/floor (/ (+ low mid) 2)))
+        ;;         (recur mid high (Math/floor (/ (+ mid high) 2))))
+        ;;     mid))
+          )))
+
+(defn knot-span-index [knots u degree]
+  (let [n (- (count knots) degree 2)
+        close (fn [a b] (< (Math/abs (- a b)) 1e-10))]
+    (if (or (= u (last knots)) (> u (last knots)))
+      n
+      (if (< u (first knots))
+        degree
+        (loop [low degree
+               high (+ n 1)
+               ](let [mid (int (Math/floor (/ (+ low high) 2.0)))]
+          (if (or (< u (nth knots mid)) (>= u (nth knots (inc mid))))
+            (if (< u (nth knots mid))
+              (recur low mid)
+              (recur mid high))
+            mid)))))))
 
 (defn nip [i u p U]
   (let [m (dec (count U))]
@@ -1049,7 +1080,7 @@
           
           (doseq [j (range 0 (+ p (- k) 1))
                 :let [Uleft (nth U (+ i j 1))
-                      Uright (nth U (+ i j k 1)) 
+                      Uright (nth U (+ i j k 1))
                       ]]
             (if (zero? (aget N (inc j))) 
               (do (aset N j (aget saved-list j)) (aset saved-list (inc j) 0.0))
@@ -1062,29 +1093,39 @@
    ))
 )
 
+;; (defn b-spline-basis [knots u degree i] 
+;;   (if (and (<= degree 0) (< u (nth knots (+ i 1))) (>= u (nth knots i)))
+;;     1
+;;     (if (and (> degree 0) (= (nth knots i) (nth knots (+ i degree)))
+;;       (* (b-spline-basis knots u (dec degree) i) (/ (- u (nth knots i)) (- (nth knots (+ i degree)) (nth knots i))))
+;;       (+ (* (b-spline-basis knots u (dec degree) i) (/ (- u (nth knots i)) (- (nth knots (+ i degree)) (nth knots i))))
+;;          (* (b-spline-basis knots u (dec degree) (inc i)) (/ (- (nth knots (+ i degree)) u) (- (nth knots (+ i degree)) (nth knots i))))
+;;          )))
+
 
 
 (defn calculate-non-vanishing-basis-functions [i u p U]
-  (let [N (double-array (inc p) 1.0 )
+  (let [N (double-array (inc p) 0.0)
         m (dec (count U))
         left (double-array  (inc p))
         right (double-array  (inc p))
         ;saved-list (double-array (inc p))
         ]
-    
+    (aset N 0 1.0)
     ;(cond (or (and (zero? i) (= u (nth U 0)))
      ;        (and (= i (- m p 1)) (= u (nth U m)))) 1.0
       ;   (or (< u (nth U i) ) (>= u (nth U (+ i p 1)))) 0.0
        ;  :else
           (doseq [j (range 1 (inc p))]
+          ;  (println "u is " u)
         (aset left j (double (- u (nth U (- (inc i) j)))))
         (aset right j (double (- (nth U (+ i j) ) u)))
         ;(aset saved-list j 0.0) 
                  
         
         (loop [saved 0.0 r 0 ] 
-          (doall (dorun (map println N)))
-          (doall (println ["left is " (aget left j) "right is " (aget right j)]))
+          ;(doall (dorun (map println N)))
+          ;(doall (println ["left is " (aget left j) "right is " (aget right j)]))
           (if (< r j) (let [temp (/ (aget N r) (+ (double (aget right (inc r))) (aget left (- j r))) )] 
           ;(println (/ (aget N r)  (aget right (inc r))))
                         (aset N r (+ saved  (* (aget right (inc r)) temp)))
@@ -1107,15 +1148,51 @@
   )
 
 (defn calculate-nurbs-curve-point [n p U Pw u]
-  (let [span (calculate-knot-span-index n p u U)
+  (let[span (calculate-knot-span-index n p u U)
         N (calculate-non-vanishing-basis-functions span u p U)
         
         ]
+   (println span)
+    (println N)
     (loop [Cw [0.0 0.0 0.0 0.0] j 0 ]
+      (println " nth Pw" (+ span (- p) j))
       (if (<= j p) (recur (mapv + Cw  (mapv (partial * (aget N j)) (nth Pw (+ span (- p) j)))) (inc j) )
-          (project-coordinate Cw))
+          (->(project-coordinate Cw)
+           (subvec 0 3)))
       )
-    )
+    )  )
+
+(defn nurbs-segment [n p U Pw steps &{:keys [u-start u-end] :or {u-start 0 u-end (inc u-start)}}]
+  (let [increment (/ (- u-end u-start) steps)]
+   (for [u (range u-start (+ u-end increment) increment)]
+    
+      
+        (do
+        (println "u-start is " u-start  "segment-steps is " steps)
+        (println "u is " u)
+       (calculate-nurbs-curve-point n p U Pw u))
+    ))
+  )
+
+(defn nurbs-with-homogenous-coordinates [Pw p U steps &{:keys [drop-last-point-of-segment] :or {drop-last-point-of-segment false}}]
+  (let [number-of-points (count Pw)
+        number-of-points-per-segment (inc p)
+        number-of-segments (- number-of-points p) 
+        steps-total (* steps number-of-segments)
+       ; segment-steps  (/ steps number-of-segments)
+        segment-steps-normalized (/ steps steps-total)
+        drop-last-point-if-not-last-segment (get-drop-last-point-if-not-last-segment number-of-segments drop-last-point-of-segment)
+        n (- (count U) p 2);(dec number-of-points)
+        ]
+    (println  " number-of-segments is " number-of-segments " segment-steps-normalized " segment-steps-normalized)
+    
+    (into [] (apply concat (for [index (range 0 number-of-segments)
+                                 :let [Pw-i (subvec Pw index (+ index number-of-points-per-segment))]
+                                 ]
+                              (drop-last-point-if-not-last-segment index (do (println "index is " index) 
+                               (nurbs-segment n p U Pw steps :u-start index :u-end (inc index))))
+                             )))
+    ) 
   )
 
 ;; (defn b-spline-point [points degree knot-vector t]

@@ -6,7 +6,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-auto "0.1.3"]
             [lein-exec "0.3.7"]
-            [lein-git-deps "0.0.2-SNAPSHOT"]]
+            [lein-git-deps "0.0.2-SNAPSHOT"]
+            [lein-kibit "0.1.8"]]
   :aliases {"generate" ["exec" "-p" "src/dactyl_keyboard/dactyl.clj"]
             "generate-low" ["exec" "-p" "src/dactyl_keyboard/low/dactyl_low.clj"]}
   :dependencies [[org.clojure/clojure "1.11.0"]
