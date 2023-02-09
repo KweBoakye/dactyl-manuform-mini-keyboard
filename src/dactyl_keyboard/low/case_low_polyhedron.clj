@@ -1077,12 +1077,12 @@
         screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tl-web-post-top
         (bezier-cubic-through-points screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top (* steps 3) :t1 0.25 :t2 0.75)
         screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor (bezier-linear screen-holder-bottom-right-inside-floor-point thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor (* steps 3))
-        a1 (catmull-rom-spline-curve-old screen-holder-top-right-outside-point screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside steps :t1 0.6 :t2 0.9 :alphaType :chordal)
-        a2 (catmull-rom-spline-curve-old screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top steps :t1 0.5 :t2 0.7)
-        a3  (catmull-rom-spline-curve-old EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top thumb-tl-tl-web-post-top steps :t1 0.5 :t2 0.7 :alphaType :chordal)
-        b1 (catmull-rom-spline-curve-old screen-holder-outside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside steps :t1 0.5 :t2 0.75)
-        b2 (catmull-rom-spline-curve-old screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top steps :t1 0.5 :t2 0.75)
-        b3 (catmull-rom-spline-curve-old  EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top thumb-bl-tr-web-post-top steps :t1 0.5 :t2 0.75)
+        a1 (catmull-rom-spline-curve screen-holder-top-right-outside-point screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside steps :t1 0.6 :t2 0.9 :alphaType :chordal)
+        a2 (catmull-rom-spline-curve screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top steps :t1 0.5 :t2 0.7)
+        a3  (catmull-rom-spline-curve EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top thumb-tl-tl-web-post-top steps :t1 0.5 :t2 0.7 :alphaType :chordal)
+        b1 (catmull-rom-spline-curve screen-holder-outside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside steps :t1 0.5 :t2 0.75)
+        b2 (catmull-rom-spline-curve screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top steps :t1 0.5 :t2 0.75)
+        b3 (catmull-rom-spline-curve  EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top thumb-bl-tr-web-post-top steps :t1 0.5 :t2 0.75)
         a (concat (drop-last a1) (drop-last a2) a3)
         b (concat (drop-last b1) (drop-last b2) b3)
         tps-65-mount-top-left-upper-catmull-rom-control-point (transform-position
@@ -1097,15 +1097,15 @@
         screen-bottom-to-top-inside-wide (bezier-linear screen-holder-bottom-right-inside-point-wide-floor screen-holder-top-right-inside-point-wide (* steps 2))
         mid2-ctrl (mapv + [0 (+ (* 4 tps-65-mount-corner-radius-with-offset)) -200] tps-65-mount-upper-with-same-x-as-EVQWGD001-mount-top-right-outside)
         mid2-ctrthumb-bl-tr-to-tps-65-bottom-left-innerside (mapv + [0 (+ (* 4 tps-65-mount-corner-radius-with-offset)) -200] tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside)
-        tps-65-top-left-to-screen-holder-top-right-inside-wide-catmull (catmull-rom-spline-curve-old screen-holder-inside-right-wide-with-same-z-as-EVQWGD001-top-left-outside screen-holder-top-right-inside-point-wide tps-65-mount-top-left-upper tps-65-mount-top-left-upper-catmull-rom-control-point steps :t1 0.6 :t2 0.7)
+        tps-65-top-left-to-screen-holder-top-right-inside-wide-catmull (catmull-rom-spline-curve screen-holder-inside-right-wide-with-same-z-as-EVQWGD001-top-left-outside screen-holder-top-right-inside-point-wide tps-65-mount-top-left-upper tps-65-mount-top-left-upper-catmull-rom-control-point steps :t1 0.6 :t2 0.7)
         EVQWGD001-mount-left-parallel-floor (find-point-on-line-using-z EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside 0)
         EVQWGD001-mount-right-parallel-floor (find-point-on-line-using-z EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside 0)
-        EVQWGD001-mount-floor-to-bottom-left-catmull-rom (catmull-rom-spline-curve-old (mapv + [0 0 -2] EVQWGD001-mount-bottom-left-outside-floor) EVQWGD001-mount-bottom-left-outside-floor EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside steps :t1 0.8 :t2 0.9)
-        EVQWGD001-mount-bottom-left-top-left-catmull-rom (catmull-rom-spline-curve-old  EVQWGD001-mount-bottom-left-outside-floor EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside tps-65-mount-top-left-upper-with-same-x-as-EVQWGD001-mount-top-left-outside steps :t1 0.5 :t2 0.5 :alphaType :chordal)
-        EVQWGD001-mount-top-left-outside-catmull-rom (catmull-rom-spline-curve-old EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside tps-65-mount-top-left-upper-with-same-x-as-EVQWGD001-mount-top-left-outside (mapv + [0 (+ (* 1 tps-65-mount-corner-radius-with-offset)) 0] tps-65-mount-top-left-upper-with-same-x-as-EVQWGD001-mount-top-left-outside) steps :t1 0.6 :t2 0.7 :alphaType :centripetal)
-        EVQWGD001-mount-floor-to-bottom-right-catmull-rom (catmull-rom-spline-curve-old (mapv + [0 0 -2] EVQWGD001-mount-bottom-right-outside-floor) EVQWGD001-mount-bottom-right-outside-floor EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside steps :t1 0.4 :t2 0.5 :alphaType :centripetal)
-        EVQWGD001-mount-bottom-to-top-right-catmull-rom (catmull-rom-spline-curve-old EVQWGD001-mount-bottom-right-outside-floor EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside tps-65-mount-upper-with-same-x-as-EVQWGD001-mount-top-right-outside steps :t1 0.5 :t2 0.5 :alphaType :chordal)
-        tps-65-mount-bottom-left-to-EVQWGD001-catmull-rom (catmull-rom-spline-curve-old EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside  tps-65-mount-upper-with-same-x-as-EVQWGD001-mount-top-right-outside mid2-ctrl steps :t1 0.7 :t2 0.8)
+        EVQWGD001-mount-floor-to-bottom-left-catmull-rom (catmull-rom-spline-curve (mapv + [0 0 -2] EVQWGD001-mount-bottom-left-outside-floor) EVQWGD001-mount-bottom-left-outside-floor EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside steps :t1 0.8 :t2 0.9)
+        EVQWGD001-mount-bottom-left-top-left-catmull-rom (catmull-rom-spline-curve  EVQWGD001-mount-bottom-left-outside-floor EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside tps-65-mount-top-left-upper-with-same-x-as-EVQWGD001-mount-top-left-outside steps :t1 0.5 :t2 0.5 :alphaType :chordal)
+        EVQWGD001-mount-top-left-outside-catmull-rom (catmull-rom-spline-curve EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-top-left-outside tps-65-mount-top-left-upper-with-same-x-as-EVQWGD001-mount-top-left-outside (mapv + [0 (+ (* 1 tps-65-mount-corner-radius-with-offset)) 0] tps-65-mount-top-left-upper-with-same-x-as-EVQWGD001-mount-top-left-outside) steps :t1 0.6 :t2 0.7 :alphaType :centripetal)
+        EVQWGD001-mount-floor-to-bottom-right-catmull-rom (catmull-rom-spline-curve (mapv + [0 0 -2] EVQWGD001-mount-bottom-right-outside-floor) EVQWGD001-mount-bottom-right-outside-floor EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside steps :t1 0.4 :t2 0.5 :alphaType :centripetal)
+        EVQWGD001-mount-bottom-to-top-right-catmull-rom (catmull-rom-spline-curve EVQWGD001-mount-bottom-right-outside-floor EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside tps-65-mount-upper-with-same-x-as-EVQWGD001-mount-top-right-outside steps :t1 0.5 :t2 0.5 :alphaType :chordal)
+        tps-65-mount-bottom-left-to-EVQWGD001-catmull-rom (catmull-rom-spline-curve EVQWGD001-mount-bottom-right-outside EVQWGD001-mount-top-right-outside  tps-65-mount-upper-with-same-x-as-EVQWGD001-mount-top-right-outside mid2-ctrl steps :t1 0.7 :t2 0.8)
         screen-bottom-to-top-inside-wide-to-tps-65-top-left-upper (concat (drop-last screen-bottom-to-top-inside-wide) tps-65-top-left-to-screen-holder-top-right-inside-wide-catmull)
         mid1 (concat (drop-last EVQWGD001-mount-floor-to-bottom-left-catmull-rom)
                      (drop-last EVQWGD001-mount-bottom-left-top-left-catmull-rom)
@@ -1116,18 +1116,18 @@
         thumb-bl-tl-floor-to-thumb-tl-tl (concat (drop-last (reverse ((wall-brace-polyhedron-circular-curve-points thumb-bl-place -1 0 "tl" :degrees (* steps 1)) :outer-points)))
                                                  (drop-last (bezier-linear thumb-bl-tl-web-post-top thumb-bl-tr-web-post-top  (* steps 1)))
                                                  ;(drop-last (bezier-linear  thumb-bl-tr-web-post-top thumb-tl-tl-web-post-top (* steps 3 (/ 2 16))))
-                                                 (catmull-rom-spline-curve-old  thumb-bl-tl-web-post-top thumb-bl-tr-web-post-top tps-65-bottom-left-outer tps-65-mount-top-right-upper (* steps 1) :t1 0.8 :t2 0.9)
+                                                 (catmull-rom-spline-curve  thumb-bl-tl-web-post-top thumb-bl-tr-web-post-top tps-65-bottom-left-outer tps-65-mount-top-right-upper (* steps 1) :t1 0.8 :t2 0.9)
                                                  ;(bezier-linear  thumb-tl-tl-web-post-top tps-65-mount-bottom-left-upper (* steps 3 (/  4 16)))
                                                  )
 
         screen-bottom-to-top-inside (reverse (bezier-linear  screen-holder-bottom-right-inside-floor-point screen-holder-top-right-inside-point (* steps 2)))
-        tps-65-top-left-to-screen-holder-top-right-inside-catmull (reverse (catmull-rom-spline-curve-old screen-holder-inside-right-with-same-z-as-EVQWGD001-top-left-inside screen-holder-top-right-inside-point tps-65-mount-top-left-lower tps-65-mount-top-left-lower-catmull-rom-control-point steps :t1 0.6 :t2 0.7))
-        EVQWGD001-mount-floor-to-bottom-left-inside-catmull-rom (reverse (catmull-rom-spline-curve-old (mapv + [0 0 -2] EVQWGD001-mount-bottom-left-inside-floor) EVQWGD001-mount-bottom-left-inside-floor EVQWGD001-mount-bottom-left-inside EVQWGD001-mount-top-left-inside steps :t1 0.8 :t2 0.9))
-        EVQWGD001-mount-bottom-left-top-left-inside-catmull-rom (reverse (catmull-rom-spline-curve-old  EVQWGD001-mount-bottom-left-inside-floor EVQWGD001-mount-bottom-left-inside EVQWGD001-mount-top-left-inside tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside steps :t1 0.5 :t2 0.5 :alphaType :chordal))
-        EVQWGD001-mount-top-left-inside-catmull-rom (reverse (catmull-rom-spline-curve-old EVQWGD001-mount-bottom-left-inside EVQWGD001-mount-top-left-inside tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside (mapv + [0 (+ (* 1 tps-65-mount-corner-radius-with-offset)) 0] tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside) steps :t1 0.6 :t2 0.7 :alphaType :centripetal))
-        EVQWGD001-mount-floor-to-bottom-right-inside-catmull-rom (reverse (catmull-rom-spline-curve-old (mapv + [0 0 -2] EVQWGD001-mount-bottom-right-inside-floor) EVQWGD001-mount-bottom-right-inside-floor EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside steps :t1 0.4 :t2 0.5 :alphaType :centripetal))
-        EVQWGD001-mount-bottom-to-top-right-inside-catmull-rom (reverse (catmull-rom-spline-curve-old EVQWGD001-mount-bottom-right-inside-floor EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside steps :t1 0.5 :t2 0.5 :alphaType :chordal))
-        tps-65-mount-bottom-left-to-EVQWGD001-inside-catmull-rom (reverse (catmull-rom-spline-curve-old EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside   tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside mid2-ctrthumb-bl-tr-to-tps-65-bottom-left-innerside steps :t1 0.7 :t2 0.8))
+        tps-65-top-left-to-screen-holder-top-right-inside-catmull (reverse (catmull-rom-spline-curve screen-holder-inside-right-with-same-z-as-EVQWGD001-top-left-inside screen-holder-top-right-inside-point tps-65-mount-top-left-lower tps-65-mount-top-left-lower-catmull-rom-control-point steps :t1 0.6 :t2 0.7))
+        EVQWGD001-mount-floor-to-bottom-left-inside-catmull-rom (reverse (catmull-rom-spline-curve (mapv + [0 0 -2] EVQWGD001-mount-bottom-left-inside-floor) EVQWGD001-mount-bottom-left-inside-floor EVQWGD001-mount-bottom-left-inside EVQWGD001-mount-top-left-inside steps :t1 0.8 :t2 0.9))
+        EVQWGD001-mount-bottom-left-top-left-inside-catmull-rom (reverse (catmull-rom-spline-curve  EVQWGD001-mount-bottom-left-inside-floor EVQWGD001-mount-bottom-left-inside EVQWGD001-mount-top-left-inside tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside steps :t1 0.5 :t2 0.5 :alphaType :chordal))
+        EVQWGD001-mount-top-left-inside-catmull-rom (reverse (catmull-rom-spline-curve EVQWGD001-mount-bottom-left-inside EVQWGD001-mount-top-left-inside tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside (mapv + [0 (+ (* 1 tps-65-mount-corner-radius-with-offset)) 0] tps-65-mount-top-left-lower-with-same-x-as-EVQWGD001-mount-top-left-inside) steps :t1 0.6 :t2 0.7 :alphaType :centripetal))
+        EVQWGD001-mount-floor-to-bottom-right-inside-catmull-rom (reverse (catmull-rom-spline-curve (mapv + [0 0 -2] EVQWGD001-mount-bottom-right-inside-floor) EVQWGD001-mount-bottom-right-inside-floor EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside steps :t1 0.4 :t2 0.5 :alphaType :centripetal))
+        EVQWGD001-mount-bottom-to-top-right-inside-catmull-rom (reverse (catmull-rom-spline-curve EVQWGD001-mount-bottom-right-inside-floor EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside steps :t1 0.5 :t2 0.5 :alphaType :chordal))
+        tps-65-mount-bottom-left-to-EVQWGD001-inside-catmull-rom (reverse (catmull-rom-spline-curve EVQWGD001-mount-bottom-right-inside EVQWGD001-mount-top-right-inside   tps-65-mount-lower-with-same-x-as-EVQWGD001-mount-top-right-inside mid2-ctrthumb-bl-tr-to-tps-65-bottom-left-innerside steps :t1 0.7 :t2 0.8))
         screen-bottom-to-top-inside-to-tps-65-top-left-upper (concat (drop-last tps-65-top-left-to-screen-holder-top-right-inside-catmull)  screen-bottom-to-top-inside)
         mid1-inside (concat (drop-last EVQWGD001-mount-top-left-inside-catmull-rom)
                             (drop-last EVQWGD001-mount-bottom-left-top-left-inside-catmull-rom)
@@ -1136,7 +1136,7 @@
                             (drop-last EVQWGD001-mount-bottom-to-top-right-inside-catmull-rom)
                             EVQWGD001-mount-floor-to-bottom-right-inside-catmull-rom)
 
-        thumb-bl-tl-floor-to-thumb-tl-tl-bottom (concat (drop-last (reverse (catmull-rom-spline-curve-old  thumb-bl-tl-web-post-bottom thumb-bl-tr-web-post-bottom tps-65-bottom-left-inner tps-65-mount-top-right-lower (* steps 1) :t1 0.8 :t2 0.9)))
+        thumb-bl-tl-floor-to-thumb-tl-tl-bottom (concat (drop-last (reverse (catmull-rom-spline-curve  thumb-bl-tl-web-post-bottom thumb-bl-tr-web-post-bottom tps-65-bottom-left-inner tps-65-mount-top-right-lower (* steps 1) :t1 0.8 :t2 0.9)))
                                                         (drop-last (reverse (bezier-linear thumb-bl-tl-web-post-bottom thumb-bl-tr-web-post-bottom  (* steps 1))))
                                                  ;(drop-last (bezier-linear  thumb-bl-tr-web-post-top thumb-tl-tl-web-post-top (* steps 3 (/ 2 16))))
 
@@ -1261,8 +1261,8 @@
                                                        steps)
         mid-1-initial  (nth start-points (/ steps 3))
         mid-2-initial  (nth start-points (* 2 (/ steps 3)))
-        mid-curve-1 (catmull-rom-spline-curve-old  (mapv - tps-65-mount-top-left-upper-catmull-rom-control-point (mapv - tps-65-top-left-outer mid-1-initial)) mid-1-initial  (nth end-points (/ steps 3))  (nth catmull-lower-control-points (/ steps 3)) steps :t1 0.6 :t2 0.7)
-        mid-curve-2 (catmull-rom-spline-curve-old (mapv - tps-65-mount-top-left-upper-catmull-rom-control-point (mapv - tps-65-top-left-outer mid-2-initial)) mid-2-initial  (nth end-points (* 2 (/ steps 3)))  (nth catmull-lower-control-points (* 2 (/ steps 3)))  steps :t1 0.6 :t2 0.7)
+        mid-curve-1 (catmull-rom-spline-curve  (mapv - tps-65-mount-top-left-upper-catmull-rom-control-point (mapv - tps-65-top-left-outer mid-1-initial)) mid-1-initial  (nth end-points (/ steps 3))  (nth catmull-lower-control-points (/ steps 3)) steps :t1 0.6 :t2 0.7)
+        mid-curve-2 (catmull-rom-spline-curve (mapv - tps-65-mount-top-left-upper-catmull-rom-control-point (mapv - tps-65-top-left-outer mid-2-initial)) mid-2-initial  (nth end-points (* 2 (/ steps 3)))  (nth catmull-lower-control-points (* 2 (/ steps 3)))  steps :t1 0.6 :t2 0.7)
         end-curve (bezier-linear  screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper screen-holder-top-right-outside-point steps)
 
         top-left-corner-outer-points (into [] (apply concat (for [index (range 0 (inc steps))
@@ -1347,8 +1347,8 @@
                                   (partial key-place 3 cornerrow) "br" :radians
                                   (partial key-place 3 cornerrow) "bl" :radians
                                   steps)
-        fourth-br-top (transform-position-radians (partial key-place 3 cornerrow) (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "br"))))
-        fourth-br-bottom (transform-position-radians (partial key-place 3 cornerrow) (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "br"))))
+        fourth-br-top (transform-position-radians (partial key-place 3 cornerrow) (get-web-post-position-top (mapv +  (get-single-plate-corner-position-vector "br"))))
+        fourth-br-bottom (transform-position-radians (partial key-place 3 cornerrow) (get-web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "br"))))
         fourth-bl-to-br (web-post-linear
                          (partial key-place lastcol cornerrow) "bl" :radians
                          (partial key-place 3 cornerrow) "br" :radians
@@ -1407,8 +1407,8 @@
 
         middle-bm-to-fourth-bl-top (middle-bm-to-fourth-bl :top)
         middle-bm-to-fourth-bl-bottom (middle-bm-to-fourth-bl :bottom)
-        middle-br-top (transform-position-radians (partial key-place 2 cornerrow) (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "br"))))
-        middle-br-bottom (transform-position-radians (partial key-place 2 cornerrow) (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "br"))))
+        middle-br-top (transform-position-radians (partial key-place 2 cornerrow) (get-web-post-position-top (mapv +  (get-single-plate-corner-position-vector "br"))))
+        middle-br-bottom (transform-position-radians (partial key-place 2 cornerrow) (get-web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "br"))))
 
         top-faces (into [] (apply concat
                                   (for [index (range 0 (inc steps))]
@@ -1859,7 +1859,7 @@
 (screen-holder-points-fn screen-holder-top-right-inside-point screen-holder-bottom-right-inside-point screen-holder-bottom-right-inside-floor-point steps)
         thumb-bl-tl-to-br-tl-corner-outer (into [] (apply concat
                                                           (for [index (range 0 (inc steps))]
-                                                            (catmull-rom-spline-curve
+                                                            (catmull-rom-spline-segment
                                                              (nth (thumb-br-bl :outer-points) index)
                                                              (nth (thumb-br-tl :outer-points) index)
                                                              (nth (thumb-bl-tl :outer-points)index)
@@ -1874,7 +1874,7 @@
                                                                        thumb-br-tl-inner-reversed  (reverse (thumb-br-tl :inner-points))
                                                                        thumb-br-bl-inner-reversed (reverse (thumb-br-bl :inner-points))
                                                                        screen-holder-right-inside-points-reversed (reverse screen-holder-right-inside-points)]]
-                                                             (catmull-rom-spline-curve
+                                                             (catmull-rom-spline-segment
                                                               (nth thumb-br-bl-inner-reversed index)
                                                               (nth thumb-br-tl-inner-reversed index)
                                                               (nth thumb-bl-tl-inner-reversed index)
@@ -2035,7 +2035,7 @@
         tps-65-inside-points-1 (bezier-linear tps-65-mid-left-inner (mapv + [0 0 0] tps-65-top-left-inner)  steps)
         tps-65-inside-points-2 (bezier-linear tps-65-inner-point-to-connect-to-thumb-bl-tr tps-65-mid-left-inner steps) 
                tps-65-inside-points-3 (bezier-linear tps-65-bottom-left-inner tps-65-inner-point-to-connect-to-thumb-bl-tr steps)
-        left-section-to-thumb-cluster-convex-walls-top-outside (reverse (catmull-rom-spline-curve 
+        left-section-to-thumb-cluster-convex-walls-top-outside (reverse (catmull-rom-spline-segment 
                                                                          (thumb-br-tl :web-post-position-top)
                                                                          (thumb-bl-tl :web-post-position-top) 
                                                                          screen-holder-top-right-outside-point
@@ -2043,14 +2043,14 @@
                                                                          steps
                                                                          :alpha-type :centripetal 
                                                                          ))
-        left-section-to-thumb-cluster-convex-walls-top-inside  (catmull-rom-spline-curve
+        left-section-to-thumb-cluster-convex-walls-top-inside  (catmull-rom-spline-segment
                                                                 (thumb-br-tl :web-post-position-bottom) 
                                                                 (thumb-bl-tl :web-post-position-bottom) 
                                                                 screen-holder-top-right-inside-point
                                                                 screen-holder-top-right-inside-point-translated-for-left-section 
                                                                 steps
                                                                 :alpha-type :centripetal )
-        left-section-to-thumb-cluster-convex-walls-bottom-outside (reverse (catmull-rom-spline-curve
+        left-section-to-thumb-cluster-convex-walls-bottom-outside (reverse (catmull-rom-spline-segment
                                                                             (thumb-br-tl :wall-locate1-point)
                                                                             (thumb-bl-tl :wall-locate1-point)
                                                                             screen-holder-bottom-right-outside-point
@@ -2058,7 +2058,7 @@
                                                                             steps
                                                                             :alpha-type :centripetal))
         
-        left-section-to-thumb-cluster-convex-walls-bottom-inside (catmull-rom-spline-curve
+        left-section-to-thumb-cluster-convex-walls-bottom-inside (catmull-rom-spline-segment
                                                                   (thumb-br-tl :wall-locate-2-bottom-floor) 
                                                                   (thumb-bl-tl :wall-locate-2-bottom-floor)
                                                                   screen-holder-bottom-right-inside-floor-point
@@ -2076,7 +2076,7 @@
         
         outside-points-1 (into [] (apply concat
                                          (for [index (range 0 (inc steps))]
-                                           (catmull-rom-spline-curve
+                                           (catmull-rom-spline-segment
                                             (nth tps-65-outside-control-points-1 index)
                                             (nth tps-65-outside-points-1 index)
                                             (nth left-section-to-thumb-cluster-convex-walls-top-outside index)
@@ -2086,7 +2086,7 @@
                                             ))))
         outside-points-2 (into [] (apply concat
                                          (for [index (range 0 (inc steps))]
-                                           (catmull-rom-spline-curve
+                                           (catmull-rom-spline-segment
                                             (nth tps-65-outside-control-points-2 index)
                                             (nth tps-65-outside-points-2 index)
                                             (nth thumb-bl-tl-to-thumb-bl-tr-top-outside index)
@@ -2111,7 +2111,7 @@
                                               :let [bottom-control-points (reverse thumb-bl-tl-to-thumb-bl-tr-bottom-inside) ]]
                                           (
                                            ;bezier-linear
-                                           catmull-rom-spline-curve
+                                           catmull-rom-spline-segment
                                            (nth tps-65-inside-control-points-2 index)
                                            (nth tps-65-inside-points-2 index)
                                            (nth thumb-bl-tl-to-thumb-bl-tr-top-inside index)
@@ -2164,14 +2164,14 @@
         ;;                                                   steps
         ;;                                                   :alpha-type :centripetal
         ;;                                                   ))
-        thumb-tl-tl-to-tps-65-bottom-left-inner (reverse (catmull-rom-spline-curve
+        thumb-tl-tl-to-tps-65-bottom-left-inner (reverse (catmull-rom-spline-segment
                                                           (mapv + tps-65-bottom-left-inner [0 -2 4])
                                                           tps-65-bottom-left-inner
                                                           (thumb-tl-tl :bottom)
                                                           (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
                                                           steps
                                                           :alpha-type :centripetal ))
-        thumb-tl-tl-to-tps-65-bottom-left-outer (catmull-rom-spline-curve
+        thumb-tl-tl-to-tps-65-bottom-left-outer (catmull-rom-spline-segment
                                                  tps-65-top-right-outer
                                                  tps-65-bottom-left-outer
                                                  (thumb-tl-tl :top)
@@ -2182,7 +2182,7 @@
                                                                      (apply concat
                                                                             (for [index (range 0 (inc steps))
                                                                                   :let [a (take-last (inc steps) outside-points-2)
-                                                                                        b (catmull-rom-spline-curve 
+                                                                                        b (catmull-rom-spline-segment 
                                                                                            tps-65-top-right-outer
                                                                                            tps-65-bottom-left-outer
                                                                                            (thumb-tl-tl :top)
@@ -2200,7 +2200,7 @@
         thumb-bl-tr-to-thumb-tl-tl-to-tps-65-bottom-left-inner (into []
                                                                      (apply concat
                                                                             (for [index (range 0 (inc steps))
-                                                                                  :let [a (catmull-rom-spline-curve-old
+                                                                                  :let [a (catmull-rom-spline-curve
                                                                                            tps-65-bottom-right-inner
                                                                                            tps-65-bottom-left-inner
                                                                                            (thumb-bl-tr :web-post-position-bottom)
@@ -2208,7 +2208,7 @@
                                                                                            steps
                                                                                            :alpha-type :centripetal :t1 0.7 :t2 0.9) 
                                      ;(take (inc steps) inside-points-2)
-                                                                                        b (catmull-rom-spline-curve-old 
+                                                                                        b (catmull-rom-spline-curve 
                                                                                            tps-65-bottom-left-inner-translated
                                                                                            tps-65-bottom-left-inner
                                                                                            (thumb-tl-tl :bottom)
@@ -2230,20 +2230,20 @@
            (generate-bezier-along-bezier-polyhedron outside-points-1 inside-points-1  steps)
          (generate-bezier-along-bezier-polyhedron outside-points-2 inside-points-2 steps)
           ;(generate-bezier-along-bezier-polyhedron top-left-surface-outer-points top-left-surface-inner-points steps)
-              (chained-hull-for-four-lists (plot-bezier-points
-                                                  (bezier-cubic
-                                                  screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
-                                                  screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
-                                                  tps-65-top-left-control-point-outer
-                                                  tps-65-top-left-outer
-                                                  steps)
-                                                  (sphere 0.001)
-                                                  ) 
-                                                 (plot-bezier-points (bezier-linear screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper tps-65-top-left-inner  steps) (sphere 0.001))
-                                                 (plot-bezier-points (reverse (take (inc steps) outside-points-1 )) (sphere 0.001)) 
-                                               (plot-bezier-points (bezier-linear  screen-holder-top-right-inside-point tps-65-top-left-inner steps) (sphere 0.001))
-                                                 (inc steps)
-                                                 )
+              ;; (chained-hull-for-four-lists (plot-bezier-points
+              ;;                                     (bezier-cubic
+              ;;                                     screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper
+              ;;                                     screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner
+              ;;                                     tps-65-top-left-control-point-outer
+              ;;                                     tps-65-top-left-outer
+              ;;                                     steps)
+              ;;                                     (sphere 0.001)
+              ;;                                     ) 
+              ;;                                    (plot-bezier-points (bezier-linear screen-holder-outside-point-with-same-y-as-tps-65-top-left-upper tps-65-top-left-inner  steps) (sphere 0.001))
+              ;;                                    (plot-bezier-points (reverse (take (inc steps) outside-points-1 )) (sphere 0.001)) 
+              ;;                                  (plot-bezier-points (bezier-linear  screen-holder-top-right-inside-point tps-65-top-left-inner steps) (sphere 0.001))
+              ;;                                    steps
+              ;;                                    )
           
          ; (-# (plot-bezier-points (take-last (inc steps) top-left-surface-outer-points) (sphere 0.1)))
         ;;(generate-bezier-along-bezier-polyhedron (concat (drop-last  (inc steps) top-left-surface-outer-points) outside-points-1) 
@@ -2334,7 +2334,7 @@
                                              :let [thumb-bl-tthumb-bl-to-tps-65-bottom-leftside (thumb-bl-tl :outer-points)
                                                    thumb-bl-bthumb-bl-to-tps-65-bottom-leftside (thumb-br-tl :outer-points)
                                                    thumb-bl-bl-to-tps-65-bottom-leftside (thumb-bl-bl :outer-points)]]
-                                         (catmull-rom-spline-curve
+                                         (catmull-rom-spline-segment
                                           (nth thumb-bl-bthumb-bl-to-tps-65-bottom-leftside index)
                                           (nth thumb-bl-tthumb-bl-to-tps-65-bottom-leftside index)
                                           (nth screen-holder-right-outside-points index)
@@ -2352,7 +2352,7 @@
                                                   screen-holder-right-inside-points-reversed (reverse screen-holder-right-inside-points)
                                                   screen-holder-left-inside-points-reversed (reverse screen-holder-left-inside-points)
                                                   screen-holder-right-inside-points-translated-reversed (reverse screen-holder-right-inside-points-translated)]]
-                                        (catmull-rom-spline-curve
+                                        (catmull-rom-spline-segment
                                          (nth thumb-br-tthumb-bl-tr-to-tps-65-bottom-left-innerside index)
                                          (nth thumb-bl-tthumb-bl-tr-to-tps-65-bottom-left-innerside index)
                                          (nth screen-holder-right-inside-points-reversed index)
@@ -2393,14 +2393,14 @@
 
 
 (defn thumb-to-body-connecters-polyhedron [steps & {:keys [bottom-plate] :or {bottom-plate false}}]
-  (let [thumb-tr-mr-top (transform-position thumb-tr-place (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "rm"))))
-        thumb-tr-mr-bottom (transform-position thumb-tr-place (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "rm"))))
-        thumb-tr-tr-top (transform-position thumb-tr-place (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "tr"))))
-        thumb-tr-tr-bottom (transform-position thumb-tr-place (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "tr"))))
+  (let [thumb-tr-mr-top (transform-position thumb-tr-place (get-web-post-position-top (mapv +  (get-single-plate-corner-position-vector "rm"))))
+        thumb-tr-mr-bottom (transform-position thumb-tr-place (get-web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "rm"))))
+        thumb-tr-tr-top (transform-position thumb-tr-place (get-web-post-position-top (mapv +  (get-single-plate-corner-position-vector "tr"))))
+        thumb-tr-tr-bottom (transform-position thumb-tr-place (get-web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "tr"))))
         thumb-tr-tl (web-post-point (partial thumb-tr-place) "tl" :degrees)
         thumb-tr-rm-to-tr-web-post (web-post-linear thumb-tr-place "rm" :degrees thumb-tr-place "tr" :degrees steps)
-        index-br-top (transform-position-radians (partial key-place 1 cornerrow) (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "br"))))
-        index-br-bottom (transform-position-radians (partial key-place 1 cornerrow) (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "br"))))
+        index-br-top (transform-position-radians (partial key-place 1 cornerrow) (get-web-post-position-top (mapv +  (get-single-plate-corner-position-vector "br"))))
+        index-br-bottom (transform-position-radians (partial key-place 1 cornerrow) (get-web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "br"))))
         index-bl (web-post-point (partial key-place 1 cornerrow) "bl" :radians)
         thumb-tl-tr (web-post-point thumb-tl-place "tr" :degrees)
         thumb-tr-mr-curve (wall-brace-polyhedron-curve-points thumb-tr-place 1 0 "rm" :degrees steps)
@@ -2575,30 +2575,30 @@
                                           thumb-mr-place "tr" :degrees
                                           thumb-tr-place "br" :degrees
                                           steps)
-        thumb-bl-tl-to-br-tl-curve-top (catmull-rom-spline-curve
+        thumb-bl-tl-to-br-tl-curve-top (catmull-rom-spline-segment
          ((web-post-point thumb-br-place  "bl" :degrees) :top)
                                         ((web-post-point thumb-br-place  "tl" :degrees) :top)
                                         ((web-post-point thumb-bl-place  "tl" :degrees) :top) 
          screen-holder-top-right-outside-point
          steps
          :alpha-type :centripetal)
-        thumb-bl-tl-to-br-tl-curve-bottom (catmull-rom-spline-curve
+        thumb-bl-tl-to-br-tl-curve-bottom (catmull-rom-spline-segment
                                               ((web-post-point thumb-br-place  "bl" :degrees) :bottom)
                                               ((web-post-point thumb-br-place  "tl" :degrees) :bottom) 
                                            ((web-post-point thumb-bl-place  "tl" :degrees) :bottom)   
                                            screen-holder-top-right-inside-point
                                               steps
                                               :alpha-type :centripetal)
-        thumb-mr-tr-top (transform-position thumb-mr-place (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "tr"))))
-        thumb-mr-tr-bottom (transform-position thumb-mr-place (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "tr"))))
+        thumb-mr-tr-top (transform-position thumb-mr-place (get-web-post-position-top (mapv +  (get-single-plate-corner-position-vector "tr"))))
+        thumb-mr-tr-bottom (transform-position thumb-mr-place (get-web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "tr"))))
         thumb-bl-tl-to-br-tl-curve (wall-brace-cubic-polyhedron-curves (get-thumb-mr-br-to-thumb-tr-br-parameters-old steps)) 
         ;; (web-post-quadratic-curve  thumb-bl-place "tl" :degrees
         ;;                                                       thumb-bl-place "bl" :degrees
         ;;                                                       thumb-br-place "tl" :degrees
         ;;                                                       steps)
-        thumb-bl-bl-top (transform-position thumb-bl-place (web-post-position-top (mapv +  (get-single-plate-corner-position-vector "bl"))))
-        thumb-bl-bl-bottom (transform-position thumb-bl-place (web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "bl"))))
-        curve-from-thumb-br-bl-to-mr-br-points (wall-brace-cubic-polyhedron-curves (points-for-curved-wall-from-thumb-br-bl-to-mr-br 36))
+        thumb-bl-bl-top (transform-position thumb-bl-place (get-web-post-position-top (mapv +  (get-single-plate-corner-position-vector "bl"))))
+        thumb-bl-bl-bottom (transform-position thumb-bl-place (get-web-post-position-bottom (mapv +  (get-single-plate-corner-position-vector "bl"))))
+        curve-from-thumb-br-bl-to-mr-br-points (wall-brace-cubic-polyhedron-curves (points-for-curved-wall-from-thumb-br-bl-to-mr-br 60))
 thumb-br-bl-to-br (web-post-linear thumb-br-place "bl" :degrees thumb-br-place "br" :degrees 12)
 thumb-br-br-to-mr-bl (web-post-linear thumb-br-place "br" :degrees thumb-mr-place "bl" :degrees 12)
 thumb-mr-bl-to-br (web-post-linear thumb-mr-place "bl" :degrees thumb-mr-place "br" :degrees 12)
@@ -2693,20 +2693,20 @@ thumb-bl-to-mr-linear-bottom  (concat
                                                                                                                                                       thumb-br-place "br" thumb-mr-place "bl"
                                                                                                                                                       :steps steps)
                                                                                                                                                      
-                                                                                                                                                     (chained-hull-for-four-lists
-                                                                                                                                                      (plot-bezier-points
-                                                                                                                                                       thumb-bl-to-mr-linear-top
-                                                                                                                                                       (sphere 0.001))
-                                                                                                                                                      (plot-bezier-points
-                                                                                                                                                       (curve-from-thumb-br-bl-to-mr-br-points :web-post-top-curve)
-                                                                                                                                                       (sphere 0.001))
-                                                                                                                                                      (plot-bezier-points
-                                                                                                                                                       (reverse thumb-bl-to-mr-linear-bottom)
-                                                                                                                                                       (sphere 0.001))
-                                                                                                                                                      (plot-bezier-points
-                                                                                                                                                       (reverse (curve-from-thumb-br-bl-to-mr-br-points :web-post-bottom-curve))
-                                                                                                                                                       (sphere 0.001))
-                                                                                                                                                      36)
+                                                                                                                                                    ;;  (chained-hull-for-four-lists
+                                                                                                                                                    ;;   (plot-bezier-points
+                                                                                                                                                    ;;    thumb-bl-to-mr-linear-top
+                                                                                                                                                    ;;    (sphere 0.001))
+                                                                                                                                                    ;;   (plot-bezier-points
+                                                                                                                                                    ;;    (curve-from-thumb-br-bl-to-mr-br-points :web-post-top-curve)
+                                                                                                                                                    ;;    (sphere 0.001))
+                                                                                                                                                    ;;   (plot-bezier-points
+                                                                                                                                                    ;;    (reverse thumb-bl-to-mr-linear-bottom)
+                                                                                                                                                    ;;    (sphere 0.001))
+                                                                                                                                                    ;;   (plot-bezier-points
+                                                                                                                                                    ;;    (reverse (curve-from-thumb-br-bl-to-mr-br-points :web-post-bottom-curve))
+                                                                                                                                                    ;;    (sphere 0.001))
+                                                                                                                                                    ;;   60)
                                                                                                                                                      
                                                                                                                                                      )))
 

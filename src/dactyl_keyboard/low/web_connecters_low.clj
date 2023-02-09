@@ -59,8 +59,8 @@
 (def web-post-br (translate  web-post-br-translation-vector web-post))
 (def web-post-bm (translate  web-post-bm-translation-vector web-post))
 
-(defn web-post-position-top [corner-translation-vector] (mapv + [0 0 (/ web-thickness 2)] web-post-translation-vector corner-translation-vector))
-(defn web-post-position-bottom [corner-translation-vector] (mapv + [0 0 (/ web-thickness -2)] web-post-translation-vector corner-translation-vector))
+(defn get-web-post-position-top [corner-translation-vector] (mapv + [0 0 (/ web-thickness 2)] web-post-translation-vector corner-translation-vector))
+(defn get-web-post-position-bottom [corner-translation-vector] (mapv + [0 0 (/ web-thickness -2)] web-post-translation-vector corner-translation-vector))
 (def web-post-x-distance-from-single-plate-corner (- (+  1.8  (/ keyswitch-width 2)) (- (/ mount-width 1.95) post-adj)))
 (def web-post-y-distance-from-single-plate-corner (-  (- (/ mount-height 1.95) post-adj) (+ 1.5 (/ keyswitch-height 2))))
 
@@ -89,6 +89,27 @@
     "lm" (mapv + web-post-lm-translation-vector [(- web-post-x-distance-from-single-plate-corner) 0 0])
     "centre" [0 0 0]
     [0 0 0])
+  )
+
+(defn get-opposite-position [position dx dy]
+  (case position
+     "tr" (cond (and (pos? dx) (pos? dy)) "bl"
+                (pos? dx) "tl"
+                (pos? dy) "br")
+ "tl" (cond (and (neg? dx) (pos? dy)) "br"
+            (neg? dx) "tr"
+            (pos? dy) "bl")
+ "bl" (cond (and (neg? dx) (neg? dy)) "tr"
+            (neg? dx) "br"
+            (neg? dy) "tl")
+ "br" (cond (and (pos? dx) (neg? dy)) "tl"
+            (pos? dx) "bl"
+            (neg? dy) "tr")
+ "tm" "bm"
+ "bm" "tm"
+ "rm" "lm"
+ "lm" "rm"
+    "centre" "centre")
   )
 
 (defn get-web-post-outer-x-and-y-vector [dx dy]

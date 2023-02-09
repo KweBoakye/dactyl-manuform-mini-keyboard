@@ -1,7 +1,12 @@
 (ns dactyl-keyboard.utils
  (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [ mmul set-current-implementation mul mget]]
-            [clojure.math :refer [ceil]]
+  (:require [clojure.core.matrix :refer [ mmul set-current-implementation mul mget matrix? array shape column-matrix dot length
+                                         length-squared cross]]
+            [clojure.core.matrix.linear :refer [lu solve ]]
+            ;[mat :as v :refer [lu]]
+            [clojure.pprint :refer [cl-format]]
+            [clojure.math :refer [pow sqrt floor]]
+            [clojure.string  :as string :refer [join replace]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             ;[chisel.curves :as chisel-curves :refer [direct-nurbs-evaluation  b-spline clamped-b-spline]]
@@ -287,12 +292,14 @@
    [0, 1, 0, y]
    [0, 0, 1, z]
    [0, 0, 0, 1]])
-(defn dot
+(defn dot-product
   "Vector dot product"
   [x y]
   (reduce + (map * x y)))
 
-
+(defn vector-magnitude [vector]
+  (sqrt (reduce + (mapv #(pow % 2) vector)))
+  )
 
 (defn mat-mult
   "Matrix-Matrix product"
@@ -301,7 +308,7 @@
   (vec
    (->> (for [x a
               y (transpose b)]
-          (dot x y))
+          (dot-product x y))
         (partition (count (transpose b)))
         (map vec))))
 
@@ -334,7 +341,7 @@
       (cond (<= (- (+ last2 1) a) (listLength1))
             (conj [(- last1 a) (- (+ last1 1) a) listLength1])
             :else
-            (conj [(- last1 - a) (+ (- last1 a) 1) ((+ (- last1 a) 1))])))))
+            (conj [(- last1 a) (+ (- last1 a) 1) ((+ (- last1 a) 1))])))))
 (defn bezier-polyhedron-faces [listLength1, listLength2]
   (let [curved-faces (for [a (range 0 (- listLength1 2))]
                        ())]))
@@ -582,7 +589,10 @@
    - A set of steps+1 points along the Hermite Cubic spline curve from p1 to pn with their arriving and departing tangents affected by the tangent, contiuitnity and bias values  
    "
   [points steps & {:keys [drop-last-point-of-segment tension-values continuinity-values bias-values] 
-                                                      :or {drop-last-point-of-segment true tension-values [0 0 0] continuinity-values [0 0 0] bias-values [0 0 0]}}]
+                                                      :or {drop-last-point-of-segment true 
+                                                           tension-values (vec (repeat (count points) 0))
+                                                           continuinity-values (vec (repeat (count points) 0))
+                                                           bias-values (vec (repeat (count points) 0))}}]
   (let [n (- (count points) 2)
         number-of-segments (dec n)
         segment-steps (/ steps number-of-segments)
@@ -694,38 +704,20 @@
            (cubic-hermite-spline-point  (nth p0 2) (nth p3 2) (nth p1t 2) (nth p2t 2) (/ t steps))])))
   )
 
+
+
 (defn getT [t alpha p0 p1]
-  (let [d (mapv - p0 p1)
-        a (dot d d)
-        b (Math/pow a (* alpha 0.5))]
-    (+ b t)))
-
-(defn getT-new [t alpha p0 p1]
   (let [d (mapv - p1 p0)
-        a (dot d d)
+        a (dot-product d d)
         b (Math/pow a (* alpha 0.5))]
     (+ b t)))
 
-(defn catmull-rom-spline  [p0 p1 p2 p3 t alpha]
-  (let [
-        t0 0.0
-        t1 (getT t0 alpha p0 p1)
-        t2 (getT t1 alpha p1 p2)
-        t3 (getT t2 alpha p2 p3)
-        tfinal (lerp-old  t1 t2 t)
-        a1 (mapv + (mapv #(* % (/ (- t1 tfinal) (- t1 t0))) p0) (mapv #(* % (/ (- tfinal t0) (- t1 t0))) p1))
-        a2 (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t1))) p1) (mapv #(* % (/ (- tfinal t1) (- t2 t1))) p2))
-        a3 (mapv + (mapv #(* % (/ (- t3 tfinal) (- t3 t2))) p2) (mapv #(* % (/ (- tfinal t2) (- t3 t2))) p3))
-        b1 (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t0))) a1) (mapv #(* % (/ (- tfinal t0) (- t2 t0))) a2))
-        b2 (mapv + (mapv #(* % (/ (- t3 tfinal) (- t3 t1))) a2) (mapv #(* % (/ (- tfinal t1) (- t3 t1))) a3))
-        c (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t1))) b1) (mapv #(* % (/ (- tfinal t1) (- t2 t1))) b2))]
-    c))
 
 (defn catmull-rom-spline-point  [p0 p1 p2 p3 t alpha]
   (let [t0 0.0
-        t1 (getT-new t0 alpha p0 p1)
-        t2 (getT-new t1 alpha p1 p2)
-        t3 (getT-new t2 alpha p2 p3)
+        t1 (getT t0 alpha p0 p1)
+        t2 (getT t1 alpha p1 p2)
+        t3 (getT t2 alpha p2 p3)
         tfinal (lerp t1 t2 t)
         a1 (mapv + (mapv #(* % (/ (- t1 tfinal) (- t1 t0))) p0) (mapv #(* % (/ (- tfinal t0) (- t1 t0))) p1))
         a2 (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t1))) p1) (mapv #(* % (/ (- tfinal t1) (- t2 t1))) p2))
@@ -735,7 +727,7 @@
         c (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t1))) b1) (mapv #(* % (/ (- tfinal t1) (- t2 t1))) b2))]
     c))
 
-(defn catmull-rom-spline-curve [p0 p1 p2 p3 steps & {:keys [alphaType] :or {alphaType :centripetal}}]
+(defn catmull-rom-spline-segment [p0 p1 p2 p3 steps &{:keys [alphaType] :or {alphaType :centripetal}}]
   (let [
         alpha (case alphaType
                 :uniform 0
@@ -747,15 +739,18 @@
 )
   )
 
-(defn catmull-rom-spline-curve-old [p0 p1 p2 p3 steps &{:keys [alphaType t1 t2] :or {alphaType :centripetal t1 (/ 1 3) t2 (/ 2 3)}}]
-  (let [alpha (case alphaType
-                :uniform 0
-                :centripetal 0.5
-                :chordal 1.0)
-        c1 (catmull-rom-spline p0 p1 p2 p3 t1 alpha )
-        c2 (catmull-rom-spline p0 p1 p2 p3 t2 alpha)]
-    
-    (bezier-cubic p1 c1 c2 p2 steps)
+(defn catmull-rom-spline-curve [points steps & {:keys [alphaType split-steps drop-last-point-if-not-last-segment] 
+                                                :or {alphaType :centripetal split-steps false drop-last-point-if-not-last-segment true}}]
+  (let [number-of-segments (- (count points) 3)
+        steps-per-segment (if split-steps (floor (/ steps number-of-segments)) steps)
+        drop-last-point-if-not-last-segment (get-drop-last-point-if-not-last-segment number-of-segments drop-last-point-if-not-last-segment)
+        ]
+    (into [](apply concat (for [index (range number-of-segments)
+          :let [i (inc index)]]
+      (drop-last-point-if-not-last-segment
+       i
+       (catmull-rom-spline-segment (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2)) steps-per-segment :alphaType alphaType))
+      )))
     )
   )
 
@@ -883,13 +878,15 @@
 (defn cubic-uniform-b-spline [points steps & {:keys [drop-last-point-of-segment] :or {drop-last-point-of-segment true}}]
 (let [number-of-points (count points)
       number-of-segments (- number-of-points 3)
-      segment-steps (/ steps number-of-segments)
+      segment-steps (floor (/ steps number-of-segments))
       drop-last-point-if-not-last-segment (get-drop-last-point-if-not-last-segment number-of-segments drop-last-point-of-segment) 
+      curve (into [] (apply concat (for [index (range 0 number-of-segments)
+                                         :let [i (inc index)]]
+                                     (drop-last-point-if-not-last-segment i
+                                                                          (cubic-uniform-b-spline-segment (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2)) segment-steps)))))
       ]
-  (into [] (apply concat (for [index (range 0 number-of-segments)
-                               :let [i (inc index)]]
-                           (drop-last-point-if-not-last-segment i
-                                                                (cubic-uniform-b-spline-segment (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2)) segment-steps)))))
+  ;(println "steps is " steps "points " number-of-points "  segments is " number-of-segments "segment-steps is "segment-steps "num points" (count curve))
+  curve
   )  
 )
 
@@ -1012,8 +1009,8 @@
   
 ;;   )
 
-(defn w [control-points weights]
-  (mapv #(conj %1 %2) control-points weights)
+(defn homogenize-cooridinates [control-points weights]
+  (mapv #(conj (mapv (partial * %2) %1) %2) control-points weights)
   )
 
 (defn calculate-knot-span-index [n p u U]
@@ -1143,20 +1140,58 @@
       ;;   )
       ;; (aset N j (aget saved-list j))
         ;)
-    N
+    (vec N)
     )
   )
+
+(defn calculate-non-uniform-b-spline-point
+  "from p82 of the nurbs book"
+  [n p U P u]
+  
+  (let [span (calculate-knot-span-index n p u U)
+        N (calculate-non-vanishing-basis-functions span u p U) 
+        p-double (double p)]
+    (loop [C [0.0 0.0 0.0] i 0]
+      (if (<= i p) (recur (mapv + C (mapv (partial * (nth N i)) (nth P (+ (- span p-double) i)))) (inc i))
+          C
+          )
+      
+      )
+    )
+  )
+
+(defn non-uniform-b-spline-segment [n p U P steps & {:keys [u-start u-end] :or {u-start 0 u-end (inc u-start)}}]
+  (let [increment (/ (- u-end u-start) steps)]
+     (println "non-uniform-b-spline-segment points" P)
+    (for [u (range u-start (+ u-end increment) increment)] 
+        (calculate-non-uniform-b-spline-point n p U P u)))
+  )
+
+(defn non-uniform-b-spline [P p U steps & {:keys [drop-last-point-of-segment extra-segments n] :or {drop-last-point-of-segment true extra-segments 0 n (- (count U) p 2)}}]
+  (let [number-of-points (count P)
+        number-of-points-per-segment (inc p)
+        number-of-segments (+ (- number-of-points p) extra-segments)
+        steps-total (* steps number-of-segments)
+       ; segment-steps  (/ steps number-of-segments)
+        segment-steps-normalized (/ steps steps-total)
+        drop-last-point-if-not-last-segment (get-drop-last-point-if-not-last-segment number-of-segments drop-last-point-of-segment)
+      ;(dec number-of-points)
+        ]
+   
+    (println "non-uniform-b-spline points" P)
+    (into [] (apply concat (for [index (range 0 number-of-segments)]
+                             (drop-last-point-if-not-last-segment (inc index)
+                                                                  (non-uniform-b-spline-segment n p U P steps :u-start index :u-end (inc index))))))))
 
 (defn calculate-nurbs-curve-point [n p U Pw u]
   (let[span (calculate-knot-span-index n p u U)
         N (calculate-non-vanishing-basis-functions span u p U)
         
         ]
-   (println span)
-    (println N)
+
     (loop [Cw [0.0 0.0 0.0 0.0] j 0 ]
-      (println " nth Pw" (+ span (- p) j))
-      (if (<= j p) (recur (mapv + Cw  (mapv (partial * (aget N j)) (nth Pw (+ span (- p) j)))) (inc j) )
+      
+      (if (<= j p) (recur (mapv + Cw  (mapv (partial * (nth N j)) (nth Pw (+ span (- p) j)))) (inc j) )
           (->(project-coordinate Cw)
            (subvec 0 3)))
       )
@@ -1168,13 +1203,11 @@
     
       
         (do
-        (println "u-start is " u-start  "segment-steps is " steps)
-        (println "u is " u)
        (calculate-nurbs-curve-point n p U Pw u))
     ))
   )
 
-(defn nurbs-with-homogenous-coordinates [Pw p U steps &{:keys [drop-last-point-of-segment] :or {drop-last-point-of-segment false}}]
+(defn nurbs-with-homogenous-coordinates [Pw p U steps &{:keys [drop-last-point-of-segment] :or {drop-last-point-of-segment true}}]
   (let [number-of-points (count Pw)
         number-of-points-per-segment (inc p)
         number-of-segments (- number-of-points p) 
@@ -1183,17 +1216,23 @@
         segment-steps-normalized (/ steps steps-total)
         drop-last-point-if-not-last-segment (get-drop-last-point-if-not-last-segment number-of-segments drop-last-point-of-segment)
         n (- (count U) p 2);(dec number-of-points)
-        ]
-    (println  " number-of-segments is " number-of-segments " segment-steps-normalized " segment-steps-normalized)
+        ] 
     
     (into [] (apply concat (for [index (range 0 number-of-segments)
                                  :let [Pw-i (subvec Pw index (+ index number-of-points-per-segment))]
                                  ]
-                              (drop-last-point-if-not-last-segment index (do (println "index is " index) 
-                               (nurbs-segment n p U Pw steps :u-start index :u-end (inc index))))
+                              (drop-last-point-if-not-last-segment (inc index)  
+                               (nurbs-segment n p U Pw steps :u-start index :u-end (inc index)))
                              )))
     ) 
   )
+
+(defn nurbs [points p U weights steps & {:keys [drop-last-point-of-segment] :or {drop-last-point-of-segment true}}]
+  (let [weighted-points (homogenize-cooridinates points weights)]
+    (nurbs-with-homogenous-coordinates weighted-points p U steps :drop-last-point-of-segment drop-last-point-of-segment)
+    ) 
+  )
+
 
 ;; (defn b-spline-point [points degree knot-vector t]
 ;;   (loop [i 0 x 0 y 0 z 0]
@@ -1202,6 +1241,615 @@
 ;;         [x y z]) 
 ;;       ) 
 ;;     )
+;;   )
+
+(defn calculate-uk-values [n numerator-list d]
+  (let [uk-list (double-array  n 0.0)]
+    (doseq [k (range 1 n)]
+      (aset uk-list k (+ (aget uk-list (dec k)) (/ (nth numerator-list (dec k)) d))))
+    (conj (vec uk-list) 1.0)))
+
+(defn u-k-chordal [n Q]
+  (let [magnitudes-of-qk-qk-minus-one (for [k (range 1 (inc n))]
+                                        (sqrt (reduce + (mapv #(pow % 2) (mapv - (nth Q k) (nth Q (dec k))) )))
+                                        )
+        d (reduce + magnitudes-of-qk-qk-minus-one) 
+        ]
+    (println "d is " d)
+    (println "magnitudes-of-qk-qk-minus-one is " magnitudes-of-qk-qk-minus-one)
+    (calculate-uk-values n magnitudes-of-qk-qk-minus-one d)
+    )
+  )
+
+(defn u-k-centripetal [n Q ]
+  (let [sqrt-of-magnitudes-of-qk-qk-minus-one (for [k (range 1 (inc n))
+                                            :let [calvec (mapv #(pow % 2) (mapv - (nth Q k) (nth Q (dec k))))
+                                                  reduced-calvec (reduce + calvec)
+                                                  res (Math/sqrt (abs reduced-calvec))
+                                                  res-sqrt (Math/sqrt res)]] 
+                                            res-sqrt
+                                        ) 
+        d (reduce + sqrt-of-magnitudes-of-qk-qk-minus-one)
+        uk-list (double-array (inc n) 0.0)
+        ] 
+    
+    (doseq [k (range 1 n)
+            :let [u-k (+ (aget uk-list (dec k)) (/ (nth sqrt-of-magnitudes-of-qk-qk-minus-one (dec k)) d))]] 
+      (aset uk-list k u-k)
+      ) 
+    (aset uk-list n 1.0)
+    (vec uk-list) 
+    )
+  )
+
+(defn calculate-knot-vector-from-u-k [U-k n p]
+  (let [m (+ n p 1)
+        knot-vector (double-array (inc m) 0.0)
+        j-min 1
+        j-max (- n p) 
+        num-segments (inc (- n p))
+        ] 
+    (doseq [index (range 0 (inc m))]
+      (cond (< index (+ j-min p)) (aset knot-vector index 0.0)
+            (and (>=  index (+ j-min p) ) (<= index (+ j-max p))) (aset knot-vector index  (* (/ (reduce + (for [j (range 0 index)]
+                                                                                           (nth U-k j))) p) num-segments) 
+                                                                    )
+            (> index j-max) (aset knot-vector index (* 1.0 num-segments))
+            )
+      )
+    (vec knot-vector)
+    )
+  )
+
+(comment
+  (let [Q [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]
+        n 4
+        p 3
+        uk (u-k-chordal n Q) 
+        U [0 0 0 0 (/ 28 51) 1 1 1 1]
+        span (calculate-knot-span-index n p (nth uk 0) U)]
+    (calculate-non-vanishing-basis-functions span 0 p U)))
+
+(defn calculate-knot-vector-from-u-k-with-end-derivs [U-k n p]
+  (let [m (+ n p 3)
+        knot-vector (double-array (inc m) 0.0)
+        j-min 0
+        j-max (inc (- n p ))
+        num-segments (+ (- n p) 3)]
+    (doseq [index (range 0 (inc m))] 
+      (cond (<= index p) (do 
+                           (println "index 0 " index)
+                           (aset knot-vector index 0.0))
+            (and (> index p) (< index (- m p))) (do
+                                                  (println "index 1 " index)
+                                                  (aset-double knot-vector index  (* (/ (reduce + (for [j (range (dec (- index p)) (inc (- index 2)))]
+                                                                                                            (nth U-k j))) p) num-segments)))
+            (>= index (- m p)) (do
+                                 (println "index 2 " index)
+                                 (aset knot-vector index (* 1.0 num-segments)))))
+    (vec knot-vector)))
+
+(defn nurbs-with-calculated-knot-vector [points p weights steps & {:keys [drop-last-point-of-segment clamped style]
+                                                                   :or {drop-last-point-of-segment true
+                                                                        clamped :start-and-end
+                                                                        style :centripetal}}]
+  (let [number-of-points (count points)
+        n (dec number-of-points)
+        u-k-fn (cond (= style :centripetal) u-k-centripetal
+                     (= style :chordal) u-k-chordal)
+        u-k (u-k-fn n points)
+        knot-vector (calculate-knot-vector-from-u-k u-k n p)
+        ] 
+    ;(println knot-vector)
+    (nurbs points p knot-vector weights steps :drop-last-point-of-segment drop-last-point-of-segment)
+    ))
+
+
+(defn forward-substitution [lower-matrix b-matrix]
+  (let [q (count b-matrix)
+        y-matrix (double-array q 0.0) 
+        ;; (for [i (range 1 q)]
+        ;;   (if (zero? i) (/ (nth b-matrix 0)) (get-in lower-matrix [0 0])
+        ;;       (/ (- (nth b-matrix i) (for [j (range 0 i)]
+        ;;                                (* )
+        ;;                                ))))
+        ;;   )
+        ] 
+    ;(println "(nth b-matrix 0) " (nth b-matrix 0))
+    ;(println "(get-in lower-matrix [0 0]) " (get-in lower-matrix [0 0]))
+    (aset y-matrix 0 (/ (nth b-matrix 0) (get-in lower-matrix [0 0])))
+    ;(println "lower-matrix" lower-matrix)
+    ;(println "b-matrix" b-matrix )
+    (doseq [i (range 1 q)
+            :let [numerator (- (nth b-matrix i) (reduce + (for [j (range 0 i)] (* (get-in lower-matrix [i j]) (aget y-matrix j)))))
+                  divisor (get-in lower-matrix [i i])
+                  y-matrix-val (do ;(println "numerator " numerator )
+                                   ;(println "divisor " divisor)
+                                 (/ numerator divisor))
+                  ;; y-matrix-val (/ (- (nth b-matrix i) (reduce + (for [j (range 0 i)] (* (get-in lower-matrix [i j]) (aget y-matrix j))))) 
+                  ;;                 (get-in lower-matrix [i i]))
+                  ]]
+      (aset y-matrix i y-matrix-val)
+      )
+    (vec y-matrix)
+    )
+  )
+
+(defn backward-substitution [upper-matrix y-matrix]
+  (let [q (count y-matrix)
+        x-matrix (double-array q 0.0)
+        x-matrix-first-value (let [numerator (nth y-matrix (dec q))
+                                   divisor (get-in upper-matrix [(dec q) (dec q)])]
+                               (if (zero? divisor) 0.0 (/ numerator divisor)))]
+    (println "upper-matrix" upper-matrix)
+  ;  (println "y-matrix " y-matrix)
+   ; (println "(nth y-matrix (dec q)) "(nth y-matrix (dec q)))
+    ;(println "(get-in upper-matrix [(dec q) (dec q)]) " (get-in upper-matrix [(dec q) (dec q)]))
+    ;(aset x-matrix (dec q) (/ (nth y-matrix (dec q)) (get-in upper-matrix [(dec q) (dec q)])))
+    (aset x-matrix (dec q) x-matrix-first-value)
+    (doseq [i (range (- q 2) -1 -1)
+            :let [upper-matrix-i-i (get-in upper-matrix [i i])
+                  x-matrix-val  (/ (- (nth y-matrix i) (reduce + (for [j (range i q)] (* (get-in upper-matrix [i j]) (nth x-matrix j)))))
+                                 upper-matrix-i-i)]]
+      (aset x-matrix i x-matrix-val)
+      )
+    (vec x-matrix)
+    )
+  )
+
+(comment
+  (let [Q [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]
+        n 4
+        p 3
+        u-k-values (u-k-chordal n Q)
+U (calculate-knot-vector-from-u-k u-k-values n p)
+q (+ n 1)
+dim (count (nth Q 0))
+;; uk-i (nth u-k-values 0)
+   ;;    span (calculate-knot-span-index n p uk-i U)
+;;                start-index (- span p)
+;;               basis-funs (calculate-non-vanishing-basis-functions span uk-i p U)
+;;                basis-funs-size (count basis-funs)
+        
+        A (for [i (range 0 (inc n))
+         :let [uk-i (nth u-k-values i) span (calculate-knot-span-index n p uk-i U)
+               start-index (- span p)
+               basis-funs (calculate-non-vanishing-basis-functions span uk-i p U)
+               basis-funs-size (count basis-funs)]]
+     basis-funs ;(into [] (concat (repeat start-index 0.0) basis-funs (repeat (- q (+ basis-funs-size start-index) ) 0.0)))
+            )
+        A-new (array :vectorz A)
+        {:keys [L U]} (lu A-new {:return [:L :U]})
+        ]
+A
+  ))
+
+(defn global-curve-interp [n Q p &{:keys [point-paramater-calculation-method] :or {point-paramater-calculation-method :centripetal}}]
+  "global interpolation through n+1 points
+   
+   -n number of points to be calculated - 1
+   -Q pass-through points
+   -r number of pass through points
+   -p curve degree
+   return m U P
+   
+   U knot vector
+   
+   "
+  (let [m (+ n p 1)
+        function-for-u-k-values (cond (= point-paramater-calculation-method :chordal ) u-k-chordal  
+                                      (= point-paramater-calculation-method :centripetal) u-k-centripetal)
+        u-k-values (function-for-u-k-values n Q)
+        U-knot-vector (mapv #(/ % (- (inc n) p))(calculate-knot-vector-from-u-k u-k-values n p))
+        q (+ n 1)
+        dim (count (nth Q 0))
+        A (for [i (range 0 q)
+                :let [uk-i (nth u-k-values i)
+                      span (calculate-knot-span-index n p uk-i U-knot-vector)
+                      start-index (do (println "span " span )
+                                    (- span p))
+                      basis-funs (calculate-non-vanishing-basis-functions span uk-i p U-knot-vector)
+                      basis-funs-size (count basis-funs)] 
+                ]
+            ;basis-funs
+            (into [] (concat (repeat start-index 0.0) basis-funs (repeat (- q (+ basis-funs-size start-index)) 0.0)))
+            )
+        A-new (array :vectorz A)
+        r (count Q)
+        {:keys [L U]} (lu A-new {:return [:L :U]})
+        L-vec (mapv vec L)
+        U-vec (mapv vec U)
+        P (to-array-2d (repeat q (repeat dim 0.0)))
+        
+        ]
+    (println "L-vec" L-vec)
+(println " U-vec " U-vec)
+    (doseq [i (range dim)
+           :let [rhs (for [j (range (inc n))] (get-in Q [j i]))
+                 y-matrix (forward-substitution L-vec rhs)
+                 xt-matrix (backward-substitution U-vec y-matrix)
+                 ]]
+       (doseq [j (range 0 (inc n))] (aset P j i (nth xt-matrix j)))
+           )
+    ;; (doseq [i (range 0 dim)
+    ;;         :let [rhs (for [rh Q] (nth rh i));(for [j (range 0 (inc n))] (get-in Q [j i]))
+    ;;               y-matrix (forward-substitution L-vec rhs)
+    ;;               xt-matrix (backward-substitution U-vec y-matrix)]]
+    ;;   (doseq [j (range 0 (inc n))] (aset P j i (nth xt-matrix j)))
+    ;;   )
+    
+    {:m m :U (mapv #(* % (- (inc n) p)) U-knot-vector) :P (mapv (partial vec) (vec P))}
+    )
+  )
+
+(comment
+  (to-array-2d (repeat 5 (repeat 3 0.0)))
+  )
+
+(comment 
+  (global-curve-interp 4 [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]] 3 :point-paramater-calculation-method :chordal))
+
+
+(defn solve-with-vector [matrix vector]
+  (let [vector-size (count vector)
+        coordinate-vector-fn  (fn [coordinate] (vec (flatten (for [index (range vector-size)]
+                                                (get-in vector [index coordinate]))))) 
+        x-vector  (coordinate-vector-fn 0)
+        y-vector (coordinate-vector-fn 1)
+        z-vector  (coordinate-vector-fn 2) 
+        x-solved (vec (solve matrix x-vector))
+        y-solved (vec (solve matrix y-vector))
+        z-solved (vec (solve matrix z-vector))
+        ]
+     (for [index (range vector-size)]
+      [(nth x-solved index) (nth y-solved index) (nth z-solved index)]
+      )
+    )
+  )
+
+
+(defn global-curve-interp-with-end-derivatives [n Q p D-zero D-n &{:keys [point-paramater-calculation-method] :or {point-paramater-calculation-method :centripetal}}]
+  (let [m (+ n p 3)
+        function-for-u-k-values (cond (= point-paramater-calculation-method :chordal) u-k-chordal
+                                      (= point-paramater-calculation-method :centripetal) u-k-centripetal) 
+        
+        
+        u-k-values (function-for-u-k-values n Q)
+        U-knot-vector (calculate-knot-vector-from-u-k-with-end-derivs u-k-values n p)
+        U-knot-vector-normalized (do (println "U-knot-vector ")
+                          (println "u-k-values " u-k-values)
+                          (mapv #(/ % (- (+ n 3) p)) U-knot-vector)
+                                    )
+        num-of-points (do (println "(count Q) ")
+                          (println "U-knot-vector " U-knot-vector-normalized)
+                          (count Q))
+        Q-with (vec (concat [(nth Q 0) (mapv (partial * (/ (nth U-knot-vector (inc p)) p)) D-zero)] 
+                            (subvec Q 1 (dec (count Q))) [(mapv (partial * (/ (- 1 (nth U-knot-vector (- m p 1))) p)) D-n) (last Q)]))
+        Q-with-tangents (do (println "Q-with-tangents ")
+                            (into [] (for [index (range (+ n 3))]
+                                       (cond 
+                                         (zero? index) (nth Q 0)
+                                         (= index 1 ) D-zero
+                                         (and (<= index 2) (>= index n)) (nth Q (dec index))
+                                         (= index (inc n)) D-n
+                                         :else (last Q)) 
+                                       )))
+        q (do (println "q" ) 
+              (println "Q-with-tangents " Q-with-tangents)
+              (+ n 3))
+        dim (do (println "dim ") (count (nth Q 0)))
+        A-row-one (vec (concat [-1.0 1.0] (repeat (inc n) 0.0)))
+        A-row-n-plus-one (vec (concat (repeat (inc n) 0.0) [-1.0 1.0]))
+        A-initial (vec (for [i (range 0 (+ n 1))
+                        :let [uk-i (nth u-k-values i)
+                              span (calculate-knot-span-index (+ n 2) p uk-i U-knot-vector-normalized)
+                              start-index (do (println "span " span)
+                                           (- span p))
+                              basis-funs (calculate-non-vanishing-basis-functions span uk-i p U-knot-vector-normalized)
+                              basis-funs-size (count basis-funs)]]
+            ;basis-funs
+                    (do
+              ;(println "uk-i "uk-i)
+                      (println "basis-funs-size " basis-funs-size)
+                      (into [] (concat (repeat start-index 0.0) basis-funs (repeat (- (+ n 3) (+ basis-funs-size start-index)) 0.0)))))) 
+        A (do (println "(nth A-initial 0) " (nth A-initial 0))
+              (println "A-row-one " A-row-one)
+              (println "A-row-n-plus-one " A-row-n-plus-one) 
+              
+              (println "(last A-initial) " (nth A-initial n))
+              (vec  (concat [(nth A-initial 0) A-row-one] (subvec A-initial 1 n) [A-row-n-plus-one (last A-initial)])))
+        ;; r (do (println "r ") 
+        ;;       (count Q-with-tangents))
+        A-new (array :vectorz A)
+        ;{:keys [L U]} (lu A-new {:return [:L :U]})
+        ;L-vec  (mapv vec L) 
+        ;U-vec (mapv vec U) 
+        P (solve-with-vector A-new Q-with);(to-array-2d (repeat (+ n 3) (repeat dim 0.0)))
+        ;P (solve A-new (array Q-with))
+        ]
+(println "Q "Q)
+(println "Q-sub " (subvec Q 1 (dec (count Q))))
+(println "Q-with " (mapv #(into [] %) Q-with))
+(println "A-new " (shape A-new) )
+(println "x-sol" )
+     ;(println "A" A)
+   ;(count A)
+      ;;  (doseq [i (range dim)
+      ;;          :let [rhs (for [j (range (+ n 3))] (get-in Q-with [j i]))
+      ;;                y-matrix (forward-substitution L-vec rhs)
+      ;;                xt-matrix (backward-substitution U-vec y-matrix)]]
+      ;;    (doseq [j (range 0 (+ n 3))] (aset P j i (nth xt-matrix j))))
+    ;; (let [U-knot-vector-unnormalized (mapv #(* % (- (+ n 1) p)) U-knot-vector)
+    ;;        P-vec (mapv (partial vec) (vec P))
+    ;;       P-zero (nth P-vec 0) 
+    ;;        P-one  (mapv - (mapv #(* % (/ (nth U-knot-vector (inc p)) p)) D-zero) P-zero) 
+    ;;        P-n-plus-two (last P-vec)
+    ;;        P-n-plus-one   (mapv - P-n-plus-two (mapv #(* % (/ (- 1 (nth U-knot-vector (- m p 1))) p)) D-n) ) 
+    ;;       ;P-vec (mapv (partial vec) (vec P))
+           
+    ;;      ; P-n-plus-one (last P-vec) 
+    ;;      ; P-n-plus-two   (mapv + P-n-plus-one (mapv (partial * (/ (- 1 (nth U-knot-vector (- m p 1))) p)) D-n))
+    ;;       P-size (count P-vec)
+    ;;       P-new (vec (concat [P-zero P-one] (subvec P-vec 1 (dec P-size)) [P-n-plus-one P-n-plus-two] )) 
+    ;;       ]
+    ;;   (println "P-vec" P-vec)
+    ;;   (println "P-zero " P-zero )
+    ;;   (println "P-one " P-one)
+    ;;   (println "P-n-plus-one " P-n-plus-one)
+    ;;   (println "P-n-plus-two " P-n-plus-two)
+    ;;   (println "P-new " P-new)
+    ;;   {:m m :U (mapv #(* % (- (+ n 1) p)) U-knot-vector) :P P-new}
+    ;;   )
+      {:m m :U 
+        U-knot-vector;(mapv #(* % (- (+ n 3) p)) U-knot-vector-normalized)
+       :P (mapv (partial vec) P)}
+      
+    
+     ) 
+  )
+
+(comment
+  (global-curve-interp-with-end-derivatives 4 [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]  3 [-1 -1 0] [0 -2 0] :point-paramater-calculation-method :chordal))
+
+
+(defn local [Qk &{:keys [point-paramater-calculation-method] :or {point-paramater-calculation-method :centripetal}}]
+  (let [n (dec (count Qk))
+        function-for-u-k-values (cond (= point-paramater-calculation-method :chordal) u-k-chordal
+                                      (= point-paramater-calculation-method :centripetal) u-k-centripetal) 
+        u-k-values (function-for-u-k-values n Qk)
+        delta-u-k-values (vec (for [index (range 1 (inc n))]
+                                (- (nth u-k-values index) (nth u-k-values (dec index)))
+                                ))
+        qk-values (vec (for [index (range 1 (inc n))]
+                         (mapv - (nth Qk index) (nth Qk (dec index)))))
+        dk-values (mapv (fn [qk delta-u-k] (mapv #(/ % delta-u-k) qk)) qk-values delta-u-k-values)
+         alpha-k-values 
+        ;;(vec (for [k (range 1 (- n 2))
+        ;;                           :let [qk-minus-one (nth qk-values (dec k))
+        ;;                                 qk (nth qk-values k)
+        ;;                                 qk-plus-one (nth qk-values (inc k))
+        ;;                                 qk-plus-two (nth qk-values (+ k 2))
+        ;;                                 magnitude-of-qk-minus-one-times-qk (vector-magnitude (mapv * qk-minus-one qk))
+        ;;                                 magnitude-of-qk-plus-one-times-qk-plus-two (vector-magnitude (mapv * qk-plus-one qk-plus-two))
+        ;;                                 ]]
+        ;;                       (do (println "qk " qk)
+        ;;                        (/ magnitude-of-qk-minus-one-times-qk
+        ;;                          (+ magnitude-of-qk-minus-one-times-qk magnitude-of-qk-plus-one-times-qk-plus-two)))
+        ;;                       ) 
+        ;;                     ) 
+        (vec (for [k (range 1 n)
+                           :let [index (dec k)
+                                 delta-u-k (nth delta-u-k-values index)
+                                 delta-u-k-plus-one (nth delta-u-k-values (inc index))]
+                           ]
+                       (/ delta-u-k (+ delta-u-k delta-u-k-plus-one))
+                       ))
+        Dk-values-initial (vec (for [k (range 1 n)
+                             :let [index (dec k)
+                                   alpha-k (nth alpha-k-values index)
+                                   dk (nth dk-values index)
+                                   dk-plus-one (nth dk-values (inc index))]]
+                         (mapv + (mapv (partial * (- 1 alpha-k)) dk) (mapv (partial * alpha-k) dk-plus-one))
+                         ) 
+                       )
+        D-zero (mapv - (mapv (partial * 2) (nth dk-values 1)) (nth Dk-values-initial 0))
+        D-n (mapv - (mapv (partial * 2) (nth dk-values (dec n))) (nth Dk-values-initial (- n 2)))
+        Dk-values (into [D-zero](conj Dk-values-initial D-n)) 
+        Vk-values (vec (for [k (range 0 (dec n))
+                             :let [alpha-k (nth alpha-k-values k)
+                                   qk (nth qk-values k)
+                                   qk-plus-one (nth qk-values (inc k))]]
+                         (mapv + (mapv (partial * (- 1 alpha-k)) qk) (mapv (partial * alpha-k) qk-plus-one)))) 
+        Tk-values (vec (mapv (fn [Vk](mapv #(/ % (vector-magnitude Vk)) Vk)) Vk-values))
+        ] 
+    Tk-values
+    ) 
+  )
+
+(defn calculate-tangents-for-local-cubic-curve-interpolation [Qk &{:keys [point-paramater-calculation-method corner-perservation] :or {point-paramater-calculation-method :centripetal corner-perservation :smooth}}]
+  (let [n (dec (count Qk))
+        qk-values-initial (vec (for [index (range 1 (inc n))]
+                         (mapv - (nth Qk index) (nth Qk (dec index)))))
+        q-zero (mapv - (mapv (partial * 2) (nth qk-values-initial 0)) (nth qk-values-initial 1))
+        q-minus-one (mapv - (mapv (partial * 2) q-zero) (nth qk-values-initial 0))
+        q-n-plus-one (mapv - (mapv (partial * 2) (nth qk-values-initial (dec n))) (nth qk-values-initial (- n 2)))
+        q-n-plus-two (mapv - (mapv (partial * 2) q-n-plus-one) (nth qk-values-initial (dec n)))
+        qk-values (into [q-minus-one q-zero] (conj qk-values-initial q-n-plus-one q-n-plus-two))
+        alpha-k-fallback-value (cond (= corner-perservation :smooth) 0.5
+                                     (= corner-perservation :preserve) 1)
+        alpha-k-values (vec (for [k (range 2 (+ n 3))
+                                  :let [index (dec k)
+                                        qk-minus-one (nth qk-values (dec index))
+                                        qk (nth qk-values index)
+                                        qk-plus-one (nth qk-values (inc index))
+                                        qk-plus-two (nth qk-values (+ index 2)) 
+                                        magnitude-of-qk-minus-one-times-qk (length (cross qk-minus-one qk))
+                                        magnitude-of-qk-plus-one-times-qk-plus-two (length (cross qk-plus-one qk-plus-two))
+                                        denominator (+ magnitude-of-qk-minus-one-times-qk magnitude-of-qk-plus-one-times-qk-plus-two)
+                                        
+                                        ]]
+                              (do (println "qk " qk)
+                                  (println "denom" )
+                                  
+                              (if (zero? denominator) alpha-k-fallback-value
+                                  (/ magnitude-of-qk-minus-one-times-qk
+                                 denominator)))
+                              ) 
+                            ) 
+        Vk-values (vec (for [k (range 0 (count alpha-k-values))
+                             :let [alpha-k (nth alpha-k-values k)
+                                   qk (nth qk-values k)
+                                   qk-plus-one (nth qk-values (inc k))]]
+                         (mapv + (mapv (partial * (- 1 alpha-k)) qk) (mapv (partial * alpha-k) qk-plus-one))))
+Tk-values (vec (mapv (fn [Vk] (mapv #(/ % (length Vk)) Vk)) Vk-values))
+        ] 
+    ;; (println "qk-values-initial peek" (peek qk-values-initial))
+    ;; (println "qk-values-initial (dec n)" (nth qk-values-initial (dec n)))
+    Tk-values
+    ) 
+  )
+
+
+(comment
+  (calculate-tangents-for-local-cubic-curve-interpolation [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]
+   ))
+
+(defn quadratic-roots
+  "Solve for the 2 roots of a quadratic equation of the form:
+
+       ax^2 + bx + c = 0 
+  "
+  [a b c]
+  (let [discriminant (Math/sqrt (- (* b b) (* 4.0 a c)))
+        neg-b        (- b)
+        inv-a2       (/ 1.0 (* 2.0 a))
+        root-1       (* inv-a2 (+ neg-b discriminant))
+        root-2       (* inv-a2 (- neg-b discriminant))]
+    [root-1 root-2]))
+
+
+(comment
+  (quadratic-roots 1 6 5))
+
+(defn calculate-u-k-local-cubic-curve-interpolation [n points]
+  (let [u-k-values (double-array  (inc n) 0.0)
+        ]
+    (println "number-of-points" (count points))
+    (loop [uk 0.0
+           k 0
+           ] 
+      (println "k" k)
+      (if (< k n)
+       (let [index (inc k)
+            point-index (* k 3)
+            u-k-plus-one (+ uk (* 3 (length (mapv - (nth points (inc point-index)) (nth points point-index)))))]
+         (println "point-index " point-index)
+         (println "(nth points point-index)" (nth points point-index))
+         (println "u-k-plus-one " u-k-plus-one)
+        (aset u-k-values index u-k-plus-one)
+        (recur u-k-plus-one (inc k))
+        )
+        (vec u-k-values)
+        )
+      )
+    )
+  )
+
+(defn filter-by-index [coll idxs]
+  (keep-indexed #(when ((set idxs) %1) %2)
+                coll))
+
+(defn remove-by-index [coll idxs]
+  (keep-indexed #(when-not ((set idxs) %1) %2)
+                coll))
+
+(defn local-cubic-curve-interpolation [points tangents]
+  (let [n (dec (count points))
+        a-values (vec (for [index (range 0 n)]
+                        (- 16.0 (pow (length (mapv + (nth tangents index) (nth tangents (inc index)))) 2))))
+        b-values (vec (for [index (range 0 n)]
+                         (* 12.0 (dot  (mapv - (nth points (inc index)) (nth points index)) 
+                                   (mapv + (nth tangents index) (nth tangents (inc index)) )))
+                        ))
+        c-values (vec (for [index (range 0 n)]
+                        (* -36.0 (pow (length (mapv - (nth points (inc index)) (nth points index))) 2))))
+        alpha-values (mapv (fn [a b c] (let [[root-1 root-2] (quadratic-roots a b c)]
+                                         (if (pos? root-1) root-1 root-2)
+                                         ))a-values b-values c-values)
+        control-points (vec (apply concat (for [k (range 0 n)
+                                                      :let [pk-zero (nth points k)
+                                                            pk-three (nth points (inc k))
+                                                            alpha-k (nth alpha-values k)
+                                                            alpha-times-T-k-zero (mapv (partial * alpha-k) (nth tangents k))
+                                                            alpha-times-T-k-three (mapv (partial * alpha-k) (nth tangents (inc k)))
+                                                            pk-one (mapv + pk-zero (mapv (partial *  (/ 1 3)) alpha-times-T-k-zero))
+                                                            pk-two (mapv - pk-three (mapv (partial *  (/ 1 3)) alpha-times-T-k-three))]] 
+                                                  
+                                                  (do (println "pk-zero" pk-zero)
+                                                    (if (= k (- n 1))[pk-zero  pk-one pk-two pk-three] [pk-zero  pk-one pk-two]))
+                                                  ))) 
+        control-points-without-inner-Qs (remove-by-index control-points (mapv (partial * 3) (range 1 n)))
+        u-k-values (calculate-u-k-local-cubic-curve-interpolation n control-points)
+        u-n (peek u-k-values)
+        U (into [0.0 0.0 0.0 0.0] (conj (vec (apply concat(for [k (range 1 n)
+                :let [u-k (nth u-k-values k)
+                      uk-over-u-n (/ u-k u-n)]] 
+                                [uk-over-u-n uk-over-u-n] 
+            ))) 1.0 1.0 1.0 1.0)) 
+        ] 
+     {:U  (mapv (partial * (-  (count control-points-without-inner-Qs) 3) ) U) :P control-points-without-inner-Qs}
+     ) 
+  )
+
+(defn local-cubic-curve-interpolation-with-calculated-tangents [points &{:keys [corner-perservation] :or {corner-perservation :smooth}}]
+  (let [tangents (calculate-tangents-for-local-cubic-curve-interpolation points :corner-perservation corner-perservation)]
+    (local-cubic-curve-interpolation points tangents)
+    )
+  )
+
+(comment
+  (local-cubic-curve-interpolation-with-calculated-tangents [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]])
+  )
+
+
+;; (defn solve-tridiagonal [n Q U]
+;;   (let [R (for [i (range 3 n)]
+;;             (nth Q (dec i))
+;;             )
+;;         abc (calculate-non-vanishing-basis-functions 4 (nth U 4) 3 U)
+;;         den (nth abc 1) 
+;;         dd (double-array (inc n) 0.0)
+;;         P (double-array (inc n) 0.0) 
+;;         ] 
+;;     (aset P 2 (mapv - (nth Q 1) (mapv * (nth abc 0) (mapv / (nth P 1) den))))
+;;     (doseq [i (range 3 n)
+;;             ]
+;;         (aset dd i (/ (nth abc 2) den-loop))   
+;;            (let [abc-inner (calculate-non-vanishing-basis-functions (+ i 2) (nth U (+ i 2)) 3 U)
+;;                  den])
+;;            )
+    
+;;     (loop [i 3 den-loop den abc-loop abc]
+;;       (if (< i n) 
+;;         (aset dd i (/ (nth abc 2) den-loop))
+;;         (let [abc-inner (calculate-non-vanishing-basis-functions (+ i 2) (nth U (+ i 2)) 3 U) 
+;;               den-inner (- (nth abc-inner ))])
+;;         (recur (inc i) (mapv - (nth abc 1) = (mapv * (nth abc 0) (aget dd i))))
+;;         )
+      
+;;       )
+;;     (doseq [i (range 3 n)]
+;;       (aset dd i (mapv / (nth abc 2) den))
+;;       ()
+;;       )
+;;     )
+;;   )
+
+
+;; (defn nurbs-from-knots [Q p weights &{:keys [point-paramater-calculation-method] :or {point-paramater-calculation-method :centripetal}} ]
+;;   (let [{m :m
+;;          U :U
+;;          P :P} (global-curve-interop )])
 ;;   )
 
 (defn calculate-knot-vector [degree control-point-count is-uniform]
@@ -1229,6 +1877,13 @@
      (+ one-minus-t-squared two-times-w-times-t-times-one-minus-t t-squared)) 
   )
                                   )
+
+(defn generate-clamped-knot-vector [degree n]
+  (let [m (+ n degree 1)
+        number-of-knots (inc m)
+        ]
+    )
+  )
 
 
 (defn non-uniform-rational-b-spline-segment [p0 p1 p2 w steps]
@@ -1495,6 +2150,7 @@
   (for [index (range 0 (- steps 1))]
     (hull (nth shapes1 index) (nth shapes2 index) (nth shapes3 index) (nth shapes1 (+ index 1)) (nth shapes2 (+ index 1)) (nth shapes3 (+ index 1)))))
 (defn chained-hull-for-four-lists [shapes1 shapes2 shapes3 shapes4 steps]
+  (println "steps is " steps)
   (for [index (range 0 (- steps 1))]
     (hull (nth shapes1 index) (nth shapes2 index) (nth shapes3 index) (nth shapes4 index) (nth shapes1 (+ index 1)) (nth shapes2 (+ index 1)) (nth shapes3 (+ index 1)) (nth shapes4 (+ index 1)))))
 
@@ -1944,6 +2600,49 @@
   (let [bezier-to-point-polyhedron-points (apply conj (conj (vec-if-not bezier-upper) point-upper) (conj (vec-if-not bezier-lower) point-lower))
         bezier-to-point-polyhedron-faces (generate-bezier-to-point-faces bezier-upper bezier-lower)]
     (polyhedron bezier-to-point-polyhedron-points bezier-to-point-polyhedron-faces)))
+
+(defn generate-polyhedron-face-list [inner-list-size outer-list-size]
+  (let [main-face-fn (fn [outer-list-start] (into [] (apply concat (for [outer-index (range outer-list-start (+ (dec outer-list-size) outer-list-start) ) inner-index (range (dec inner-list-size))]
+                                                                     [[(+ (* outer-index inner-list-size) inner-index) (+ (* (inc outer-index ) inner-list-size) inner-index) 
+                                                                       (+ (* (inc outer-index) inner-list-size) (inc inner-index))]
+                                                                      [(+ (* outer-index inner-list-size) inner-index) (+ (* (inc outer-index) inner-list-size) (inc inner-index)) 
+                                                                       (+ (* outer-index inner-list-size) (inc inner-index)) ]]
+                                                                     ))))
+        main-face-front (main-face-fn 0)
+        main-face-back (main-face-fn outer-list-size)
+        side-fn  (fn [initial-left-index-in-side-view initial-right-index-in-side-view]
+                  (into [] (apply concat (for [index (range (dec inner-list-size))]
+                     [[(+ index initial-left-index-in-side-view) (+ index initial-right-index-in-side-view) (+ index (inc initial-right-index-in-side-view))]
+                     [(+ index initial-left-index-in-side-view) (+ index (inc initial-right-index-in-side-view)) (+ index (inc initial-left-index-in-side-view)) ]]
+                     )))
+                   )
+        front-to-back (side-fn (* (dec outer-list-size) inner-list-size) (* outer-list-size inner-list-size))
+        back-to-front (side-fn (+ (* (dec outer-list-size) inner-list-size) (* outer-list-size inner-list-size) ) 0)
+        top-or-bottom-fn (fn [increasing-side-start-index decreasing-side-start-index] 
+            (into [] (apply concat (for [index (range 0 (dec outer-list-size))]
+                                   [[(+ (* index inner-list-size) increasing-side-start-index) (- decreasing-side-start-index (* index inner-list-size) )(- decreasing-side-start-index (* (inc index) inner-list-size))]
+                                    [(+ (* index inner-list-size) increasing-side-start-index) (- decreasing-side-start-index (* (inc index) inner-list-size)) (+ (* (inc index) inner-list-size) increasing-side-start-index)  ]]
+                                   ))))
+        top (top-or-bottom-fn 0 (+ (* (dec outer-list-size) inner-list-size) (* outer-list-size inner-list-size)))
+        bottom (into [] (apply concat (for [index (range 0 (dec outer-list-size))
+                                     :let [increasing-side-start-index  (+ (dec inner-list-size)(* outer-list-size inner-list-size))
+                                           decreasing-side-start-index (+ (dec inner-list-size) (* (dec outer-list-size) inner-list-size))]]
+                                 [[(- decreasing-side-start-index (* index inner-list-size)) (+ (* index inner-list-size) increasing-side-start-index)   (+ (* (inc index) inner-list-size) increasing-side-start-index)]
+                                  [(- decreasing-side-start-index (* index inner-list-size))   (+ (* (inc index) inner-list-size) increasing-side-start-index) (- decreasing-side-start-index (* (inc index) inner-list-size))]])))
+        ]
+(into [] (concat main-face-front main-face-back front-to-back back-to-front top bottom))
+)
+  )
+
+(defn generate-polyhedron-face-list-with-different-list-lengths [inner-list-size-front outer-list-size-front inner-list-size-back outer-list-size-back]
+  ()
+  
+  )
+
+(defn generate-polyhedron [points inner-list-size outer-list-size]
+  (polyhedron points (generate-polyhedron-face-list inner-list-size outer-list-size))
+  )
+
 (defn make-point-z-value-not-below-zero [point]
   (if (< (nth point 2) 0) (assoc (vec point) 2 0) point))
 
@@ -2010,3 +2709,126 @@
 
 (defn radius-of-chord [chord-length angle-in-radians]
   (/ (/ chord-length 2) (Math/sin (/ angle-in-radians 2))))
+
+
+(defn svg-polygon-to-coordinates [svg-polygon-points]
+  
+  
+  )
+
+(defn vec-to-scad-vec [vec]
+ (str "[" (string/join ", " vec) "]")
+  )
+
+(defn nested-vec-to-nested-scad-vec [nested-vec]
+  (vec-to-scad-vec (mapv (partial vec-to-scad-vec) nested-vec))
+  ;(str (mapv #(vec-to-scad-vec (mapv (partial vec-to-scad-vec) %) ) [nested-vec])) 
+  )
+
+(defn matrix-to-scad [matrix]
+  (vec-to-scad-vec (mapv (partial nested-vec-to-nested-scad-vec)  matrix))
+  )
+
+(comment
+  (nested-vec-to-nested-scad-vec [[0 0 0] [0 0 0]]))
+
+(comment
+ (matrix-to-scad  [[[0 0 0] [0 0 0]] [[0 0 0] [0 0 0]]]))
+(comment 
+  (for [row [[[0 0 0] [0 0 0]] [[0 0 0] [0 0 0]] ]]
+    (vec-to-scad-vec (for [coordinate row] (vec-to-scad-vec coordinate))
+                     ))
+  ;(mapv #(vec-to-scad-vec (mapv (partial vec-to-scad-vec) %) ) [[[0 0 0] [0 0 0]]]) 
+  )
+
+(keyword "default")
+(keyword "alt")
+(keyword "min-edge")
+(keyword "quincunx")
+(keyword "convex")
+(keyword "concave")
+(defn vnf-vertex-array [points  &{:keys [^Boolean caps ^Boolean cap1 ^Boolean cap2 ^Boolean col-wrap ^Boolean row-wrap ^Boolean reverse ^Boolean style] 
+                                  :or {caps true cap1 false cap2 false col-wrap true row-wrap false reverse false style :default}}]
+  ;; (assert (and (false? (or caps cap1 cap2)) (false? col-wrap)) "col_wrap must be true if caps are requested")
+  ;; (assert (and (false? (or caps cap1 cap2)) row-wrap ) "Cannot combine caps with row_wrap")
+  ;; (assert (some #(= some style %) [:default :alt :quincunx :convex :concave :min_edge]))
+  ;; ;(assert (matrix? ))
+  
+ (let [points-for-scad (matrix-to-scad points)
+       style-string (case style
+                      :default "default"
+                      :alt "alt"
+                      :min-edge "min_edge"
+                      :quincunx "quincunx"
+                      :convex "convex"
+                      :concave "concave")]
+  (call :vnf_vertex_array  (cl-format nil "points = ~A" points-for-scad) (format "caps =  %b" caps)
+        (cond (false? caps)(format "cap1 =  %b" cap1)) (cond (false? caps) (format "cap2 =  %b" cap2))
+        (format "col_wrap =  %b" col-wrap) (format "row_wrap =  %b" row-wrap) (format "reverse =  %b" reverse)
+        (format "style =\"%s\"" style-string)))
+  )
+
+(defn format-vnf-as-argument [vnf]
+  (string/replace (write-scad vnf) #";" "")
+  )
+
+(defn vnf-join [vnf-list]
+  (let [vnf-list-formatted-for-scad (vec-to-scad-vec (mapv #(string/replace (write-scad %) #";" "")vnf-list))
+        ]
+   (call :vnf_join vnf-list-formatted-for-scad))
+  )
+
+(defn vnf-reverse-faces [vnf]
+  (let [vnf-string (string/replace (write-scad vnf) #";" "")]
+    (call :vnf_reverse_faces vnf-string)
+    )
+  )
+
+(defn vnf-merge-points [vnf &{:keys [eps] :or {eps "EPSILON"}}]
+  (call :vnf_merge_points (format-vnf-as-argument vnf) [eps])
+  )
+
+(defn vnf-drop-unused-points [vnf]
+  (call :vnf_drop_unused_points (format-vnf-as-argument vnf)))
+
+(defn vnf-triangulate [vnf]
+  (call :vnf_triangulate (format-vnf-as-argument vnf))
+  )
+
+(defn vnf-slice [vnf dir cuts]
+  (call :vnf_slice (format-vnf-as-argument vnf) (format "dir = \"%s\"" dir) (cl-format nil "points = ~A" (vec-to-scad-vec cuts))))
+
+
+
+(defn vnf-polyhedron [vnf &{:keys [ convexity  extent  cp  anchor  spin orient atype] 
+                            :or {convexity 2 extent true cp  "centroid" anchor  "origin" spin 0 orient "UP" atype  "hull"}}] 
+  
+    (let [vnf-string (string/replace(write-scad vnf) #";" "")]
+      (call-module :vnf_polyhedron (format "vnf = %s" vnf-string) (format "convexity = %d" convexity) (format "extent = %b" extent) (format "cp = \"%s\"" cp) 
+                 (format "anchor = \"%s\"" anchor) (format "spin = %d" spin) (format "orient = %s" orient) 
+               (format "atype = \"%s\"" atype)))
+  )
+
+(defn vnf-wireframe [vnf width]
+  (call-module (format-vnf-as-argument vnf) (format "width = %s" width))
+  )
+
+(defn vnf-volume [vnf]
+  (call :vnf_volume (format-vnf-as-argument vnf))
+  )
+
+(defn vnf-halfspace [plane vnf &{:keys[closed boundary] :or {closed true boundary false}}]
+  (call :vnf_halfspace (vec-to-scad-vec plane) (format-vnf-as-argument vnf) (format "closed = %b" closed) (format "boundary = %b" boundary))
+  )
+
+;(defn vnf-halfspace [vnf r {:keys [d axis] :or {d axis}}])
+
+(defn debug-vnf [vnf &{:keys [vertices opacity convexity size filter] :or {vertices true opacity 0.5 convexity 6 size 1 filter nil}}]
+  (call :debug_vnf (format-vnf-as-argument vnf) (format "vertices = %b" vertices) (format "opacity = %d" opacity) (format "convexity = %d" convexity) (format "size = %d" size) (if (false? (nil? filter)) filter))
+  )
+
+
+
+
+
+

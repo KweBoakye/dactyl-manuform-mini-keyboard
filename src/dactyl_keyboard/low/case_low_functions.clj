@@ -963,7 +963,7 @@
   [{:keys [dx1 dy1 place1 rotate1 post-position-1
            dxmid1 dymid1 place-mid1 rotatemid1 post-position-mid1
            dx2 dy2 place2 rotate2 post-position-2
-           rotation-values1 rotation-values2 rotate-x-fn rotate-y-fn rotate-z-fn variable-rotation-fn post steps] :or {steps 20}}]
+           rotation-values1 rotation-values2 rotate-x-fn rotate-y-fn rotate-z-fn variable-rotation-fn post steps] :or {steps 15}}]
   (let
    [rotated-d1 (rotate1 [dx1 dy1 0])
     rotated-dmid1 (rotatemid1 [dxmid1 dymid1 0])
@@ -1046,7 +1046,7 @@
            dxmid1 dymid1 place-mid1 rotatemid1 post-position-mid1
            dxmid2 dymid2 place-mid2 rotatemid2 post-position-mid2
            dx2 dy2 place2 rotate2 post-position-2
-           rotation-values1 rotation-values2 rotate-x-fn rotate-y-fn rotate-z-fn variable-rotation-fn post steps] :or {steps 20}}]
+           rotation-values1 rotation-values2 rotate-x-fn rotate-y-fn rotate-z-fn variable-rotation-fn post steps] :or {steps 36}}]
   (let
    [rotated-d1 (rotate1 [dx1 dy1 0])
     rotated-dmid1 (rotatemid1 [dxmid1 dymid1 0])

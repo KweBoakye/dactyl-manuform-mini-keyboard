@@ -221,8 +221,8 @@
                                   :scale-x 0.07 :scale-y 0.07 :position "lm" :z-rotation 0 :rotation #(rdy 10 %)}))
 
 (def model-polyhedron
-  (let [steps 36
-      steps-low 8
+  (let [steps 60
+      steps-low 15
       steps-mid 16]
     (union
 
@@ -246,7 +246,7 @@
       (left-section-to-thumb-cluster-convex-connecters steps)
       (key-place 0 2 MxLEDBitPCB-clearance))
      
-     (thumb-connecters-polyhedron 36) ;renders
+     (thumb-connecters-polyhedron 60) ;renders
        (key-web-connecters-polyhedron steps-low)
      ;(EVQWGD001-place EVQWGD001-holder)
      (front-wall-connecters-polyhedron steps);renders
@@ -370,7 +370,7 @@
 ;;      (translate [0 0 -10] screw-insert-screw-holes)))))
 
 (def bottom-plate-for-polyhedron-model
-  (let [steps 36
+  (let [steps 60
     steps-low 8
     steps-mid 16 
     back-wall-polyhedron-points    (back-wall-polyhedron-catmull-rom steps :bottom-plate true)
@@ -585,7 +585,7 @@ switches)))
  
     (union
   aviator-assembly-polyhedron
-   (left-section-back 36)
+   (left-section-back 60)
     
     )
   ;;  (->>
@@ -620,7 +620,7 @@ switches)))
 
          (union
           aviator-assembly-polyhedron
-          (left-section-back 36))
+          (left-section-back 60))
          (-# (->>
          ;(cube 40 35  (* (+ wall-thickness wall-xy-offset) 2) )
           (cube 11 27  (* (+ wall-thickness wall-xy-offset) 2))
@@ -778,21 +778,21 @@ switches)))
 ;;                     (difference screw-insert-outers
 ;;                                 screw-insert-holes)
 ;;                    ; (translate [0 0 0] bottom-plate-for-polyhedron-model)
-;;                     (polyhedron-thumb-walls-for-convex-cluster 36)
-;;                     (back-left-wall-to-screen 36)
+;;                     (polyhedron-thumb-walls-for-convex-cluster 60)
+;;                     (back-left-wall-to-screen 60)
                     
 ;;        ; (EVQWGD001-place EVQWGD001)
 ;;                     thumb-type
-;;                     (left-section-back 36)
+;;                     (left-section-back 60)
 ;;                     under-screen
 ;;        ; dsa-thumbcaps
 ;;         ;screen-to-EVQWGD001
 ;;        ;;  (difference (screen-holder-place-side screen-holder)
 ;;        ;;             (screen-holder-place-side screen-holder-cut) )
 
-;;        ;(right-side-polyhedron 36) 
-;;                     ;(left-section-front-polyhedron 36)
-;;         ;(left-section-back 36)
+;;        ;(right-side-polyhedron 60) 
+;;                     ;(left-section-front-polyhedron 60)
+;;         ;(left-section-back 60)
 ;;         ;; thumb-walls-polyhedron
 ;;         ;;  thumb-corners-polyhedron
 ;;         ;;  thumb-tweeners-polyhedron
@@ -834,7 +834,7 @@ switches)))
 
 
 ;; (spit "things-low/thumb-wall-test.scad"
-;;      (let[curve-points (wall-brace-cubic-polyhedron-curves (points-for-curved-wall-from-thumb-br-bl-to-mr-br 36))
+;;      (let[curve-points (wall-brace-cubic-polyhedron-curves (points-for-curved-wall-from-thumb-br-bl-to-mr-br 60))
 ;;           thumb-br-bl-to-br (web-post-linear thumb-br-place "bl" :degrees thumb-br-place "br" :degrees 12)
 ;;           thumb-br-br-to-mr-bl (web-post-linear thumb-br-place "br" :degrees thumb-mr-place "bl" :degrees 12)
 ;;           thumb-mr-bl-to-br (web-post-linear thumb-mr-place "bl" :degrees thumb-mr-place "br" :degrees 12)
@@ -853,7 +853,7 @@ switches)))
 ;;       ;;    (generate-bezier-along-bezier-polyhedron-from-points-list-linear 
 ;;       ;;     thumb-bl-to-mr-linear-top (curve-points :web-post-top-curve)
 ;;       ;;     thumb-bl-to-mr-linear-bottom (curve-points :web-post-bottom-curve)
-;;       ;;     36)
+;;       ;;     60)
 ;;       ;;   (thumb-br-place switch-model)
 ;;       ;;   (thumb-mr-place switch-model)
 ;;       ;;   (chained-hull-for-four-lists 
@@ -870,7 +870,7 @@ switches)))
 ;;       ;;    (plot-bezier-points
 ;;       ;;     (reverse (curve-points :web-post-bottom-curve))
 ;;       ;;     (sphere 0.001))
-;;       ;;    36
+;;       ;;    60
 ;;       ;;    )
         
 ;;       ;;    (generate-bezier-to-point-polyhedron
@@ -893,8 +893,8 @@ switches)))
         
 ;;         ;(thumb-tr-place MxLEDBitPCB-holder-legs)
         
-;;         (polyhedron-thumb-walls-for-convex-cluster 36)
-;;         (thumb-connecters-polyhedron 36)
+;;         (polyhedron-thumb-walls-for-convex-cluster 60)
+;;         (thumb-connecters-polyhedron 60)
 ;;         ;front-wall-polyhedron
         
 ;;       ;;   (key-place 1 2 (union
@@ -905,7 +905,7 @@ switches)))
 ;; (spit "things-low/render-test.scad"
 ;;       (write-scad
 ;;        (let 
-;;         [steps 36
+;;         [steps 60
 ;;          steps-low 8](union 
 ;;                       (polyhedron-thumb-walls steps);renders
 ;;                       (thumb-connecters-polyhedron steps-low)
@@ -969,8 +969,8 @@ switches)))
 ;; (spit "things-low/right-wall-test.scad"
 ;;       (write-scad
 ;;        (union 
-;;         ; (right-wall-polyhedron 36)
-;;         (right-wall-polyhedron-catmull-rom-spline 36)
+;;         ; (right-wall-polyhedron 60)
+;;         (right-wall-polyhedron-catmull-rom-spline 60)
 ;;        key-holes
 ;;        )))
 
@@ -1054,25 +1054,25 @@ switches)))
                     ;;   )
                     ;;  (difference 
                     ;;   (union 
-                    ;;    (back-wall-polyhedron 36)
-                    ;;    ;(left-section-back 36)
+                    ;;    (back-wall-polyhedron 60)
+                    ;;    ;(left-section-back 60)
                     ;;    )
                     ;;   (usb-jack-place usb-jack-polyhedron))
                     ;;  (difference
-                      (polyhedron-thumb-walls-for-convex-cluster 36)
+                      (polyhedron-thumb-walls-for-convex-cluster 60)
                     ;;   (place-2d-shape-on-thumb-wall (square 95.25 95.25)
                     ;;                                 {:place thumb-mr-place  :offset [(/ mount-width 2) (+ (/ mount-height -2) extra-height 0.5) 0]
                     ;;                                  :scale-x 0.075 :scale-y 0.075 :position "bm" :z-rotation 0}))
-                     ;(front-wall-polyhedron 36)
+                     ;(front-wall-polyhedron 60)
                       ;; (difference
-                      ;;  (back-wall-polyhedron 36)
+                      ;;  (back-wall-polyhedron 60)
                       ;;  (usb-jack-place usb-jack-polyhedron))
-                     ;(polyhedron-left-section 36)
-                     ; (left-section-to-thumb-cluster-convex-walls 36)
-                     ;(right-wall-polyhedron-catmull-rom-spline 36)
-                     ;(left-section-to-thumb-cluster-convex-connecetors 36)
+                     ;(polyhedron-left-section 60)
+                     ; (left-section-to-thumb-cluster-convex-walls 60)
+                     ;(right-wall-polyhedron-catmull-rom-spline 60)
+                     ;(left-section-to-thumb-cluster-convex-connecetors 60)
                     ;;  (rp2040-plus-place rp2040-plus-mount)
-                      ;; (left-section-back 36)
+                      ;; (left-section-back 60)
                      )))
         )
   
@@ -1092,22 +1092,22 @@ switches)))
 (spit "things-low/front-and-thumb-wall-test.scad"
       (write-scad
        (union
-        (front-wall-polyhedron 36)
+        (front-wall-polyhedron 60)
         key-holes
-        ;(back-left-wall-to-screen 36)
-        ;(thumb-to-body-connecters-polyhedron 36)
-        (thumb-connecters-polyhedron 36)
-        ;(polyhedron-thumb-walls 36)
-        (polyhedron-thumb-walls-for-convex-cluster 36)
+        ;(back-left-wall-to-screen 60)
+        ;(thumb-to-body-connecters-polyhedron 60)
+        (thumb-connecters-polyhedron 60)
+        ;(polyhedron-thumb-walls 60)
+        (polyhedron-thumb-walls-for-convex-cluster 60)
       
         
         
         ;(key-place 1 2 dsa-cap)
-        ;(left-section-to-thumb-cluster-convex-walls 36)
-        ;(back-left-wall-to-screen 36)
+        ;(left-section-to-thumb-cluster-convex-walls 60)
+        ;(back-left-wall-to-screen 60)
         ;(screen-holder-place-side screen-holder)
-       ;(left-section-to-thumb-cluster-convex-connecters 36)
-        ;(right-side-polyhedron 36)
+       ;(left-section-to-thumb-cluster-convex-connecters 60)
+        ;(right-side-polyhedron 60)
         ;(key-web-connecters-polyhedron 12)
         ;(thumb-connecters-polyhedron 12)
         ;key-holes
@@ -1119,7 +1119,7 @@ switches)))
       )
 
 (spit "things-low/front-wall-polyhedron-test.scad"
-      (write-scad (front-wall-polyhedron 36))
+      (write-scad (front-wall-polyhedron 60))
       )
   
   ;; (spit "things-low/left-front-test.scad"
@@ -1130,12 +1130,12 @@ switches)))
   ;;         ;;   (screen-holder-place-side screen-holder-cut))
   ;;         ;(tps-65-place tps-65-mount)
   ;;         (difference
-  ;;          (left-section-front-polyhedron 36)
+  ;;          (left-section-front-polyhedron 60)
   ;;          (EVQWGD001-place EVQWGD001-main-cutout))
   ;;         ;(EVQWGD001-place EVQWGD001-holder)
   ;;         ;thumb-type
-  ;;         ;(polyhedron-thumb-walls 36)
-  ;;         (back-left-wall-to-screen 36)
+  ;;         ;(polyhedron-thumb-walls 60)
+  ;;         (back-left-wall-to-screen 60)
   ;;         ;under-screen
           
   ;;         )))
@@ -1190,7 +1190,7 @@ switches)))
 ;;           thumb-type
 ;;           (thumb-1x-layout MxLEDBitPCB)
 ;;           (thumb-15x-layout MxLEDBitPCB)
-;;           ;(right-side-polyhedron 36)
+;;           ;(right-side-polyhedron 60)
 ;;           (tps-65-place tps-65-mount)
 ;;           (thumb-connecters-polyhedron 12))
 ;;          ;  (translate [0 0 -20] (cube 350 350 40))
@@ -1208,7 +1208,7 @@ switches)))
   ;; (spit "things-low/hole-placement-test.scad"
   ;;       (write-scad 
   ;;        (let 
-  ;;         [steps 36]
+  ;;         [steps 60]
   ;;          (union
   ;;           (polyhedron-left-section steps)
   ;;         (polyhedron-case-walls steps)
@@ -1256,7 +1256,7 @@ switches)))
 ;; ;;           (thumb-place-convex 0 3 dsa-cap)
 ;; ;;           (thumb-place-convex 1 3 single-plate)
 ;; ;; (thumb-place-convex 1 3 dsa-cap)
-;;           (left-section-to-thumb-cluster-convex-connecters  36) 
+;;           (left-section-to-thumb-cluster-convex-connecters  60) 
 ;;           ;dsa-thumbcaps
 ;;           dsa-caps
 ;;           des-cornelius-thumbs
@@ -1269,11 +1269,11 @@ switches)))
 ;; (spit "things-low/right-side-polyhedron.scad"
 ;;       (write-scad
 ;;        (union
-;;         ;(right-side-polyhedron 36)
+;;         ;(right-side-polyhedron 60)
 ;;         (difference 
 ;;     (union
 ;;   aviator-assembly-polyhedron
-;;    (left-section-back 36) 
+;;    (left-section-back 60) 
 ;;     ) 
 ;;  aviator-assembly-diffs
 ;;         )
@@ -1294,18 +1294,18 @@ switches)))
 (spit "things-low/back-wall-polyhedron-catmull-rom-test.scad" 
       (write-scad (union
                     (difference
-                     (back-wall-polyhedron-catmull-rom 36)
+                     (back-wall-polyhedron-catmull-rom 60)
                        (usb-jack-place usb-jack-polyhedron))
                    ;key-holes
-                   (left-section-back 36)
-                   (right-wall-polyhedron-catmull-rom-spline 36)
+                   (left-section-back 60)
+                   (right-wall-polyhedron-catmull-rom-spline 60)
                    aviator-assembly-polyhedron
                    (rp2040-plus-place rp2040-plus-mount)
                    ;bottom-plate-for-polyhedron-model
                    )))
 
 (spit "things-low/generate-bezier-along-bezier-polyhedron-all-side-test.scad"
-      (let [steps 36
+      (let [steps 10
             min-z 0
             max-z 10
             min-y -5
@@ -1316,63 +1316,88 @@ switches)))
             top-inside (bezier-linear  [max-x max-y max-z] [min-x max-y max-z]   steps)
             bottom-outside (bezier-linear [min-x min-y min-z] [max-x min-y min-z] steps)
             bottom-inside (bezier-linear   [max-x max-y min-z] [min-x max-y min-z]  steps)
-            outer-points (into [] 
-                               (apply concat 
-                                      (for [index (range 0 (inc steps))] 
-                                        (bezier-linear 
-                                         (nth top-outside index) 
-                                         (nth bottom-outside index) 
-                                         steps) 
-                                        )))
-            inner-points (into []
-                               (apply concat
-                                      (for [index (range 0 (inc steps))]
-                                        (bezier-linear
-                                         (nth top-inside index)
-                                         (nth bottom-inside index)
-                                         steps))))
-            wall-left (wall-brace-polyhedron-curve-points (partial key-place 0 1) 0 -1 "bl" :radians steps)
-            wall-right (wall-brace-polyhedron-curve-points (partial key-place 0 1) 0 -1 "br" :radians steps)
-            wall-outer (into []
-                             (apply concat
-                                    (for [index (range 0 (inc steps))]
-                                      (bezier-linear 
-                                       (nth (wall-right :outer-points) index)
-                                       (nth (wall-left :outer-points) index)
-                                       steps))))
-            wall-inner (into []
-                             (apply concat
-                                    (for [index (range 0 (inc steps))
-                                          :let [left (reverse (wall-left :inner-points))
-                                                right (reverse (wall-right :inner-points))]]
-                                      (bezier-linear 
-                                       (nth right index)
-                                       (nth  left index) 
-                                       steps))))
-            spline-test (cubic-hermite-spline-curve-segment [0 0 0] [1 1 1] [1 0 0] [0 1 0] 20)
-            curve-1 (bezier-quadratic [-2 2 0] [-2 0 0] [-1 0 0] 20)
+            ;; outer-points (into [] 
+            ;;                    (apply concat 
+            ;;                           (for [index (range 0 (inc steps))] 
+            ;;                             (bezier-linear 
+            ;;                              (nth top-outside index) 
+            ;;                              (nth bottom-outside index) 
+            ;;                              steps) 
+            ;;                             )))
+            ;; inner-points (into []
+            ;;                    (apply concat
+            ;;                           (for [index (range 0 (inc steps))]
+            ;;                             (bezier-linear
+            ;;                              (nth top-inside index)
+            ;;                              (nth bottom-inside index)
+            ;;                              steps))))
+            ;; wall-left (wall-brace-polyhedron-curve-points (partial key-place 0 1) 0 -1 "bl" :radians steps)
+            ;; wall-right (wall-brace-polyhedron-curve-points (partial key-place 0 1) 0 -1 "br" :radians steps)
+            ;; wall-outer (into []
+            ;;                  (apply concat
+            ;;                         (for [index (range 0 (inc steps))]
+            ;;                           (bezier-linear 
+            ;;                            (nth (wall-right :outer-points) index)
+            ;;                            (nth (wall-left :outer-points) index)
+            ;;                            steps))))
+            ;; wall-inner (into []
+            ;;                  (apply concat
+            ;;                         (for [index (range 0 (inc steps))
+            ;;                               :let [left (reverse (wall-left :inner-points))
+            ;;                                     right (reverse (wall-right :inner-points))]]
+            ;;                           (bezier-linear 
+            ;;                            (nth right index)
+            ;;                            (nth  left index) 
+            ;;                            steps))))
+            ;; spline-test (cubic-hermite-spline-curve-segment [0 0 0] [1 1 1] [1 0 0] [0 1 0] 20)
+            ;; curve-1 (bezier-quadratic [-2 2 0] [-2 0 0] [-1 0 0] 20)
             
-            test-m [[4 7]
-                    [2 6]]
-            test-m-inv (/ 1 (- (* (nth (nth test-m 0) 0) (nth (nth test-m 0) 0))))
-            basis-inv (matrix-inverse [[(/ -3  1) 0 (/ 3 1) 0 0]
-                                       [1 4 1 0 0]
-                                       [0 1 4 1 0]
-                                       [0 0 1 4 1]
-                                       [0 0 (/ -3 1) 0 (/ 3 1)]])
-            basis (generate-basis-matrix-to-find-cubic-uniform-b-spline-points-from-knots 2)
-            basis-2 (calculate-non-vanishing-basis-functions 3
-                                                             1 3.0 [0 0 0 0 1 1 1 1])
-            nurbs-test   (nurbs-with-homogenous-coordinates [[0 0 0 1] [0 1 0 1] [5 0 0 5] [2 1 0 1] [2 0 0 1]] 2 [0 0 0 1 2 3 3 3] 20)
-            nurps-segment-1 (nurbs-segment 4 2 [0 0 0 1 2 3 3 3] [[0 0 0 1] [0 1 0 1] [1 0 0 1]] 20)
-             nurps-segment-2 (nurbs-segment 4 2 [0 0 0 1 2 3 3 3] [[0 0 0 1] [0 1 0 1] [1 0 0 1] [2 1 0 1] [2 0 0 1]] 20 :u-start 1.0)
-           ; nurbs-test-size (count nurbs-test)
+            ;; test-m [[4 7]
+            ;;         [2 6]]
+            ;; test-m-inv (/ 1 (- (* (nth (nth test-m 0) 0) (nth (nth test-m 0) 0))))
+            ;; basis-inv (matrix-inverse [[(/ -3  1) 0 (/ 3 1) 0 0]
+            ;;                            [1 4 1 0 0]
+            ;;                            [0 1 4 1 0]
+            ;;                            [0 0 1 4 1]n
+            ;;                            [0 0 (/ -3 1) 0 (/ 3 1)]])
+            ;; basis (generate-basis-matrix-to-find-cubic-uniform-b-spline-points-from-knots 2)
+            ;; basis-2 (calculate-non-vanishing-basis-functions 3
+            ;;                                                  1 3.0 [0 0 0 0 1 1 1 1])
+             ;nurbs-test   (nurbs-with-homogenous-coordinates [[0 0 0 1] [0 1 0 1] [5 0 0 5] [2 1 0 1] [2 0 0 1]] 2 [0 0 0 1 2 3 3 3] 20)
+            nurbs-test   (nurbs [[0 0 0] [0 1 0] [1 0 0] [2 1 0] [2 0 0]] 2 [0 0 0 1 2 3 3 3] [1 1 5 1 1] 20)
+            ;; nurps-segment-1 (nurbs-segment 4 2 [0 0 0 1 2 3 3 3] [[0 0 0 1] [0 1 0 1] [1 0 0 1]] 20)i.
+            ;;  nurps-segment-2 (nurbs-segment 4 2 [0 0 0 1 2 3 3 3] [[0 0 0 1] [0 1 0 1] [1 0 0 1] [2 1 0 1] [2 0 0 1]] 20 :u-start 1.0)
+            u-k (u-k-chordal 4 [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]])
+            ;; knot-vec (calcula-knot-vector-from-u-k u-k 4 3)
+            
+            ; nurbs-test-size (count nurbs-test)
             ;nurbs-test (mapv #(subvec (coerce :persistent-vector %) 0 3) (b-spline-wrapper [[0 0 0 1] [0 1 0 1] [1 0 1 0.5] [2 1 2 1] [2 0 2 1]] 2 [0 0 0 (/ 1 3) (/ 2 3) 1 1 1] false 11))
+            cu (wall-brace-polyhedron-curve-points (partial key-place lastcol cornerrow) 0 -1 "bl" :radians 60)
+            pp (wall-brace-polyhedron-points (partial key-place lastcol cornerrow) 0 -1 "bl" :radians )
+            pp-u-k (u-k-centripetal 5 [(pp :web-post-position-top) (pp :point-on-tangent-from-plate) (pp :wall-locate-1-to-3-curve-for-polyhedron-control-point)
+                                       (pp :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (pp :wall-locate3-point) (pp :wall-locate3-point-floor)])   
+            pp-knot-vector (calculate-knot-vector-from-u-k pp-u-k 5 3)
+           ;  nn (nurbs-with-calculated-knot-vector (pp ))
+            vnf (vnf-vertex-array [[[1 0 0] [10 0 0] [10 10 0] [1 10 0]]
+                                   [[1 0 2] [10 0 2] [10 10 2] [1 10 2]]
+                                   [[1 0 4] [10 0 4] [10 10 4] [1 10 4]]
+                                   [[1 0 6] [10 0 6] [10 10 6] [1 10 6]]
+                                   [[1 0 8] [10 0 8] [10 10 8] [1 10 8]]
+                                   [[1 0 10] [10 0 10] [10 10 10] [1 10 10]]] )
+            Q-global-test [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]
+            global-test (global-curve-interp 4 Q-global-test  3 :point-paramater-calculation-method :centripetal)
+            global-test-spline (non-uniform-b-spline (global-test :P) 3 (global-test :U) 30)
+            global-test-deriv (global-curve-interp-with-end-derivatives 4 Q-global-test  3 [0 0 0] [-2 -3 0] :point-paramater-calculation-method :chordal)
+            global-test-deriv-spline (non-uniform-b-spline (global-test-deriv :P) 3 (global-test-deriv :U) 30)
+            local-inte (local-cubic-curve-interpolation-with-calculated-tangents  [ [0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]])
+            local-spline (non-uniform-b-spline (local-inte :P) 3 (local-inte :U) 30)
+            local-spline-uni (cubic-uniform-b-spline-through-terminal-endpoints (local-inte :P) 60)
             ] 
         
         (write-scad 
+         (include "../BOSL2/std.scad")
       ; (wall-brace-polyhedron  (partial key-place 0 1) 0 -1 "bl" :radians (partial key-place 0 1) 0 -1 "br" :radians wall-xy-offset wall-xy-offset true steps)
-        ;;  (wall-brace-quadratic-polyhedron (partial key-place 1 cornerrow) 1 -0.1 "br" :radians
+        ;;  (wall-brace-quadratic-polyhedron (partial key-place 1 cornerrow) 1 -0.1 "br" :radiansn
         ;;                           (partial key-place 2 cornerrow) 0.25 -1 "bl" :radians
         ;;                           (partial key-place 2 cornerrow) 0 -1 "bm" :radians
         ;;                           wall-xy-offset-medium-thin wall-xy-offset-thin wall-xy-offset-thin
@@ -1383,7 +1408,7 @@ switches)))
         ;;                           (partial key-place 3 cornerrow) -1 0 "bl" :radians
         ;;                           wall-xy-offset-thin wall-xy-offset-thin wall-xy-offset-mid
         ;;                           steps)
-        ;;  (wall-brace-catmull-rom-spline 
+        ;;  (wall-brace-catmull-rom-spline local-cubic-curve-interpolation-with-calculated-tangents
         ;;   (points-fn-deg thumb-tr-place 1 0 "br" wall-xy-offset)
         ;;   (points-fn-deg thumb-tr-place 1 -1 "tr" wall-xy-offset-mid) 
         ;;  (points-fn-rad  (partial key-place 1 cornerrow) 1 0.2 "br"   wall-xy-offset-thin)
@@ -1399,7 +1424,7 @@ switches)))
         ;;   (points-fn-rad (partial key-place 2 cornerrow) 1 -1 "bl" wall-xy-offset-thin)
         ;;   (points-fn-rad  (partial key-place 2 cornerrow) 0 -1 "br" wall-xy-offset-thin)
         ;;   ;(points-fn-rad  (partial key-place 3 cornerrow) -1 0 "bl" wall-xy-offset-mid)
-        ;;   steps
+        ;;   stelocal-cubic-curve-interpolation-with-calculated-tangentslocal-cubic-curve-interpolation-with-calculated-tangentslocal-cubic-curve-interpolation-with-calculated-tangentsps
         ;;   ;:web-post-top-style :curved
         ;;   :extra-points-for-sides-and-top-and-bottom true)
       ;;  (key-place 1 cornerrow (union
@@ -1418,13 +1443,12 @@ switches)))
          ;(plot-bezier-points (quadratic-uniform-b-spline [[1 0 0] [1 1 0] [2 1 0] [2 0 0]] 20) (sphere 0.05))
          ;(plot-bezier-points (quadratic-uniform-b-spline-through-terminal-endpoint [[1 0 0] [1 1 0] [2 1 0] [2 0 0]] 40) (sphere 0.05))
          ;(plot-bezier-points (cubic-uniform-b-spline [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 20) (sphere 0.05))
-         ;(plot-bezier-points (cubic-uniform-b-spline [[0 0 0] [1 1 0] [1 1 0] [1 1 0] [2 0 0]] 20) (sphere 0.05))
-         ;(plot-bezier-points (cubic-uniform-b-spline-through-terminal-endpoints [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 40) (sphere 0.05))
+         ;(plot-bezier-points (cubic-uniform-b-spline [[nhrough-terminal-endpoints [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 40) (sphere 0.05))
          ;(plot-bezier-points (cubic-uniform-b-spline-closed [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 50) (sphere 0.05))
          ;(plot-bezier-points (cubic-b-spline-with-tension [[0 0 0] [0 1 0] [1 1 0]  [1 0 0]] 3 20) (sphere 0.05))
          ;(plot-bezier-points (cubic-b-spline-with-tension [[0 0 0] [0 1 0] [1 1 0]  [1 0 0]] 5 20) (sphere 0.05))
          ;(plot-bezier-points (cubic-b-spline-with-tension [[0 0 0] [0 1 0] [1 1 0]  [1 0 0]] 0 20) (sphere 0.05))
-        
+         
        ;  (plot-bezier-points (quartic-uniform-b-spline-segment [0 0 0] [1 1 0] [4 4 0] [8 2 0] [12 0 0] 20) (sphere 0.05))
         ; (plot-bezier-points (bezier-cubic [-5 0 0] [-2.5 5 0] [2.5 5 0] [5 0 0] 10) (sphere 0.05))
          ;(color [1 0 0 1](plot-bezier-points (n-degree-bezier-curve [[-5 0 0] [-2.5 5 0] [2.5 5 0] [5 0 0]] 10) (sphere 0.05)))
@@ -1451,7 +1475,7 @@ switches)))
           ;;  (println   (reduce + (mapv * p (mapv #(* % 6)  (into [] (apply concat [[0.5] [(/ 1 6)] [1] [(/ 11 6)] [0.5]]))))))
           ;;   )
           ;(plot-bezier-points (cubic-uniform-b-spline [[0 0 0] [0 1 0] [1 1 0] [2 1 0] [2 0 0]] 10) (sphere 0.05))
-          ;(plot-bezier-points (kochanek-bartels-spline-curve [[-1 -1 0] [0 0 0]  [4 6 0] [10 -1 0] [11 -2 0]] 40 :tension-values [0 -1 0] :continuinity-values [0 0 0] :bias-values [0 0 0] ) (sphere 0.05))
+          ;(plot-bezier-points (kochanek-bartels-spline-curve [[-1 -1 0] [0 0 0]  [4 6 0] [10 -1 0] [11 -2 0]] 40 :tension-values [0 -1 0] :continuinity-values [0 0 0] :bias-values [0 0 0] ) (sphere 0.05))i
         ; (color [1 0 0 1](plot-bezier-points (cubic-uniform-b-spline-through-points [0.5 0.5 0] [ [(/ 1 6) (/ 5 6) 0] [1 1 0] [(/ 11 6) (/ 5 6) 0] ] [0.5 -0.5 0] 10) (sphere 0.05)))
          ;(for [b basis] (println b))
         ;(plot-bezier-points (bezier-cubic [-2 6 0] [-1 4 0] [1 4 0] [2 6 0] 20) (sphere 0.05))
@@ -1477,11 +1501,109 @@ switches)))
         ;;      (println basis-function)
         ;;      ) 
         ;;  (println (calculate-nurbs-curve-point 3 3 [0 0 0 0 1 1 1 1] [[-4 -4 0 1] [-2 4 0 1] [2 -4 0 1] [4 4 0 1]] 1))
-        (println nurbs-test)
-        (for [index (range 0 (count nurbs-test))]
-          (color [1 (/ index (count nurbs-test)) 0 1](translate (nth nurbs-test index) (sphere 0.05)))
-          )
+        ;; (println nurbs-test)
+         (for [index (range 0 (count nurbs-test))]
+           (color [1 (/ index (count nurbs-test)) 0 1](translate (nth nurbs-test index) (sphere 0.05)))
+           )
+         (println "u-k is " u-k)
+         (println "u-k knot vec is" (calculate-knot-vector-from-u-k u-k 4 3))
+        ;; (println "knot-vector is " knot-vec)
          ;(plot-bezier-points nurbs-test (sphere 0.05)) 
-        )))
+        ;; (doseq [index (range 0 5)
+        ;;         :let [uk-i (nth u-k index)
+        ;;               span (calculate-knot-span-index 4 3 (nth u-k index) knot-vec)
+        ;;               start-index (- span 3)
+        ;;               basis-funs (calculate-non-vanishing-basis-functions span uk-i 3 knot-vec)
+        ;;               basis-funs-size (count basis-funs)]]
+        ;;   (println "index is " index " span is " span)
+        ;;   (println "row  is " (into [] (concat (repeat start-index 0.0) basis-funs (repeat (- 5 (+ basis-funs-size start-index)) 0.0)))))
+         ;(-# (translate [0 0 -10] (cube 200 200 20)))
+         (key-place lastcol cornerrow single-plate)
+         ;(key-wall-brace-polyhedron lastcol cornerrow 0 -1 "bl" lastcol cornerrow 0 -1 "br" :steps steps)
+         ;(print (count (cu :outer-points)))
+         ;(plot-bezier-points (cu :outer-points) (sphere 0.1))
+         ;(plot-bezier-points (cu :inner-points) (sphere 0.1))
+        ;;  (for [[k v] pp]
+        ;;    ;(println v)
+           
+          
+        ;;    (do (println (vec v)) 
+        ;;      (translate (vec v) (if (= k :point-on-tangent-from-plate ) (color [1 0 0 1] (sphere 0.1))
+        ;;                     (sphere 0.1))))
+        ;;    )
+         (println "pp-u-k is " pp-u-k)
+         (println "pp-knot-vector is " pp-knot-vector)
+          (translate (pp :web-post-position-top)   (sphere 0.1))
+(color [1 0 0 1] (translate (pp :point-on-tangent-from-plate)   (sphere 0.1)))
+;(color [0 1 0 1] (translate (pp :wall-locate1-point)   (sphere 0.1)))
+(color [0 0 1 1] (translate (pp :wall-locate-1-to-3-curve-for-polyhedron-second-control-point)   (sphere 0.1)))
+(color [0 1 0 1](translate (pp :wall-locate-1-to-3-curve-for-polyhedron-control-point)   (sphere 0.1)))
+(translate (pp :wall-locate3-point)   (sphere 0.1))
+(translate (pp :wall-locate3-point-floor)   (sphere 0.1))
+         
+         (color [1 1 0 1](plot-bezier-points (nurbs-with-calculated-knot-vector [(pp :web-post-position-top) (pp :point-on-tangent-from-plate)
+                                                                                 ;(pp :wall-locate-1-to-3-curve-for-polyhedron-control-point)
+                                                     (pp :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (pp :wall-locate3-point) (pp :wall-locate3-point-floor)]
+                                                                3 [1 0.9  0.6 0.75 1] 50 :style :centripetal) (sphere 0.2) ))
+         (println "homogenize-cooridinates " (homogenize-cooridinates [[0 0 0] [3 3 3] [3 3 3] ] [1 1 0.5]))
+        ; (println "strrrrrtarr " (vec (for [coordinate ] (if (not= coordinate 3) (* coordinate weight) coordinate))))
+        ;(println (nurbs-with-calculated-knot-vector [[0 0 0] [0 1 0] [1 2 0] [2 4 0] [3 1 2] [5 -4 8] [8 0 2]] 3 [1 1 1 1 1 1 1] 30))
+         (generate-polyhedron (concat (into [] (apply concat (for [index (range (inc steps))]
+                                                               (bezier-linear
+                                                                (nth top-outside index)
+                                                                (nth bottom-outside index)
+                                                                8)
+                                                               )))
+                                      (into [] (apply concat 
+                                                      (for [index (range (inc steps))
+                                                            :let [top (reverse top-inside)
+                                                                  bottom (reverse bottom-inside)]]
+                                                        (bezier-linear
+                                                         (nth top-inside index)
+                                                         (nth bottom-inside index)
+                                                         8))))) 
+                              
+                              (inc 8) (inc steps)
+                              )
+         
+         
+
+         ;(color [1 0 0 1] (plot-bezier-points (cubic-uniform-b-spline-through-terminal-endpoints [(pp :opposite-web-post-position-top) (pp :web-post-position-top) (pp :wall-locate3-point-floor) (pp :wall-locate3-point-below-floor)] 50) (sphere 0.2)))
+;;          (color [0.3 0 1 1] (plot-bezier-points (cubic-uniform-b-spline-through-terminal-endpoints [(pp :web-post-position-top) (pp :point-on-tangent-from-plate)
+;;                                                                                  ;(pp :wall-locate-1-to-3-curve-for-polyhedron-control-point)
+;; (pp :wall-locate-1-to-3-curve-for-polyhedron-second-control-point) (pp :wall-locate3-point) (pp :wall-locate3-point-floor)] 50) (sphere 0.2)))
+         (plot-bezier-points (catmull-rom-spline-curve [(pp :opposite-web-post-position-bottom) (pp :web-post-position-bottom) (pp :point-on-tangent-from-plate-bottom) (pp :wall-locate-2-bottom) (pp :wall-locate-2-bottom-floor) (pp :wall-locate-2-bottom-below-floor)] 30) (sphere 0.1))
+         (color [1 0 0 1] (plot-bezier-points (bezier-cubic (pp :web-post-position-bottom) (pp :wall-locate-2-top) (pp :wall-locate-2-bottom) (pp :wall-locate-2-bottom-floor)  30) (sphere 0.1)))
+         (color [1 0 1 1] (plot-bezier-points (cubic-uniform-b-spline [(pp :opposite-web-post-position-bottom) (pp :web-post-position-bottom) (pp :wall-locate-2-top) (pp :wall-locate-2-bottom) (pp :wall-locate-2-bottom-floor) (pp :wall-locate-2-bottom-below-floor)]  30) (sphere 0.1)))
+         (color [1 0.2 0.5 1] (plot-bezier-points 
+                           (nurbs-with-calculated-knot-vector [ (pp :web-post-position-bottom) (pp :point-on-tangent-from-plate-bottom) (pp :wall-locate-2-top) 
+                                                               (pp :wall-locate-2-bottom) (pp :wall-locate-2-bottom-floor)]
+                                                                                 4 [1 0.9 0.6 0.75 1] 30) (sphere 0.1)))
+         (color [1 1 1 1](plot-bezier-points (kochanek-bartels-spline-curve [(pp :opposite-web-post-position-bottom) (pp :web-post-position-bottom)  
+                                                                             (pp :wall-locate-2-bottom) (pp :wall-locate-2-bottom-floor) (pp :wall-locate-2-bottom-below-floor)] 30
+                                                                            :bias-values [0 0 0 0 0 0]) (sphere 0.1)))
+         (vnf-polyhedron vnf)
+         (color [1 0 0 1](plot-bezier-points Q-global-test (sphere 0.6)))
+         (plot-bezier-points global-test-spline (sphere 0.5))
+         (color [0 0 1 1](plot-bezier-points global-test-deriv-spline  (sphere 0.5)))
+         (color [0 1 0 1](plot-bezier-points (global-test :P) (sphere 0.5)))
+         (color [1 0 1 0] (plot-bezier-points (global-test-deriv :P) (sphere 0.5)))
+         ;(color [1 1 0 1] (plot-bezier-points local-spline-uni (sphere 0.5)))
+         
+        ;;  (for [index (range 0 (count (local-inte :P)) )]
+        ;;    (color [0 (/ index (count (local-inte :P))) 0 1](translate (nth (local-inte :P) index) (cylinder 0.8 0.8 )))
+        ;;    )
+         (color [0.5 1 0.5] (plot-bezier-points local-spline (sphere 0.5)))
+        ;;  (color  [0.5 1 0.5] (plot-bezier-points (local-inte :P) (sphere 0.8)))
+         (println " (global-test :P)" (global-test :P))
+         (println " (global-test :U)" (global-test :U))
+         (println "global-test-spline" global-test-spline)
+         (println "global-test-deriv-spline " global-test-deriv-spline)
+         (println "global-test-deriv :P" (global-test-deriv :P))
+         (println "global-test-deriv :U" (global-test-deriv :U))
+         (println "(local-inte :U)" (local-inte :U))
+         (println "(local-inte :P)" (local-inte :P))
+         (println "local-spline" local-spline)
+         )))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
