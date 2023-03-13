@@ -4,6 +4,7 @@
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             ))
 
 ;;;;;;;;;;;;;;;;;;;;;;

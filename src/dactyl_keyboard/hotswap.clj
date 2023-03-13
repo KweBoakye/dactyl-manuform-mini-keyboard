@@ -1,15 +1,14 @@
 (ns dactyl-keyboard.hotswap
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
+  (:require [dactyl-keyboard.hand :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+            [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.shape-parameters :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
-            [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.thumbs :refer :all]
-            [dactyl-keyboard.hand :refer :all]
-            ))
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 ;;;;;;;;;;;;;
 ;; Hotswap ;;

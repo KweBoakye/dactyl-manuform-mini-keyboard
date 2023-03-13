@@ -23,6 +23,8 @@
 (def retention-tab-hole-thickness  (- (+ plate-thickness 0.5) retention-tab-thickness))
 (def mount-width (+ keyswitch-width 3.2))
 (def mount-height (+ keyswitch-height 2.7))
+(def mount-width-inset 3)
+(def mount-extra-height 3)
 (def side-nub  (->> (binding [*fn* 30] (cylinder 1 2.75))
                     (rotate (/ π 2) [1 0 0])
                     (translate [(+ (/ keyswitch-width 2)) 0 1])

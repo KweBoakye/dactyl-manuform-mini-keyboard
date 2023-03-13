@@ -3,7 +3,8 @@
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
-            
+            [dactyl-keyboard.low.tps-65-placement-functions :refer :all]
+            [dactyl-keyboard.low.screen-holder-placement-functions :refer :all]
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
@@ -16,6 +17,11 @@
             [dactyl-keyboard.oled :refer :all]
              [dactyl-keyboard.tps-65 :refer :all]
             [dactyl-keyboard.EVQWGD001 :refer :all]
+            [dactyl-keyboard.lib.transformations :refer [rx ry rz rdx rdy rdz]]
+            [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-z rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees]]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-quadratic]]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+            [dactyl-keyboard.low.EVQWGD001-placement-functions :refer [EVQWGD001-translate-and-place-at-position]]
             ))
 
 

@@ -1,10 +1,13 @@
 (ns dactyl-keyboard.MxLEDBitPCB-holder
   (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
+  (:require [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-cubic
+                                                                  bezier-linear]]
+            [dactyl-keyboard.lib.openscad.polyhedrons :refer [generate-bezier-along-bezier-polyhedron-from-points-list-linear]]
+            [dactyl-keyboard.lib.transformations :refer [rdz]]
+            [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]))
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 
 

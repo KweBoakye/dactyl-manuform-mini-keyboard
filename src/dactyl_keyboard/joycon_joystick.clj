@@ -1,12 +1,11 @@
 (ns dactyl-keyboard.joycon-joystick
   (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
+  (:require [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+            [dactyl-keyboard.thumbs :refer :all]
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
-            [dactyl-keyboard.thumbs :refer :all]
-            ))
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Joycon Joystick ;;

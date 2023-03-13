@@ -1,136 +1,53 @@
 (ns dactyl-keyboard.low.case-low-polyhedron
   (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            
-            [dactyl-keyboard.low.shape-parameters-low :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]
-            [dactyl-keyboard.sa-keycaps :refer :all]
-            [dactyl-keyboard.low.placement-functions-low :refer :all]
-            [dactyl-keyboard.low.web-connecters-low :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.low.case-low-functions :refer :all]
+  (:require [dactyl-keyboard.EVQWGD001 :refer :all]
+            [dactyl-keyboard.lib.algebra :refer [find-point-on-line-using-x
+                                                 find-point-on-line-using-y
+                                                 find-point-on-line-using-z]]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-cubic
+                                                                  bezier-cubic-through-control-points bezier-linear bezier-quadratic bezier-quartic
+                                                                  bezier-quintic]]
+            [dactyl-keyboard.lib.curvesandsplines.splines :refer [catmull-rom-spline-curve catmull-rom-spline-segment]]
+            [dactyl-keyboard.lib.openscad.hull :refer [chained-hull-to-points]]
+            [dactyl-keyboard.lib.openscad.polyhedrons :refer [bezier-along-bezier-polyhedron-generate-front-or-back-faces bezier-along-bezier-polyhedron-generate-side-reverse
+                                                              bezier-along-bezier-polyhedron-generate-side-reverse-2
+                                                              bezier-along-bezier-polyhedron-generate-side-reverse-3 generate-bezier-along-bezier-polyhedron
+                                                              generate-bezier-along-bezier-polyhedron-faces
+                                                              generate-bezier-along-bezier-polyhedron-from-points-linear generate-bezier-along-bezier-polyhedron-from-points-list-linear
+                                                              generate-bezier-quadratic-polyhedron-from-points
+                                                              generate-bezier-quadratic-polyhedron-from-points-and-control-vectors generate-bezier-to-point-polyhedron
+                                                              generate-polyhedron-from-points]]
+            [dactyl-keyboard.lib.transformations :refer [rdx]]
+            [dactyl-keyboard.lib.vectors :refer [calculate-point-between-points vector-distance]]
             [dactyl-keyboard.low.case-low :refer :all]
+            [dactyl-keyboard.low.case-low-functions :refer :all]
             [dactyl-keyboard.low.case-low-polyhedron-functions :refer :all]
-            [dactyl-keyboard.low.thumbs-low :refer :all]
+            [dactyl-keyboard.low.EVQWGD001-placement-functions :refer [EVQWGD001-translate-and-place-at-position]]
             [dactyl-keyboard.low.oled-low-placements :refer :all]
+            [dactyl-keyboard.low.placement-functions-low :refer :all]
+            [dactyl-keyboard.low.screen-holder-placement-functions :refer :all]
+            [dactyl-keyboard.low.screen-holder-placement-points :refer :all]
+            [dactyl-keyboard.low.shape-parameters-low :refer :all]
+            [dactyl-keyboard.low.thumbs-low :refer :all]
+            [dactyl-keyboard.low.tps-65-placement-functions :refer :all]
+            [dactyl-keyboard.low.tps-65-placement-points :refer :all]
+            [dactyl-keyboard.low.web-connecters-low :refer :all]
             [dactyl-keyboard.oled :refer :all]
+            [dactyl-keyboard.sa-keycaps :refer :all]
+            [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.tps-65 :refer :all]
-            [dactyl-keyboard.EVQWGD001 :refer :all]))
-
-(def tps-65-top-right (partial tps-65-translate-and-place-at-position-with-offset
-                               tps-65-mount-corner-cylinder-top-right-position
-                               [(+ tps-65-corner-radius 0.05 (/ post-size 2))  (+ tps-65-corner-radius 0.05 (/ post-size 2)) (+ (* (+ tps-65-depth) -2) 0.05)]))
-
-
-(def tps-65-bottom-right (partial tps-65-translate-and-place-at-position-with-offset
-                                  tps-65-mount-corner-cylinder-bottom-right-position
-                                  [(+ tps-65-corner-radius 0.05 (/ post-size 2))  (- (+ tps-65-corner-radius 0.05 (/ post-size 2))) (+ (* (+ tps-65-depth) -2) 0.05)]))
-
-(def tps-65-top-left (partial tps-65-translate-and-place-at-position-with-offset
-                              tps-65-mount-corner-cylinder-top-left-position
-                              [(- (+ tps-65-corner-radius 0.05 (/ post-size 2)))  (+ tps-65-corner-radius 0.05 (/ post-size 2)) (+ (* (+ tps-65-depth) -2) 0.05)]))
-
-(def tps-65-bottom-left (partial tps-65-translate-and-place-at-position-with-offset
-                                 tps-65-mount-corner-cylinder-bottom-left-position
-                                 [(- (+ tps-65-corner-radius 0.05 (/ post-size 2)))  (- (+ tps-65-corner-radius 0.05 (/ post-size 2))) (+ (* (+ tps-65-depth) -2) 0.05)]))
-
-(def screen-holder-top-left  (partial screen-holder-translate-and-place-side-with-offset (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  0 (mapv + [(/ post-size 2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
-
-(def screen-holder-top-right (partial screen-holder-translate-and-place-side-with-offset (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2) 0 (mapv + [(/ post-size -2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
-
-(def screen-holder-top-left-outside-point (transform-position
-                                           (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
-                                           (mapv + [(/ post-size 2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
-
-(def screen-holder-top-right-outside-point (transform-position
-                                            (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
-                                            (mapv + [(/ post-size -2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
-
-(def  tps-65-top-right-outer    (transform-position
-                                 (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-right-position)
-                                 [(+ tps-65-corner-radius 0.05)  (+ tps-65-corner-radius 0.05) 0]))
-
-(def  tps-65-top-right-inner    (transform-position
-                                 (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-right-position)
-                                 [(+ tps-65-corner-radius 0.05)  (+ tps-65-corner-radius 0.05) (/ web-thickness -2)]))
-
-(def  tps-65-mid-right-outer    (transform-position
-                                 (partial tps-65-translate-and-place-at-position [(- (/ tps-65-mount-width 2) tps-65-corner-radius),
-                                                                                  0,
-                                                                                  0])
-                                 [(+ tps-65-corner-radius 0.05)  0 0]))
-(def  tps-65-mid-right-inner    (transform-position
-                                 (partial tps-65-translate-and-place-at-position [(- (/ tps-65-mount-width 2) tps-65-corner-radius),
-                                                                                  0,
-                                                                                  0])
-                                 [(+ tps-65-corner-radius 0.05)  0 (/ web-thickness -2)]))
-(def  tps-65-bottom-right-outer    (transform-position
-                                 (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-right-position)
-                                 [(+ tps-65-corner-radius 0.05)  (- (+ tps-65-corner-radius 0.05)) 0]))
-
-(def  tps-65-bottom-right-inner    (transform-position
-                                 (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-right-position)
-                                 [(+ tps-65-corner-radius 0.05)  (- (+ tps-65-corner-radius 0.05)) (/ web-thickness -2)]))
-
-(def tps-65-top-left-outer    (transform-position
-                               (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-left-position)
-                               [(- (+ tps-65-corner-radius 0.05))  (+ tps-65-corner-radius 0.05) 0]))
-
-(def tps-65-top-left-inner    (transform-position
-                               (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-left-position)
-                               [(- (+ tps-65-corner-radius 0.05))  (+ tps-65-corner-radius 0.05) (- (/ web-thickness 2))]))
-
-(def tps-65-mid-left-outer    (transform-position
-                               (partial tps-65-translate-and-place-at-position [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
-                                                                                0,
-                                                                                0])
-                               [(- (+ tps-65-corner-radius 0.05))  0 0]))
-(def tps-65-mid-left-inner    (transform-position
-                               (partial tps-65-translate-and-place-at-position [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
-                                                                                0,
-                                                                                0])
-                               [(- (+ tps-65-corner-radius 0.05))  0 (- (/ web-thickness 2))]))
-(def tps-65-bottom-left-outer (transform-position
-                                     (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-left-position)
-                                     [(- (+ tps-65-corner-radius 0.05))  (- (+ tps-65-corner-radius 0.05)) 0]))
-
-(def tps-65-bottom-left-inner (transform-position
-                                (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-left-position)
-                                [(- (+ tps-65-corner-radius 0.05))  (- (+ tps-65-corner-radius 0.05)) (- (/ web-thickness 2))]))
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 
 
 
-(def screen-holder-top-left-inside-point (transform-position
-                                          (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
-                                          (mapv + [(/ post-size 2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
 
 
-(def screen-holder-top-left-inside-point-translated (transform-position
-                                                     (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
-                                                     (mapv + [(/ post-size 2) (/ post-size -2) 0] [0 (/ web-thickness 2) (/ oled-holder-thickness 1)])))
-(def screen-holder-bottom-left-outside-point (transform-position
-                                              (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
-                                              (mapv + [(/ post-size 2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
-(def screen-holder-bottom-left-outside-floor-point (assoc (vec screen-holder-bottom-left-outside-point) 2 0))
-(def screen-holder-bottom-left-inside-point (transform-position
-                                             (partial screen-holder-translate-and-place-side (/ (- screen-holder-height) 2) (/ (- screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
-                                             (mapv + [(/ post-size 2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
-
-(def screen-holder-top-right-inside-point (transform-position
-                                           (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
-                                           (mapv +  [(/ post-size -2) (/ post-size -2) (/ oled-holder-thickness 2)])))
-
-(def screen-holder-bottom-right-inside-point (transform-position
-                                              (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
-                                              (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
 
 
-(def tps-65-top-left-control-point-outer (transform-position
-                                          (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-left-position)
-                                          [(- (+ tps-65-corner-radius 0.05))  (* 1.5 (+ tps-65-corner-radius 0.05)) (/ web-thickness)]))
+
 (def  screen-holder-top-right-inside-point-translated (transform-position
                                                        (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
                                                        (mapv +  [0 (/ web-thickness 2) (/ oled-holder-thickness 1)])))
@@ -144,12 +61,7 @@
 
 (def screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner (find-point-on-line-using-y  screen-holder-top-left-inside-point-translated screen-holder-top-right-inside-point-translated  (nth tps-65-top-left-inner 1)))
 (def tps-65-top-left-inner-with-same-z-as-screen-holder-top-right-inside-point-translated-with-same-y-as-tps-65-top-left-inner (assoc tps-65-top-left-inner 2 (nth screen-holder-inside-point-with-same-y-as-tps-65-top-left-inner 2)))
-(def screen-holder-bottom-right-outside-point (transform-position
-                                               (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
-                                               (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
-(def screen-holder-bottom-right-outside-floor-point (assoc (vec screen-holder-bottom-right-outside-point) 2 0))
-(def screen-holder-bottom-left-inside-floor-point (assoc (vec screen-holder-bottom-left-inside-point) 2 0))
-(def screen-holder-bottom-right-inside-floor-point (assoc (vec screen-holder-bottom-right-inside-point) 2 0))
+
 
 (def screen-holder-top-right-outside-point-translated-for-left-section (mapv + [(- (+ wall-thickness wall-xy-offset (+ (/ oled-post-size 2)))) (/ (+ wall-thickness wall-xy-offset (+ (/ oled-post-size 2))) -2) 0] screen-holder-top-right-outside-point))
 (def screen-holder-top-right-inside-point-translated-for-left-section (mapv + [(- (+ wall-thickness wall-xy-offset (+ (/ oled-post-size 2)))) (/ (+ wall-thickness wall-xy-offset (+ (/ oled-post-size 2))) -2) 0] screen-holder-top-right-inside-point))
@@ -297,11 +209,11 @@
         wall-curve (polyhedron wall-curve-points, wall-curve-faces)
 
         tps-65-top-middle-outer    (transform-position
-                                    (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-centre-position)
+                                    (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-mid-position)
                                     [0  (+ tps-65-corner-radius 0.05) 0])
 
         tps-65-top-middle-inner    (transform-position
-                                    (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-centre-position)
+                                    (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-mid-position)
                                     [0  (+ tps-65-corner-radius 0.05) (/ web-thickness -2)])
        
         tps-65-top-right-to-top-left-outer (bezier-linear  tps-65-top-right-outer tps-65-top-left-outer  (* steps 2))
@@ -310,10 +222,10 @@
                                               (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-right-position  tps-65-mount-corner-radius-with-offset-mod  tps-65-mount-corner-radius-with-offset)
                                               (mapv + oled-translation-vector [(/ oled-post-size -2) (/ oled-post-size 2) (/ oled-holder-thickness 2)]))
         tps-65-top-middle-control-point-outer (transform-position
-                                               (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-centre-position  0  tps-65-mount-corner-radius-with-offset)
+                                               (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-mid-position  0  tps-65-mount-corner-radius-with-offset)
                                                (mapv + oled-translation-vector [0 (/ oled-post-size 2) (/ web-thickness 2)]))
         tps-65-top-middle-control-point-inner (transform-position
-                                               (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-centre-position  0  tps-65-mount-corner-radius-with-offset)
+                                               (partial tps-65-translate-and-place-with-radius tps-65-mount-corner-cylinder-top-mid-position  0  tps-65-mount-corner-radius-with-offset)
                                                (mapv + oled-translation-vector [0 (/ oled-post-size 2) (/ web-thickness -2)]))
         tps-65-screen-side-upper-control-points (bezier-linear tps-65-top-right-control-point-outer tps-65-top-left-control-point-outer  (* steps 2))
         tps-65-top-right-wall-to-screen-holder-top-right-points-outer (concat top-bezier-points (reverse (drop 1 (bezier-linear  screen-holder-top-right-outside-point screen-holder-top-left-outside-point steps))))
@@ -1073,9 +985,9 @@
         screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside (find-point-on-line-using-z screen-holder-top-right-inside-point screen-holder-bottom-right-inside-point (nth EVQWGD001-mount-bottom-left-outside 2))
         screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-inside (find-point-on-line-using-z screen-holder-top-right-inside-point screen-holder-bottom-right-inside-point (nth EVQWGD001-mount-bottom-left-inside 2))
         screen-holder-top-right-inside-point--to-EVQWGD001-mount-top-left-outside-to-EVQWGD001-mount-top-right-outside-to-thumb-bl-tr-web-post-top
-        (bezier-cubic-through-points screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top (* steps 3) :t1 0.25 :t2 0.75)
+        (bezier-cubic-through-control-points screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top (* steps 3) :t1 0.25 :t2 0.75)
         screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-left-outside-to-EVQWGD001-mount-bottom-right-outside-to-thumb-bl-tl-web-post-top
-        (bezier-cubic-through-points screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top (* steps 3) :t1 0.25 :t2 0.75)
+        (bezier-cubic-through-control-points screen-holder-inside-right-with-same-z-as-EVQWGD001-mount-bottom-left-outside EVQWGD001-mount-bottom-left-outside  EVQWGD001-mount-bottom-right-outside thumb-bl-tl-web-post-top (* steps 3) :t1 0.25 :t2 0.75)
         screen-holder-bottom-right-inside-floor-point-to-thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor (bezier-linear screen-holder-bottom-right-inside-floor-point thumb-bl-tthumb-bl-to-tps-65-bottom-leftside-floor (* steps 3))
         a1 (catmull-rom-spline-curve screen-holder-top-right-outside-point screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside steps :t1 0.6 :t2 0.9 :alphaType :chordal)
         a2 (catmull-rom-spline-curve screen-holder-top-right-inside-point EVQWGD001-mount-top-left-outside EVQWGD001-mount-top-right-outside thumb-bl-tr-web-post-top steps :t1 0.5 :t2 0.7)
@@ -1175,7 +1087,7 @@
 
 
         outer-points-fn (fn [index]
-                          (bezier-cubic-through-points
+                          (bezier-cubic-through-control-points
                            (nth screen-bottom-to-top-inside-wide-to-tps-65-top-left-upper index) ;(nth tps-65-mount-top-left-to-bottom-left-web-post-top index)
                           ;(nth tps-65-mount-top-left-to-bottom-left-web-post-top-control-points index)
                            (nth mid1 index);(nth screen-holder-top-right-inside-point--to-EVQWGD001-mount-top-left-outside-to-EVQWGD001-mount-top-right-outside-to-thumb-bl-tr-web-post-top index)
@@ -1186,7 +1098,7 @@
                            :t2 0.7))
 
         inner-points-fn (fn [index]
-                          (bezier-cubic-through-points
+                          (bezier-cubic-through-control-points
                            (nth screen-bottom-to-top-inside-to-tps-65-top-left-upper index)
                            (nth mid1-inside index)
                            (nth mid2-inside index)
@@ -1267,7 +1179,7 @@
 
         top-left-corner-outer-points (into [] (apply concat (for [index (range 0 (inc steps))
                                                                   :let [top (reverse tps-65-top-left-to-screen-holder-top-right-inside-wide-catmull)]]
-                                                              (bezier-cubic-through-points
+                                                              (bezier-cubic-through-control-points
                                                                (nth  top index)
                                                                (nth mid-curve-1 index)
                                                                (nth mid-curve-2 index)
@@ -2201,18 +2113,18 @@
                                                                      (apply concat
                                                                             (for [index (range 0 (inc steps))
                                                                                   :let [a (catmull-rom-spline-curve
-                                                                                           tps-65-bottom-right-inner
+                                                                                           [tps-65-bottom-right-inner
                                                                                            tps-65-bottom-left-inner
                                                                                            (thumb-bl-tr :web-post-position-bottom)
-                                                                                           (thumb-bl-br :bottom)
+                                                                                           (thumb-bl-br :bottom)]
                                                                                            steps
                                                                                            :alpha-type :centripetal :t1 0.7 :t2 0.9) 
                                      ;(take (inc steps) inside-points-2)
                                                                                         b (catmull-rom-spline-curve 
-                                                                                           tps-65-bottom-left-inner-translated
+                                                                                           [tps-65-bottom-left-inner-translated
                                                                                            tps-65-bottom-left-inner
                                                                                            (thumb-tl-tl :bottom)
-                                                                                           (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))
+                                                                                           (mapv + [0 -8 0] (assoc (thumb-tl-tl :bottom) 2 0))]
                                                                                            steps
                                                                                            :alpha-type :centripetal :t1 0.7 :t2 0.9
                                                                                            )
@@ -2910,6 +2822,9 @@ thumb-bl-to-mr-linear-bottom  (concat
      )))
 
 
+(comment(wall-brace-polyhedron tps-65-bottom-right 1 1 :centre :degrees
+                          tps-65-top-right 1 0 :centre :degrees
+                          30))
 
 (defn left-section-back [steps & {:keys [bottom-plate] :or {bottom-plate false}}]
   (let [wall-brace-quadratic-fn (get-wall-brace-quadratic-fn bottom-plate)

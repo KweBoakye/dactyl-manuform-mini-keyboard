@@ -11,6 +11,10 @@
             [dactyl-keyboard.low.web-connecters-low :refer :all]
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.cirque-circle-trackpad :refer :all]
+            [dactyl-keyboard.lib.transformations :refer [rd rdx rdy rdz]]
+            [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees]]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad radius-of-chord]]
+            [dactyl-keyboard.lib.openscad.polyhedrons :refer [generate-bezier-quadratic-polyhedron-from-points-and-control-vectors]]
             ))
 
 

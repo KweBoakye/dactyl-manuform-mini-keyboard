@@ -2,9 +2,9 @@
 (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            
+            [scad-clj.model :refer :all] 
             [dactyl-keyboard.utils :refer :all]
+            [dactyl-keyboard.lib.transformations :refer [rdx rdz]]
   )
 )
  (def tps-65-includes  (map  include ["../BOSL/shapes.scad" "../BOSL/constants.scad" "../BOSL/masks.scad"]))
@@ -114,10 +114,15 @@
               (- (/ tps-65-mount-length 2) tps-65-corner-radius),
               0] )
 
-(def tps-65-mount-corner-cylinder-top-centre-position
+(def tps-65-mount-corner-cylinder-top-mid-position
   [0,
    (- (/ tps-65-mount-length 2) tps-65-corner-radius),
    0])
+
+(def tps-65-mount-corner-cylinder-bottom-mid-position
+  [0,
+   (- tps-65-corner-radius (/ tps-65-mount-length 2)),
+   0]) 
 
 (def tps-65-mount-corner-cylinder-bottom-left-position
    [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
@@ -128,6 +133,16 @@
    [(- (/ tps-65-mount-width 2) tps-65-corner-radius),
               (- tps-65-corner-radius (/ tps-65-mount-length 2)),
               0] )
+(def tps-65-mount-corner-cylinder-right-mid-position
+  [(- (/ tps-65-mount-width 2) tps-65-corner-radius),
+   0,
+   0]
+  )
+
+(def tps-65-mount-corner-cylinder-left-mid-position
+  [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
+      0,
+      0])
 
 (def tps-65-corner-cylinder-top-left-position
   [(- tps-65-corner-radius (/ tps-65-width 2)),

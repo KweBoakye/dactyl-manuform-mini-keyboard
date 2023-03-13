@@ -1,15 +1,14 @@
 (ns dactyl-keyboard.low.palm-rest-low
   (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.low.shape-parameters-low :refer :all]
-            [dactyl-keyboard.low.placement-functions-low :refer :all]
-            [dactyl-keyboard.hand :refer :all]
+  (:require [dactyl-keyboard.hand :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             [dactyl-keyboard.low.case-low-functions :refer :all]
+            [dactyl-keyboard.low.placement-functions-low :refer :all]
+            [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.tenting-hardware :refer :all]
-            ))
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 ;;;;;;;;;;;;;;;
 ;; Palm Rest ;;

@@ -1,18 +1,25 @@
  (ns dactyl-keyboard.low.aviator-low
    (:refer-clojure :exclude [use import])
-   (:require [clojure.core.matrix :refer [array matrix mmul inner-product transform add]]
-             [scad-clj.scad :refer :all]
-             [scad-clj.model :refer :all]
-             [dactyl-keyboard.utils :refer :all]
-             [dactyl-keyboard.switch-hole :refer :all]
-             [dactyl-keyboard.low.placement-functions-low :refer :all]
-             ;[dactyl-keyboard.low.case-low :refer :all]
+   (:require [clojure.core.matrix :refer [add mmul]]
+             [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees]]
+             [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-cubic
+                                                                   bezier-linear bezier-quadratic bezier-quartic]]
+             [dactyl-keyboard.low.tps-65-placement-functions :refer [tps-65-translate-and-place-at-position tps-65-z-rotation]]
+             [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+             [dactyl-keyboard.lib.openscad.hull :refer [join-beziers]]
+             [dactyl-keyboard.lib.openscad.polyhedrons :refer [bezier-along-bezier-polyhedron-generate-front-or-back-faces generate-bezier-to-point-polyhedron]]
+             [dactyl-keyboard.lib.transformations :refer [rdx rdy rdz]]
+             [dactyl-keyboard.lib.vectors :refer [add-third-dimension
+                                                  vec-to-matrix]]
              [dactyl-keyboard.low.case-low-functions :refer :all]
-             [dactyl-keyboard.low.shape-parameters-low :refer :all]
-            ; 
+             [dactyl-keyboard.low.placement-functions-low :refer :all] ;[dactyl-keyboard.low.case-low :refer :all]
+             [dactyl-keyboard.low.shape-parameters-low :refer :all] ; 
+             [dactyl-keyboard.metal-tactile-button :refer :all]
+             [dactyl-keyboard.switch-hole :refer :all]
              [dactyl-keyboard.tps-65 :refer :all]
-            [dactyl-keyboard.metal-tactile-button :refer :all] 
-             ))
+             [dactyl-keyboard.utils :refer :all]
+             [scad-clj.model :refer :all]
+             [scad-clj.scad :refer :all]))
 
 ; code adapted from https://gist.github.com/jamiehs/de163e7d469e4fb4220e504b58613806
 (def aviator-includes (map include ["../BOSL2/transforms.scad" , "../BOSL2/std.scad"] ))

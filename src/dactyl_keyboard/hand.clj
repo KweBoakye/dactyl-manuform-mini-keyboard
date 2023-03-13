@@ -1,10 +1,9 @@
 (ns dactyl-keyboard.hand
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
+  (:require [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             [dactyl-keyboard.utils :refer :all]
-            ))
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 
 ;;;;;;;;;;

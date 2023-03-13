@@ -1,12 +1,11 @@
 (ns dactyl-keyboard.tenting-hardware
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.shape-parameters :refer :all]
+  (:require [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             [dactyl-keyboard.plate :refer :all]
-            ))
+            [dactyl-keyboard.shape-parameters :refer :all]
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 
 (def tent-ball-rad 7)

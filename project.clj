@@ -9,7 +9,8 @@
             [lein-git-deps "0.0.2-SNAPSHOT"]
             [lein-kibit "0.1.8"]]
   :aliases {"generate" ["exec" "-p" "src/dactyl_keyboard/dactyl.clj"]
-            "generate-low" ["exec" "-p" "src/dactyl_keyboard/low/dactyl_low.clj"]}
+            "generate-low" ["exec" "-p" "src/dactyl_keyboard/low/dactyl_low.clj"]
+            :profiles {:dev {:dependencies [[org.clojure/test.check "1.1.1"]]}}} 
   :dependencies [[org.clojure/clojure "1.11.0"]
                  ;[unicode-math "0.2.0"]
                  ;[uncomplicate/neanderthal "0.44.0"]
@@ -17,6 +18,8 @@
                  ;[org.bytedeco/mkl-platform-redist "2022.0-1.5.7"]
                  [net.mikera/core.matrix "0.63.0"]
                  [net.mikera/vectorz-clj "0.48.0"]
+                 [org.clojure/spec.alpha "0.3.218"]
+                 [org.clojure/test.check "1.1.1"]
                  ;[org.clojars.janherich/chisel "0.1.0-SNAPSHOT"]
                  ;[sicmutils "0.22.0"]
                  ]

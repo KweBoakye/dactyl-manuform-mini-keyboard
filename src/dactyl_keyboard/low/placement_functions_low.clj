@@ -7,7 +7,10 @@
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
-            [dactyl-keyboard.utils :refer :all]
+           ; [dactyl-keyboard.utils :refer ]
+            [dactyl-keyboard.lib.transformations :refer [rx ry rz rdx rdy rdz]]
+            [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-x rotate-around-y rotate-around-z
+                                                                rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees]]
   ))
 
 
@@ -164,42 +167,17 @@
 ;;                       column row shape))
 
 
-(defn rotate-around-x [angle position]
-  (mmul
-   [[1 0 0]
-    [0 (Math/cos angle) (- (Math/sin angle))]
-    [0 (Math/sin angle)    (Math/cos angle)]]
-   position))
 
-(defn rotate-around-x-in-degrees [angle-in-degrees position](rotate-around-x (deg2rad angle-in-degrees) position))
 
-(defn rotate-around-y [angle position]
-  (mmul
-   [[(Math/cos angle)     0 (Math/sin angle)]
-    [0                    1 0]
-    [(- (Math/sin angle)) 0 (Math/cos angle)]]
-   position))
-
-(defn rotate-around-y-in-degrees [angle-in-degrees position] (rotate-around-y (deg2rad angle-in-degrees) position))
-
-(defn rotate-around-z [angle position]
-  (mmul
-   [[(Math/cos angle), (- (Math/sin angle)), 0]
-    [(Math/sin angle),  (Math/cos angle),    0]
-    [0,                0,                  1]
-   ]
-   position))
-
-(defn rotate-around-z-in-degrees [angle-in-degrees position] (rotate-around-z (deg2rad angle-in-degrees) position))
 (defn rotation-transformations [position] [rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees position])
 (defn rotate-position [function position] (apply function (rotation-transformations position)))
 (defn affine-transformations [position] [(partial mapv +) rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees position])
 (defn transform-position [function position]
-  (apply function (affine-transformations position))
+  (vec (apply function (affine-transformations position)))
   )
 (defn affine-transformations-radians [position] [(partial map +) rotate-around-x rotate-around-y rotate-around-z position])
 (defn transform-position-radians [function position]
-  (apply function (affine-transformations-radians position)))
+  (vec (apply function (affine-transformations-radians position))))
 
 (defn transform-position-partial [function]
  (fn [position] (apply function (affine-transformations position))))

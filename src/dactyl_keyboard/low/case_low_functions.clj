@@ -14,8 +14,12 @@
             [dactyl-keyboard.low.oled-low-placements :refer :all]
             [dactyl-keyboard.oled :refer :all]
              [dactyl-keyboard.tps-65 :refer :all]
+           ; [dactyl-keyboard.low.tps-65-placement-functions :refer :all]
             [dactyl-keyboard.EVQWGD001 :refer :all]
             [dactyl-keyboard.vybronics-vl91022 :refer :all]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-quadratic bezier-cubic bezier-quartic]]
+            [dactyl-keyboard.lib.transformations :refer [rdx rdy rdz]]
+            [dactyl-keyboard.lib.openscad.hull :refer :all]
             ))
 
 (defn bottom-translate [points-list]
@@ -504,26 +508,10 @@
        (rotate oled-mount-rotation-x-old [1 0 0])
        (rotate oled-mount-rotation-z-old [0 0 1])))
 
-(def tps-65-z-position 10)
-(def tps-65-z-rotation (+ 90 far-index-splay))
-(def tps-65-x-rotation -20)
-(def tps-65-y-rotation 0)
 
-(defn tps-65-rotate ([shape] (tps-65-rotate  rdx rdy rdz shape))
-  ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
-   (->> shape (rotate-z-fn tps-65-z-rotation)
-        (rotate-x-fn tps-65-x-rotation)
-        (rotate-y-fn tps-65-y-rotation)
-        (left-wall-plate-place-rotate  rotate-x-fn rotate-z-fn))))
-(defn tps-65-place ([shape] (tps-65-place translate rdx rdy rdz shape))
-  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
-                                                                 (rotate-z-fn tps-65-z-rotation)
-                                                                 (rotate-x-fn tps-65-x-rotation)
 
-                                                                 (rotate-y-fn tps-65-y-rotation)
-       ;(rdy -7.5)
-                                                                 (left-wall-plate-place 0 (+ left-wall-y-modifier -3) translate-fn rotate-x-fn rotate-z-fn)
-                                                                 (translate-fn [0 3 tps-65-z-position]))))
+
+
 
 
 
@@ -540,160 +528,12 @@
 
 
 
-(defn tps-65-translate-and-place [x y z shape]
-  (->> shape
-       (translate [x y z])
-       (tps-65-place)))
-
-(defn tps-65-translate-and-place-at-position ([position shape] (tps-65-translate-and-place-at-position position translate rdx rdy rdz shape))
-  ([position translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
-                                                                          (translate-fn position)
-                                                                          (tps-65-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
-
-(defn tps-65-translate-and-place-at-position-with-offset ([position offset shape] (tps-65-translate-and-place-at-position-with-offset position offset translate rdx rdy rdz shape))
-  ([position offset translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape 
-                                                                          (translate-fn offset)       
-                                                                          (translate-fn position)
-                                                                          (tps-65-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
 
 
 
-(defn tps-65-translate-and-place-with-radius
-  ([position radius-compensation-x radius-compensation-y shape]
-   (tps-65-translate-and-place-with-radius position radius-compensation-x radius-compensation-y translate rdx rdy rdz shape))
-  ([position radius-compensation-x radius-compensation-y translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
-   (->> shape
-        (translate-fn position)
-       ;plate-thickness
-        (translate-fn [(tps-radius-compensation-adjust radius-compensation-x) (tps-radius-compensation-adjust radius-compensation-y) (- plate-thickness)])
-        (tps-65-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
 
-(defn tps-65-translate-and-place-with-radius-xyz
-  ([x y z radius-compensation-x radius-compensation-y shape]
-   (tps-65-translate-and-place-with-radius-xyz x y z radius-compensation-x radius-compensation-y translate rdx rdy rdz shape))
-  ([x y z radius-compensation-x radius-compensation-y translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
-   (->> shape
-        (translate-fn [x y z])
-       ;plate-thickness
-        (translate-fn [(tps-radius-compensation-adjust radius-compensation-x) (tps-radius-compensation-adjust radius-compensation-y) (- plate-thickness)])
-        (tps-65-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
 
-(defn EVQWGD001-place ([shape] (EVQWGD001-place translate rdx rdy rdz shape))
-  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
-       ;(rdz 90)
-       ;(rdy -20)
-      ;;  (translate [0 0 (- (+ EVQWGD001-plastic-height plate-thickness))])
-      ;;  (rdx 80)
-      ;;  (rdz -57)
-      ;;  (rdy 25)
-      ;; ;(rdz 20)
-      ;;  ;(rdy 45)
-      ;;  (translate [(- tps-65-mount-corner-radius (/ tps-65-width 2)) 0 0])
-      ;;  ;(translate [(- tps-65-mount-corner-radius-with-offset) tps-65-mount-corner-radius-with-offset 0])
-      ;;  ;(rdz -90)
-      ;;  ;(rdy -90)
-      ;;  (rdz (/ (+ tps-65-z-rotation 35) 2))
-      ;;  ;(rdz tps-65-z-rotation)
-      ;;  (rdx (/ (+ tps-65-x-rotation 6) 2))
-      ;;  (rdy (/ (+ tps-65-y-rotation -32) 2))
-      ;;  ;(rdz (/ (+ tps-65-z-rotation 35) 2))
-      ;;  ;(rdx (/ (+ tps-65-x-rotation 6) 2))
-      ;;  ;(rdy (/ (+ tps-65-y-rotation -32) 2))
-      ;;  (translate (col-avg (left-wall-plate-position 0 (+ left-wall-y-modifier -3)) thumborigin))
-      ;; (translate (col-avg br-minithumb-loc [0 0 tps-65-z-position]) )
-      ;;  (translate [-10 10 2])
-                                                                 (rotate-z-fn (- tps-65-z-rotation))
-                                                                 (rotate-y-fn -20)
-                                                                 (rotate-x-fn -20)
-                                                                 (tps-65-translate-and-place-with-radius [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
-                                                                                                          0,
-                                                                                                          0] (- tps-65-mount-corner-radius-with-offset)  0
-                                                                                                         translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
-                                                                 (translate-fn [(- (/ EVQWGD001-mount-width 2)) (- (/ EVQWGD001-height 2)) (- (/ EVQWGD001-mount-length 2))]))))
 
-(defn EVQWGD001-translate-and-place ([x y z shape] (EVQWGD001-translate-and-place x y z translate rdx rdy rdz shape))
-  ([x y z translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
-   (->> shape
-        (translate-fn [x y z])
-        (EVQWGD001-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
-
-(defn EVQWGD001-translate-and-place-at-position ([position shape] (EVQWGD001-translate-and-place-at-position position translate rdx rdy rdz shape))
-  ([position translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
-   (->> shape
-        (translate-fn position)
-        (EVQWGD001-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
-
-(defn EVQWGD001-translate-and-place-at-position-with-offset ([position offset shape] (EVQWGD001-translate-and-place-at-position-with-offset position offset translate rdx rdy rdz shape))
-  ([position offset translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
-   (->> shape
-        (translate-fn offset)
-        (translate-fn position)
-        (EVQWGD001-place translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
-
-(defn screen-holder-rotate [shape]
-  (->> shape
-       (rdx -5)
-       (rdy 7.5)
-       (rdz screen-rotation-angle)))
-
-(defn screen-holder-place [shape]
-  (->> shape
-       (screen-holder-rotate)
-       (left-wall-plate-place 0 (+ left-wall-y-modifier 0.5))
-       (translate screen-holder-position)
-       (translate [0 0 (cond (= nrows 5) 0 (= nrows 4) -4 (= nrows 3) -4)])))
-
-(defn screen-holder-place-x-y [xdir ydir shape]
-  (->> shape
-       (translate [(* xdir oled-holder-width 0.5) (* ydir oled-holder-height 0.5) (/ screen-holder-depth 2)])
-       (screen-holder-rotate)
-       (translate [(- (* xdir oled-holder-width 0.5)) (- (* ydir oled-holder-height 0.5)) 0])
-       (left-wall-plate-place xdir ydir)
-
-       (translate screen-holder-position)))
-
-(defn screen-holder-translate-and-place [x y z shape]
-  (->> shape
-       (translate [x y z])
-       (screen-holder-place)))
-
-(def screen-holder-rotate-side-y -70)
-(defn screen-holder-rotate-side
-  ([shape] (screen-holder-rotate-side rdz rdy rdz shape))
-  ([rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
-                                                    (rotate-z-fn -90)
-                                                    (rotate-y-fn screen-holder-rotate-side-y)
-                                                    (rotate-x-fn -18)
-                                                    (rotate-z-fn 20))))
-(defn screen-holder-place-side ([shape] (screen-holder-place-side translate rdx rdy rdz shape))
-  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
-                                                                 (screen-holder-rotate-side rotate-x-fn rotate-y-fn rotate-z-fn)
-                                                                 (translate-fn [0 -20 8])
-       ;(rdz 5)
-                                                                 (left-wall-plate-place -2 -3 translate-fn rotate-x-fn rotate-z-fn)
-                                                                 (translate-fn [0 0 (- 2.5 keyboard-z-offset 3)]))))
-
-(defn screen-holder-translate-and-place-side ([x y z shape] (screen-holder-translate-and-place-side x y z translate rdx rdy rdz shape))
-  ([x y z translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape
-                                                                       (translate-fn [x y z])
-                                                                       (screen-holder-place-side translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
-(defn screen-holder-translate-and-place-side-with-offset ([x y z offset shape] (screen-holder-translate-and-place-side-with-offset x y z offset translate rdx rdy rdz shape))
-  ([x y z offset translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape] (->> shape 
-                                                                              (translate-fn offset)
-                                                                              (translate-fn [x y z]) 
-                                                                              (screen-holder-place-side translate-fn rotate-x-fn rotate-y-fn rotate-z-fn))))
-
-(defn vybronics-vl91022-place ([shape] (vybronics-vl91022-place translate rdx rdy rdz shape))
-  ([translate-fn rotate-x-fn rotate-y-fn rotate-z-fn shape]
-   (->> shape
-        (rotate-z-fn -90)
-        (rotate-y-fn 180)
-        (tps-65-translate-and-place-at-position [(/ vybronics-vl91022-y-axis 2)
-                                                 0
-                                                 (- (+ (* tps-65-depth 2) tps-65-depth-tolerance tps-65-overlay-thickness))] translate-fn rotate-x-fn rotate-y-fn rotate-z-fn)
-    ) 
-   ) 
-  )
 
 (defn wall-corner-points [dx1 dy1 dxmid dymid dx2 dy2 translation-mod  dz]
 

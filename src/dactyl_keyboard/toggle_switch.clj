@@ -1,13 +1,12 @@
 (ns dactyl-keyboard.toggle-switch
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]
+  (:require [dactyl-keyboard.case :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             [dactyl-keyboard.oled :refer :all]
-            [dactyl-keyboard.case :refer :all]
-            ))
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;   Toggle Switch        ;;

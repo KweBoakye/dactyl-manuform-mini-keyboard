@@ -7,6 +7,8 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
             [dactyl-keyboard.utils :refer :all]
+            [dactyl-keyboard.lib.transformations :refer [rdx rdy rdz ]]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             ))
 
 ;from https://github.com/oysteinkrog/dactyl-manuform-mini-keyboard

@@ -1,13 +1,12 @@
 (ns dactyl-keyboard.encoder
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]
+  (:require [dactyl-keyboard.case :refer :all]
+            [dactyl-keyboard.lib.transformations :refer [rx rz]]
             [dactyl-keyboard.oled :refer :all]
-            [dactyl-keyboard.case :refer :all]
-            ))
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 (def encoder-pos (add-vec (left-wall-plate-position 0 -1.75) [-6 -7 0]))
 (def encoder-rot-x oled-mount-rotation-x-old)

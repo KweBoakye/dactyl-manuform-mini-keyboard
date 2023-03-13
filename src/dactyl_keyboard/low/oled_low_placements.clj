@@ -8,6 +8,7 @@
             [dactyl-keyboard.oled :refer :all]
             [dactyl-keyboard.low.web-connecters-low :refer :all]
              [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             ))
 
 (def screen-holder-position [2, -2, 0])
@@ -81,46 +82,60 @@
 (def round-thumb-post-br (translate [(- (/ mount-width 1.95)  oled-post-adj) (+ (/ mount-height -1.95) oled-post-adj) 0] round-thumb-post))
 
 (defn oled-post-position-top [corner-translation-vector] (mapv + [0 0 (/ oled-holder-thickness 2)] oled-translation-vector corner-translation-vector))
+(defn oled-post-position-midle [corner-translation-vector ] (mapv + [0 0 0] oled-translation-vector corner-translation-vector))
 (defn oled-post-position-bottom [corner-translation-vector] (mapv + [0 0 (/ oled-holder-thickness -2)] oled-translation-vector corner-translation-vector))
-(defn curve-post-position-top [corner-translation-vector] (mapv + [0 0 (/ curve-post-size 2)] curve-post-translation-vector corner-translation-vector))
+(defn curve-post-position-top [corner-translation-vector] (mapv + [0 0 (/ web-thickness 2)] curve-post-translation-vector corner-translation-vector))
 (defn curve-post-position-middle [corner-translation-vector] (mapv + [0 0 0] curve-post-translation-vector corner-translation-vector))
-(defn curve-post-position-bottom [corner-translation-vector] (mapv + [0 0 (/ curve-post-size -2)] curve-post-translation-vector corner-translation-vector))
+(defn curve-post-position-bottom [corner-translation-vector] (mapv + [0 0 (/ web-thickness -2)] curve-post-translation-vector corner-translation-vector))
 
 (defn get-oled-corner-translation-vector [position]
-  (case position
-    "tr" oled-post-tr-translation-vector
-    "tl" oled-post-tl-translation-vector
-    "bl" oled-post-bl-translation-vector
-    "br" oled-post-br-translation-vector
-    "tm" oled-post-tm-translation-vector
-    "bm" oled-post-bm-translation-vector
-    "rm" oled-post-rm-translation-vector
-    "lm" oled-post-lm-translation-vector
+  (case (if-position-is-string-return-keyword position)
+    :tr oled-post-tr-translation-vector
+    :tl oled-post-tl-translation-vector
+    :bl oled-post-bl-translation-vector
+    :br oled-post-br-translation-vector
+    :tm oled-post-tm-translation-vector
+    :bm oled-post-bm-translation-vector
+    :rm oled-post-rm-translation-vector
+    :lm oled-post-lm-translation-vector
     [0 0 0]))
 
 (defn get-curve-corner-translation-vector [position]
-  (case position
-    "tr" curve-post-tr-translation-vector
-    "tl" curve-post-tl-translation-vector
-    "bl" curve-post-bl-translation-vector
-    "br" curve-post-br-translation-vector
-    "tm" curve-post-tm-translation-vector
-    "bm" curve-post-bm-translation-vector
-    "rm" curve-post-rm-translation-vector
-    "lm" curve-post-lm-translation-vector
+  (case (if-position-is-string-return-keyword position)
+    :tr curve-post-tr-translation-vector
+    :tl curve-post-tl-translation-vector
+    :bl curve-post-bl-translation-vector
+    :br curve-post-br-translation-vector
+    :tm curve-post-tm-translation-vector
+    :bm curve-post-bm-translation-vector
+    :rm curve-post-rm-translation-vector
+    :lm curve-post-lm-translation-vector
     [0 0 0]))
 
 (defn get-oled-post-outer-x-and-y-vector [dx dy]
-  (let [x (if (pos? dx) (/ oled-post-size 2) (/ oled-post-size -2))
-        y (if (pos? dy) (/ oled-post-size 2) (/ oled-post-size -2))]
-    [x y 0]))
+  (let [x (cond (pos? dx) (/ oled-post-size 2)
+                (neg? dx) (/ oled-post-size -2)
+                :else 0.0)
+        y (cond (pos? dy) (/ oled-post-size 2)
+                (neg? dy) (/ oled-post-size -2)
+                 :else 0.0)]
+    [x y 0.0]))
 
 (defn get-oled-post-inner-x-and-y-vector [dx dy]
-  (let [x (if (pos? dx)  (/ oled-post-size -2) (/ oled-post-size 2))
-        y (if (pos? dy) (/ oled-post-size -2) (/ oled-post-size 2))]
-    [x y 0]))
+  (let [x (cond (pos? dx)  (/ oled-post-size -2)
+              (neg? dx) (/ oled-post-size 2)
+                :else 0.0)
+        y (cond (pos? dy) (/ oled-post-size -2)
+                (neg? dy)(/ oled-post-size 2)
+                :else 0.0)]
+    [x y 0.0]))
 
+(comment (pos? 0))
 (defn get-curve-post-outer-x-and-y-vector [dx dy]
-  (let [x (if (pos? dx) (/ curve-post-size 2) (/ curve-post-size -2))
-        y (if (pos? dy) (/ curve-post-size 2) (/ curve-post-size -2))]
-    [x y 0]))
+  (let [x (cond (pos? dx) (/ curve-post-size 2)
+                (neg? dx)(/ curve-post-size -2)
+                :else 0.0)
+        y (cond (pos? dy) (/ curve-post-size 2)
+                (neg? dy ) (/ curve-post-size -2)
+                :else 0.0)]
+    [x y 0.0]))

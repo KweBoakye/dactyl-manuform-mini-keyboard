@@ -1,19 +1,18 @@
 (ns dactyl-keyboard.plate
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
+  (:require [dactyl-keyboard.case :refer :all]
+            [dactyl-keyboard.hotswap :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+            [dactyl-keyboard.placement-functions :refer :all]
+            [dactyl-keyboard.screw-inserts :refer :all]
             [dactyl-keyboard.shape-parameters :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
-            [dactyl-keyboard.placement-functions :refer :all]
-            [dactyl-keyboard.web-connecters :refer :all]
             [dactyl-keyboard.thumbs :refer :all]
-             [dactyl-keyboard.hotswap :refer :all]
             [dactyl-keyboard.trackball :refer :all]
-            [dactyl-keyboard.case :refer :all]
-            [dactyl-keyboard.screw-inserts :refer :all]
-            ))
+            [dactyl-keyboard.utils :refer :all]
+            [dactyl-keyboard.web-connecters :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 (def bottom-plate-thickness 2.6)
 

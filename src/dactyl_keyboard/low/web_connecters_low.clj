@@ -60,57 +60,68 @@
 (def web-post-bm (translate  web-post-bm-translation-vector web-post))
 
 (defn get-web-post-position-top [corner-translation-vector] (mapv + [0 0 (/ web-thickness 2)] web-post-translation-vector corner-translation-vector))
+(defn get-web-post-position-middle [corner-translation-vector] (mapv + [0 0 0] web-post-translation-vector corner-translation-vector))
 (defn get-web-post-position-bottom [corner-translation-vector] (mapv + [0 0 (/ web-thickness -2)] web-post-translation-vector corner-translation-vector))
 (def web-post-x-distance-from-single-plate-corner (- (+  1.8  (/ keyswitch-width 2)) (- (/ mount-width 1.95) post-adj)))
 (def web-post-y-distance-from-single-plate-corner (-  (- (/ mount-height 1.95) post-adj) (+ 1.5 (/ keyswitch-height 2))))
 
+(defn if-position-is-string-return-keyword [position]
+  (if (string? position) (keyword position) position)
+  )
 (defn get-web-corner-translation-vector [position]
-  (case position
-    "tr" web-post-tr-translation-vector
-    "tl" web-post-tl-translation-vector
-    "bl" web-post-bl-translation-vector
-    "br" web-post-br-translation-vector
-    "bm" web-post-bm-translation-vector
-    "rm" web-post-rm-translation-vector
-    "lm" web-post-lm-translation-vector
-    "tm" web-post-tm-translation-vector
-    "centre" [0 0 0]
+  (case (if-position-is-string-return-keyword position)
+    :tr web-post-tr-translation-vector
+    :tl web-post-tl-translation-vector
+    :bl web-post-bl-translation-vector
+    :br web-post-br-translation-vector
+    :bm web-post-bm-translation-vector
+    :rm web-post-rm-translation-vector
+    :lm web-post-lm-translation-vector
+    :tm web-post-tm-translation-vector
+    :centre [0 0 0]
     [0 0 0]))
 
+(comment 
+  (- (get-web-corner-translation-vector :tm) ))
+
 (defn get-single-plate-corner-position-vector [position]
-  (case position
-    "tr" (mapv + web-post-tr-translation-vector [web-post-x-distance-from-single-plate-corner (- web-post-y-distance-from-single-plate-corner) 0] )
-    "tl" (mapv + web-post-tl-translation-vector [(- web-post-x-distance-from-single-plate-corner) (- web-post-y-distance-from-single-plate-corner) 0])
-    "bl" (mapv + web-post-bl-translation-vector [(- web-post-x-distance-from-single-plate-corner) web-post-y-distance-from-single-plate-corner 0])
-    "br" (mapv + web-post-br-translation-vector [web-post-x-distance-from-single-plate-corner  web-post-y-distance-from-single-plate-corner 0])
-    "tm" (mapv + web-post-tm-translation-vector [0 (- web-post-y-distance-from-single-plate-corner) 0])
-    "bm" (mapv + web-post-bm-translation-vector [0 (- web-post-y-distance-from-single-plate-corner) 0])
-    "rm" (mapv + web-post-rm-translation-vector [web-post-x-distance-from-single-plate-corner 0 0])
-    "lm" (mapv + web-post-lm-translation-vector [(- web-post-x-distance-from-single-plate-corner) 0 0])
-    "centre" [0 0 0]
+  (case (if-position-is-string-return-keyword position)
+    :tr (mapv + web-post-tr-translation-vector [web-post-x-distance-from-single-plate-corner (- web-post-y-distance-from-single-plate-corner) 0] )
+    :tl (mapv + web-post-tl-translation-vector [(- web-post-x-distance-from-single-plate-corner) (- web-post-y-distance-from-single-plate-corner) 0])
+    :bl (mapv + web-post-bl-translation-vector [(- web-post-x-distance-from-single-plate-corner) web-post-y-distance-from-single-plate-corner 0])
+    :br (mapv + web-post-br-translation-vector [web-post-x-distance-from-single-plate-corner  web-post-y-distance-from-single-plate-corner 0])
+    :tm (mapv + web-post-tm-translation-vector [0 (- web-post-y-distance-from-single-plate-corner) 0])
+    :bm (mapv + web-post-bm-translation-vector [0 (- web-post-y-distance-from-single-plate-corner) 0])
+    :rm (mapv + web-post-rm-translation-vector [web-post-x-distance-from-single-plate-corner 0 0])
+    :lm (mapv + web-post-lm-translation-vector [(- web-post-x-distance-from-single-plate-corner) 0 0])
+    :centre [0 0 0]
     [0 0 0])
   )
 
 (defn get-opposite-position [position dx dy]
-  (case position
-     "tr" (cond (and (pos? dx) (pos? dy)) "bl"
-                (pos? dx) "tl"
-                (pos? dy) "br")
- "tl" (cond (and (neg? dx) (pos? dy)) "br"
-            (neg? dx) "tr"
-            (pos? dy) "bl")
- "bl" (cond (and (neg? dx) (neg? dy)) "tr"
-            (neg? dx) "br"
-            (neg? dy) "tl")
- "br" (cond (and (pos? dx) (neg? dy)) "tl"
-            (pos? dx) "bl"
-            (neg? dy) "tr")
- "tm" "bm"
- "bm" "tm"
- "rm" "lm"
- "lm" "rm"
-    "centre" "centre")
+  (let [return-value-type-fn #(if (string? position) % (keyword %))] 
+   (case (if (string? position) (keyword position) position)
+     :tr (cond (and (pos? dx) (pos? dy)) (return-value-type-fn "bl")
+                (pos? dx) (return-value-type-fn "tl")
+                (pos? dy) (return-value-type-fn "br"))
+ :tl (cond (and (neg? dx) (pos? dy)) (return-value-type-fn "br")
+            (neg? dx) (return-value-type-fn "tr")
+            (pos? dy) (return-value-type-fn "bl"))
+ :bl (cond (and (neg? dx) (neg? dy)) (return-value-type-fn "tr")
+            (neg? dx) (return-value-type-fn "br")
+            (neg? dy) (return-value-type-fn "tl"))
+ :br (cond (and (pos? dx) (neg? dy)) (return-value-type-fn "tl")
+            (pos? dx) (return-value-type-fn "bl")
+            (neg? dy) (return-value-type-fn "tr"))
+ :tm (return-value-type-fn"bm")
+ :bm (return-value-type-fn "tm")
+ :rm (return-value-type-fn "lm")
+ :lm (return-value-type-fn "rm")
+    :centre (return-value-type-fn "centre")))
   )
+(comment 
+  (get-opposite-position :br 1 1))
+
 
 (defn get-web-post-outer-x-and-y-vector [dx dy]
   (let [x (if (pos? dx) (/ post-size 2) (/ post-size -2))

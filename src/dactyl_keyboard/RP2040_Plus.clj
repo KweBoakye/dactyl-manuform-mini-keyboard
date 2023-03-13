@@ -1,14 +1,13 @@
 (ns dactyl-keyboard.RP2040-Plus
   (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.low.shape-parameters-low :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]
+  (:require [dactyl-keyboard.lib.transformations :refer [rdy]]
             [dactyl-keyboard.low.case-low :refer :all]
             [dactyl-keyboard.low.placement-functions-low :refer :all]
-            ))
+            [dactyl-keyboard.low.shape-parameters-low :refer :all]
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 
 (def rp2040-plus-width 21.00)

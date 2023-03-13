@@ -1,18 +1,17 @@
 (ns dactyl-keyboard.case
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
+  (:require [dactyl-keyboard.joycon-joystick :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+            [dactyl-keyboard.oled :refer :all]
+            [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.shape-parameters :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
-            [dactyl-keyboard.placement-functions :refer :all]
-            [dactyl-keyboard.web-connecters :refer :all]
-             [dactyl-keyboard.thumbs :refer :all]
-            [dactyl-keyboard.oled :refer :all]
+            [dactyl-keyboard.thumbs :refer :all]
             [dactyl-keyboard.trackball :refer :all]
-            [dactyl-keyboard.joycon-joystick :refer :all]
-            ))
+            [dactyl-keyboard.utils :refer :all]
+            [dactyl-keyboard.web-connecters :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 ;;;;;;;;;;
 ;; Case ;;

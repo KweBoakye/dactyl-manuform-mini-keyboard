@@ -6,6 +6,7 @@
             [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             ;[dactyl-keyboard.placement-functions :refer :all]
             ;[dactyl-keyboard.web-connecters :refer :all]
            ; [dactyl-keyboard.case :refer :all]

@@ -4,7 +4,8 @@
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]))
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.lib.transformations :refer [rdz]]))
 
 ;from https://github.com/hugokernel/OpenSCAD_Dovetail/blob/master/dovetail.scad
 

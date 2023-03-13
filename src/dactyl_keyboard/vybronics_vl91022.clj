@@ -7,6 +7,8 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.dovetail :refer :all]
             [dactyl-keyboard.tps-65 :refer :all]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-quadratic]]
+            [dactyl-keyboard.lib.openscad.polyhedrons :refer [generate-bezier-to-point-polyhedron]]
             ))
 
 

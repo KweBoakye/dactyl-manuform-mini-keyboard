@@ -4,7 +4,9 @@
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]))
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+            [dactyl-keyboard.lib.transformations :refer [rdz]]))
 
 
 (def EVQWGD001-width 16.71)

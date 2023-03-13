@@ -1,15 +1,15 @@
 (ns dactyl-keyboard.thumbs
    (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.shape-parameters :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]
+  (:require [dactyl-keyboard.lib.geometry :refer [deg2rad]]
+            [dactyl-keyboard.lib.transformations :refer [rd]]
             [dactyl-keyboard.placement-functions :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
+            [dactyl-keyboard.shape-parameters :refer :all]
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.utils :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
-            ))
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Default Thumb ;;

@@ -1,16 +1,15 @@
 (ns dactyl-keyboard.cirque-circle-trackpad-placement-functions
     (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-             [scad-clj.scad :refer :all]
-[scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
+  (:require [dactyl-keyboard.case :refer :all]
+            [dactyl-keyboard.cirque-circle-trackpad :refer :all]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             [dactyl-keyboard.placement-functions :refer :all]
-             [dactyl-keyboard.case :refer :all]
-            [dactyl-keyboard.web-connecters :refer :all]
-             [dactyl-keyboard.switch-hole :refer :all]
-             [dactyl-keyboard.cirque-circle-trackpad :refer :all]
             [dactyl-keyboard.sa-keycaps :refer :all]
-            ))
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.utils :refer :all]
+            [dactyl-keyboard.web-connecters :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 (defn cirque-place [shape]
   (->> shape

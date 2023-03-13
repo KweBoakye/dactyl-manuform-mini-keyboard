@@ -1,13 +1,13 @@
 (ns dactyl-keyboard.des-caps
   (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all]
-            [dactyl-keyboard.utils :refer :all]
-            [dactyl-keyboard.switch-hole :refer :all]
+  (:require [dactyl-keyboard.lib.transformations :refer [rdz]]
             [dactyl-keyboard.low.placement-functions-low :refer :all]
+            [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.low.thumbs-low :refer :all]
-            [dactyl-keyboard.low.shape-parameters-low :refer :all]))
+            [dactyl-keyboard.switch-hole :refer :all]
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 (def des-height (+ plate-thickness 6.5))
 (defn des-translate [shape] (translate [0 0 des-height] shape))
