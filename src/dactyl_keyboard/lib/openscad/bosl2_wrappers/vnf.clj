@@ -23,8 +23,8 @@
    scad-func
    )
   )
-(def  
-  {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})
+(def default-vnf-vertex-array-args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})
+
 (defn vnf-vertex-array [points  &{:keys [^Boolean caps ^Boolean cap1 ^Boolean cap2 ^Boolean col-wrap ^Boolean row-wrap ^Boolean reverse ^Boolean style]
                                    :or {caps true cap1 false cap2 false col-wrap true row-wrap false reverse false style :default}}]
   ;; (assert (and (false? (or caps cap1 cap2)) (false? col-wrap)) "col_wrap must be true if caps are requested")

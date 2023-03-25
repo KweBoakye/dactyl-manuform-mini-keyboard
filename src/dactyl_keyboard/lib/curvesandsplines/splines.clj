@@ -199,7 +199,7 @@
       (catmull-rom-spline-point  p0  p1  p2  p3 (/ t steps) alpha))))
 
 (defn catmull-rom-spline-curve [points steps & {:keys [alphaType split-steps drop-last-point-if-not-last-segment]
-                                                :or {alphaType :centripetal split-steps true drop-last-point-if-not-last-segment true}}]
+                                                :or {alphaType :centripetal split-steps true drop-last-point-if-not-last-segment true}}] 
   (let [number-of-segments (- (count points) 3)
         steps-per-segment (if split-steps (floor (/ steps number-of-segments)) steps)
         increment (/ number-of-segments steps)

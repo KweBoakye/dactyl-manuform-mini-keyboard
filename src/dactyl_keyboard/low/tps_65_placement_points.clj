@@ -37,6 +37,7 @@
                                                                                   0,
                                                                                   0])
                                  [(+ tps-65-corner-radius 0.05)  0 0]))
+
 (def  tps-65-mid-right-inner    (transform-position
                                  (partial tps-65-translate-and-place-at-position [(- (/ tps-65-mount-width 2) tps-65-corner-radius),
                                                                                   0,
@@ -45,6 +46,16 @@
 (def  tps-65-bottom-right-outer    (transform-position
                                     (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-right-position)
                                     [(+ tps-65-corner-radius 0.05)  (- (+ tps-65-corner-radius 0.05)) 0]))
+
+(def  tps-65-centre     (partial tps-65-translate-and-place-at-position-with-offset
+                                 [0 0 0]
+                                 [(+ (* (+ tps-65-depth) -2) 0.05)]))
+(def  tps-65-centre-outer (transform-position
+                           (partial tps-65-place)
+                           [0  0 0]))
+(def  tps-65-centre-inner    (transform-position
+                              (partial tps-65-place)
+                              [0 0 (/ web-thickness -2)]))
 
 (def  tps-65-bottom-right-inner    (transform-position
                                     (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-right-position)

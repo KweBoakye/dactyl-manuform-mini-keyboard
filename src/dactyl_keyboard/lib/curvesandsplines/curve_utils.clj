@@ -31,5 +31,11 @@
 (defn project-coordinate [coordinate]
   (mul (/ 1 (mget coordinate 3)) coordinate))
 
+(defn homogenize-single-point [vector weight]
+  (conj (mapv (partial * weight) vector) weight)
+  )
+
+(comment (homogenize-single-point [2 3 1] 2))
+
 (defn homogenize-cooridinates [control-points weights]
   (mapv #(conj (mapv (partial * %2) %1) %2) control-points weights))

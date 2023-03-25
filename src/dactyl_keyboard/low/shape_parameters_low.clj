@@ -58,7 +58,7 @@
          (= column 3) ring-splay
          (>= column 4) pinky-splay
          :else 0)
-   (deg2rad)))
+   (deg2rad)))  
 
 (defn splay-angle-to-translation [splay-angle]
   (let [x-trans (* (- splay-angle) (/ 3 5))

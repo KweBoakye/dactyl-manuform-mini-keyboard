@@ -1,14 +1,16 @@
 (ns dactyl-keyboard.lib.curvesandsplines.curve-fitting
-  (:require [clojure.core.matrix :refer [array cross dot length magnitude normalise]]
+  (:require [clojure.core.matrix :refer [array cross dot length magnitude mul
+                                         normalise]]
             [clojure.core.matrix.linear :refer [lu solve]]
             [clojure.math :refer [pow]]
             [dactyl-keyboard.lib.algebra :refer [quadratic-roots]]
             [dactyl-keyboard.lib.collections :refer [remove-by-index]]
             [dactyl-keyboard.lib.constants :refer [epsilon]]
+            [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [homogenize-cooridinates]]
             [dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline 
-    :refer [calculate-knot-span-index calculate-knot-vector-from-u-k
-            calculate-non-vanishing-basis-functions u-k-centripetal u-k-chordal]]
-            [dactyl-keyboard.lib.vectors :refer [vector-magnitude]]) 
+    :refer [calculate-averaged-knot-vector-from-u-k calculate-knot-span-index
+            calculate-non-vanishing-basis-functions non-uniform-b-spline
+            nurbs-deriv-deboor u-k-centripetal u-k-chordal]]) 
   )
 
 
@@ -62,7 +64,7 @@
         n 4
         p 3
         u-k-values (u-k-chordal n Q)
-        U (calculate-knot-vector-from-u-k u-k-values n p)
+        U (calculate-averaged-knot-vector-from-u-k u-k-values n p)
         q (+ n 1)
         dim (count (nth Q 0))
 ;; uk-i (nth u-k-values 0)
@@ -91,9 +93,20 @@
         z-vector  (coordinate-vector-fn 2)
         x-solved (vec (solve matrix x-vector))
         y-solved (vec (solve matrix y-vector))
-        z-solved (vec (solve matrix z-vector))]
+        z-solved (vec (solve matrix z-vector))] 
     (for [index (range vector-size)]
       [(nth x-solved index) (nth y-solved index) (nth z-solved index)])))
+
+(comment (solve (array :vectorz [[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+                 [-1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+                 [0.0,0.9996352054012266,3.647831574156622E-4,1.1441353990480655E-8,3.4665889473727118E-15,0.0,0.0,0.0,0.0],
+                 [0.0,0.9994798950242914,5.20080439118758E-4,2.4536542517889334E-8,4.71728892210986E-14,0.0,0.0,0.0,0.0],
+                 [0.0,0.0,0.0,0.2001854337169558,0.6001058076881196,0.19970875859492473,7.766239056253257E-24,0.0,0.0],
+                 [0.0,0.0,0.0,0.0,9.205269329277368E-9,6.177380234646243E-5,0.02542887568641895,0.9745093413059651,0.0],
+                 [0.0,0.0,0.0,0.0,1.5330402737134804E-41,8.834844872008977E-6,0.010234837373210423,0.9897563277819176,0.0],
+                 [0.0,0.0,0.0,0.0,0.0,0.0,0.0,-1.0,1.0],
+                 [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0]])
+                (array :vectorz [-100.46506732026194 -4.2051783974774206E-5 -100.46506732026195 -100.46506731026194 -99.29418920589302 -98.12341109152413 -98.12331109152413 -1.2104385536119593 -98.12331109152413])))
 
 (defn global-curve-interp [Q p &{:keys [n point-paramater-calculation-method] :or {n (dec (count Q)) point-paramater-calculation-method :centripetal}}]
   "global interpolation through n+1 points
@@ -111,7 +124,7 @@
         function-for-u-k-values (cond (= point-paramater-calculation-method :chordal) u-k-chordal
                                       (= point-paramater-calculation-method :centripetal) u-k-centripetal)
         u-k-values (function-for-u-k-values n Q)
-        U-knot-vector (mapv #(/ % (- (inc n) p)) (calculate-knot-vector-from-u-k u-k-values n p))
+        U-knot-vector (mapv #(/ % (- (inc n) p)) (calculate-averaged-knot-vector-from-u-k u-k-values n p))
         q (+ n 1)
         dim (count (nth Q 0))
         A (for [i (range 0 q)
@@ -146,9 +159,11 @@
 (comment
   (global-curve-interp [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]] 3 :point-paramater-calculation-method :chordal))
 
-
-
-
+(defn global-curve-interp-curve [Q p steps &{:keys [n point-paramater-calculation-method] :or {n (dec (count Q)) point-paramater-calculation-method :centripetal}}]
+  (let [global-curve-interp-data (global-curve-interp Q p :n n :point-paramater-calculation-method point-paramater-calculation-method)]
+    (non-uniform-b-spline (:P global-curve-interp-data ) p (:U global-curve-interp-data) steps)
+    )
+  )
 
 (defn global-curve-interp-with-end-derivatives [Q p D-zero D-n & {:keys [n point-paramater-calculation-method] :or {n (dec (count Q)) point-paramater-calculation-method :centripetal}}]
   (let [m (+ n p 3)
@@ -162,15 +177,14 @@
         num-of-points (count Q)
         Q-with (vec (concat [(nth Q 0) (mapv (partial * (/ (nth U-knot-vector (inc p)) p)) D-zero)]
                             (subvec Q 1 (dec (count Q))) [(mapv (partial * (/ (- 1 (nth U-knot-vector (- m p 1))) p)) D-n) (last Q)]))
-        Q-with-tangents (do
-                          (println "Q-with " Q-with)
+        Q-with-tangents 
                           (into [] (for [index (range (+ n 3))]
                                        (cond
                                          (zero? index) (nth Q 0)
                                          (= index 1) D-zero
                                          (and (<= index 2) (>= index n)) (nth Q (dec index))
                                          (= index (inc n)) D-n
-                                         :else (last Q)))))
+                                         :else (last Q))))
         q (+ n 3)
         dim (count (nth Q 0))
         A-row-one (vec (concat [-1.0 1.0] (repeat (inc n) 0.0)))
@@ -190,6 +204,19 @@
      U-knot-vector
      :P (mapv (partial vec) P)}))
 
+(defn global-curve-interp-with-end-unit-derivatives [Q p tangent-endpoint-zero tangent-endpoint-n & {:keys [n point-paramater-calculation-method] :or {n (dec (count Q)) point-paramater-calculation-method :centripetal}}] 
+  (let [tangent-endpoint-zero-to-Q-zero (mapv - (nth Q 0) tangent-endpoint-zero)
+        Q-n-to-tangent-endpoint-n (mapv - tangent-endpoint-n (last Q))
+        D-zero (mapv #(/ % (magnitude tangent-endpoint-zero-to-Q-zero)) tangent-endpoint-zero-to-Q-zero)
+        D-n (mapv #(/ % (magnitude Q-n-to-tangent-endpoint-n)) Q-n-to-tangent-endpoint-n) ]
+    (global-curve-interp-with-end-derivatives Q p D-zero D-n :n n :point-paramater-calculation-method point-paramater-calculation-method)))
+
+(defn global-curve-interp-with-end-unit-derivatives-curve [Q p tangent-endpoint-zero tangent-endpoint-n steps & {:keys [n point-paramater-calculation-method] :or {n (dec (count Q)) point-paramater-calculation-method :centripetal}}]
+  (let [curve-interp-data (global-curve-interp-with-end-unit-derivatives Q p tangent-endpoint-zero tangent-endpoint-n :n n :point-paramater-calculation-method point-paramater-calculation-method)
+        ]
+    (non-uniform-b-spline (:P curve-interp-data) p (:U curve-interp-data) steps)
+    )
+  )
 (comment
   (global-curve-interp-with-end-derivatives [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]  3 [-1 -1 0] [0 -2 0] :point-paramater-calculation-method :chordal))
 
@@ -325,6 +352,12 @@
   (let [tangents (calculate-tangents-for-local-cubic-curve-interpolation points :corner-perservation corner-perservation)]
     (local-cubic-curve-interpolation points tangents)))
 
+(defn local-cubic-curve-interpolation-with-calculated-tangents-curve [points steps &{:keys [corner-perservation] :or {corner-perservation :smooth}}]
+  (let [curve-parameters (local-cubic-curve-interpolation-with-calculated-tangents points :corner-perservation corner-perservation)]
+    (non-uniform-b-spline (:P curve-parameters) 3 (:U curve-parameters) steps)
+    )
+  )
+
 (comment
   (local-cubic-curve-interpolation-with-calculated-tangents [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]))
 
@@ -356,4 +389,94 @@
 
 (comment (calculate-Rk-weight [0 0 0] [0 5 0] [0 10 0]))
 
+(defn delta-k [sk sk-minus-one]
+  (- sk-minus-one sk))
+
+(defn a-k [delta-k C-u-sk]
+   (* (magnitude C-u-sk) delta-k)
+  )
+(defn b-k [delta-k C-u-sk-plus-one]
+  (* (magnitude C-u-sk-plus-one) delta-k))
+
+(defn sk-plus-one [ak sk sk-minus-one bk-minus-one]
+  (+ (/ (* ak (- sk sk-minus-one) bk-minus-one)) sk)
+  )
+
+;unit-direciton-of-chord
+(defn sk [qk qk-plus-one ck]
+  (mapv / (mapv - qk-plus-one qk) ck)
+  )
+
+;; (defn orthoganal-parameterisation [Qk]
+;;   (let [
+;;         tk []
+;;         m "?"
+;;         k-max (- m 2)
+;;         tau-zero (/ a-zero delta-zero)
+;;         tau-m-minus-two (/ b-m-minus-three delta-m-minus-three)
+
+;;         ])
+;;   )
+
+(comment (dot  [1 2 3]  (mul [4 5 6] (dot [7 8 9] [4 5 6]))) )
+(defn w-equals-zero-orthoganal-construction [Q p U weights]
+  (let [n (dec (count Q))
+        Pw (homogenize-cooridinates Q weights)
+        chord-lengths (vec (for [k (range n)
+                                 :let [Qk (nth Q k)
+                                       Qk-plus-one (nth Q (inc k))]]
+                             (mapv - Qk-plus-one Qk)
+                             ))
+        
+        ck-values (mapv magnitude chord-lengths)
+        Sk-values (vec (for [k (range n)
+                             :let [Qk-plus-one-minus-Qk (nth chord-lengths k)
+                                   ck (nth ck-values k)]]
+                         (mapv #(/ % ck) Qk-plus-one-minus-Qk)
+                         ))
+        a-k-fn (fn [ck Sk tk tk-plus-one ] (* (* 3 ck) 
+                                              (/ (- (dot (mul 2 Sk) tk) (dot Sk (mul tk-plus-one (dot tk tk-plus-one))))
+                                                 (- 4 (pow (dot tk tk-plus-one) 2)))))
+        bk-fn (fn [ck Sk tk tk-plus-one] (* (* 3 ck)
+                                            (/ (- (dot (mul 2 Sk) tk-plus-one) (dot Sk (mul tk (dot tk tk-plus-one))))
+                                               (- 4 (pow (dot tk tk-plus-one) 2)))))
+        tk-fn (fn [sk] (let [c-u-sk (nth (nurbs-deriv-deboor n p U Q sk weights) 1)]
+                         (mapv #(/ % (magnitude c-u-sk)) c-u-sk)))
+        sk-plus-one-fn (fn [ak sk sk-minus-one bk-minus-one]
+                         (+ (/ (* ak (- sk sk-minus-one))
+                               bk-minus-one
+                               )sk)
+                         )
+        s-zero 0
+        s-one 1
+        t-zero (tk-fn s-zero)
+        t-one (tk-fn s-one)
+        a-zero (a-k-fn (nth ck-values 0) (nth Sk-values 0) t-zero t-one)
+        b-zero (bk-fn  (nth ck-values 0) (nth Sk-values 0) t-zero t-one)
+        a-one b-zero
+        s-two (sk-plus-one-fn a-one s-one s-zero b-zero)
+        t-two (tk-fn s-two)
+        b-one (bk-fn (nth ck-values 1) (nth Sk-values 1) t-one t-two)
+        a-two b-one
+        s-three (sk-plus-one-fn a-two s-two s-one b-one)
+        t-three (tk-fn s-three)
+        a-two-calc (a-k-fn (nth ck-values 2) (nth Sk-values 2) t-two t-three)
+        sk-list (double-array (dec n))
+        tk-list (into-array (repeat (dec n) (vec (repeat 4 0.0)))) 
+        ak-list (double-array (dec n))
+        bk-list (double-array (dec n))
+        ]
+        ;; (aset sk-list 0 s-zero)
+        ;; (aset sk-list 1 s-one)
+        ;; (aset tk-list 0 t-zero)
+        ;; (aset tk-list 1 t-one)
+        ;; (aset ak-list 0 a-zero)
+        ;; (aset bk-list 0 b-zero)
+        ;; (doseq [k (range 1 (dec n))]
+        ;;        (a-k-fn ))
+        (- a-two a-two-calc)
+        )
+  )
+
+(comment (w-equals-zero-orthoganal-construction [[0 0 0] [2 3 0] [5 1 3] [4 3 5]] 3 [0 0 0 0 1 1 1 1] [1 1 1 1]))
 (defn local-raional-quadratic-curve-interpolation [Q R])

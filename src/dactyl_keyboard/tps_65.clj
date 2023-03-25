@@ -1,11 +1,11 @@
 (ns dactyl-keyboard.tps-65
 (:refer-clojure :exclude [use import])
-  (:require [clojure.core.matrix :refer [array matrix mmul]]
-            [scad-clj.scad :refer :all]
-            [scad-clj.model :refer :all] 
-            [dactyl-keyboard.utils :refer :all]
+  (:require [clojure.core.matrix :refer [magnitude]]
+            [dactyl-keyboard.lib.openscad.bosl2-wrappers.shapes-3d :refer [cuboid]]
             [dactyl-keyboard.lib.transformations :refer [rdx rdz]]
-  )
+            [dactyl-keyboard.utils :refer :all]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all])
 )
  (def tps-65-includes  (map  include ["../BOSL/shapes.scad" "../BOSL/constants.scad" "../BOSL/masks.scad"]))
  (def tps-65-depth 2.03)
@@ -309,6 +309,25 @@
           ))
    )
  
+ (def tps-65-mount-new
+   (let [corner  [tps-65-corner-radius tps-65-corner-radius 0] half-radius (/ tps-65-corner-radius 2)
+         tl (mapv + tps-65-mount-corner-cylinder-top-left-position [(tps-radius-compensation-adjust (- half-radius)) (tps-radius-compensation-adjust half-radius) 0] [(- half-radius) half-radius 0])
+         tr (mapv + tps-65-mount-corner-cylinder-top-right-position [(tps-radius-compensation-adjust half-radius) (tps-radius-compensation-adjust half-radius) 0] [half-radius half-radius 0])
+         bl (mapv + tps-65-mount-corner-cylinder-bottom-left-position  [(tps-radius-compensation-adjust (- half-radius)) (tps-radius-compensation-adjust (- half-radius)) 0] [(- half-radius) (- half-radius) 0])
+         br (mapv + tps-65-mount-corner-cylinder-bottom-right-position [(tps-radius-compensation-adjust half-radius) (tps-radius-compensation-adjust (- half-radius)) 0] [half-radius (- half-radius) 0]) 
+         x (magnitude (mapv - tr tl))
+         y (magnitude (mapv - tl bl))
+         z (+ tps-65-y-modifier tps-65-depth tps-65-depth-tolerance)
+         ] 
+     (->>
+      (cuboid [x y z] :chamfer 1 )
+      (translate [0 0 (+ (- (+ tps-65-depth tps-65-depth-tolerance)) 0.6)])
+      )
+     )
+   )
+ 
+ 
+ 
  (def tps-65-mount-body
     (->> (hull
           (for [i [0 0.25 0.5 0.75 1]
@@ -338,6 +357,8 @@
      ;(translate [0 0 (- (/ (+ tps-65-depth tps-65-depth-tolerance) 2))] )
      (translate [0 0(- (+ tps-65-depth tps-65-depth-tolerance))])
      ))
+  
+  
 
   
  (def tps-65-base
