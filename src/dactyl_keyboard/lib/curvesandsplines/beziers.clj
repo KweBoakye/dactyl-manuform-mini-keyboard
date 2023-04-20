@@ -1,5 +1,6 @@
 (ns dactyl-keyboard.lib.curvesandsplines.beziers
   (:require [clojure.math :refer [floor]]
+            [clojure.core.matrix :refer [mul]]
             [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer[mmul-scalar-to-vector]]
             [dactyl-keyboard.lib.general-maths :refer [factorial]]
             [dactyl-keyboard.lib.vectors :refer [vector-distance]])
@@ -106,6 +107,15 @@
 
     (* n-factorial-over-i-factorial-factorial-n-minus-i-times-point (Math/pow t i) (Math/pow (- 1 t) n-minus-i))))
 
+(defn calculate-bezier-basis-functions [n]
+  (for [i (range 0 (inc n))] (fn [t] (bezier-basis-fn n i t))))
+
+(defn n-degree-bezier-point [points t &{:keys [basis-functions] :or {basis-functions (calculate-bezier-basis-functions (dec (count points)))}}] 
+  (let [n (dec (count points))]
+    (apply mapv + (for [i (range 0 (inc n))]
+                  (mapv #(* ((nth basis-functions i) t) %) (nth points i)))))
+  )
+
 (defn n-degree-bezier-curve [points steps]
   (let [n (dec (count points)) 
         basis-functions (for [i (range 0 (inc n))] (fn [t] (bezier-basis-fn n i t)))
@@ -115,6 +125,25 @@
                                        (mapv #(* ((nth basis-functions i) t) %) (nth points i)))))]
     (vec curve-points)))
 
+(defn n-degree-bezier-derivative-point [points u &{:keys [n Q] :or {n (dec (count points)) 
+                                                                  Q (vec (for [index (range n)]
+                                                                           (mul n (mapv - (nth points (inc index)) (nth points index)))))}}]
+  (let [C-deriv (reduce + (for [i (range n)
+                                :let [basis-fn (bezier-basis-fn n i u)
+                                      Qi (nth Q i)]]
+                            (mul basis-fn Qi)))
+        ]
+    C-deriv)
+  )
+
+(defn n-degree-bezier-derivative-curve [points steps]
+  (let [n (dec (count points))
+        Q (vec (for [index (range n)]
+                 (mul n (mapv - (nth points (inc index)) (nth points index)))))]
+    (vec (for [index (range 0 (inc steps))
+          :let [u (/ index steps)]]
+      (n-degree-bezier-derivative-point points u :n n :Q Q)
+      ))))
 
 
 

@@ -1,8 +1,10 @@
 (ns dactyl-keyboard.lib.algebra
   
-  (:require [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-linear]]
+  (:require [clojure.core.matrix :refer [magnitude dot]]
+            [clojure.math :refer [pow sqrt]]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-linear]]
             [dactyl-keyboard.lib.geometry :refer [minimum-distance]]
-            [clojure.core.matrix :refer [magnitude]]))
+            [numeric.expresso.core :refer [ex simplify solve rearrange ]]))
 
 (defn equation-on-line-for-x [x-zero a t]
   (let [
@@ -111,3 +113,37 @@
         root-1       (* inv-a2 (+ neg-b discriminant))
         root-2       (* inv-a2 (- neg-b discriminant))]
     [root-1 root-2]))
+
+(comment (simplify (ex (* a 3 4))) )
+(comment (let [c 4
+               c-squared (pow c 2)
+               c-cubed (pow c 3)
+               c-to-power-four (pow c 4)
+               sk [4 2 0]
+               tk [3 8 0]
+               tk-plus-one [2 2 0]
+               dot-sk-tk (dot sk tk)
+               dot-sk-tk-plus-one (dot sk tk-plus-one)
+               dot-sk-tk-plus-one-squared dot-sk-tk-plus-one
+               A 1
+               B 0
+               C (* -4 c-squared)
+               D (* c-cubed dot-sk-tk dot-sk-tk-plus-one-squared)
+               E (- (* 4 c-to-power-four) (* 2 c-to-power-four dot-sk-tk-plus-one-squared))]
+           (println "A" A "B" B "C" C "D" D "E" E)
+            (solve 'a (ex (= (+ (** a 4) 
+                             (* C (** a 2)) 
+                 (*  D (** a 2) ) E
+                                 ) 0)))
+          ; (solve 'a (ex (= 0 (+ (* (** a 2) (+ 21504 -64)) (** a 4) (* 0 a) -5120.0))))
+           ))
+(comment (solve 'x (ex (= 2 (* 4 x)))))
+
+(comment (sqrt -1))
+         
+         (defn findRoots [f start stop step eps]
+           (filter #(-> (f %) Math/abs (< eps)) (range start stop step)))
+         
+         (comment (findRoots #(+ (* % % %) (* -3 % %) (* 2 %)) -1.0 3.0 0.0001 0.00000001))
+
+(defn solve-depressed-quartic [e d c])

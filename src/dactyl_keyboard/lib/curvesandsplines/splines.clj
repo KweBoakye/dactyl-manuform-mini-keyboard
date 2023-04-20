@@ -1,8 +1,9 @@
 (ns dactyl-keyboard.lib.curvesandsplines.splines
-  (:require 
-   [clojure.core.matrix :refer [mmul dot magnitude-squared]]
-   [clojure.math :refer [floor pow sqrt acos asin cos]]
-   [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [lerp get-drop-last-point-if-not-last-segment]])
+  (:require [clojure.core.matrix :refer [dot magnitude-squared mmul mul]]
+            [clojure.math :refer [acos asin floor pow]]
+            [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [get-drop-last-point-if-not-last-segment]]
+            [dactyl-keyboard.lib.matrices :refer [coordinate-matrix-to-point-matrix
+                                                  split-matrix-into-coordinate-matrices]])
   )
 
 (defn cubic-hermite-spline-point [p1 p2 p1t p2t t]
@@ -173,7 +174,62 @@
         b2 (mapv + (mapv #(* % (/ (- t3 tfinal) (- t3 t1))) a2) (mapv #(* % (/ (- tfinal t1) (- t3 t1))) a3))
         c (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t1))) b1) (mapv #(* % (/ (- tfinal t1) (- t2 t1))) b2))]
     c))
+(defn catmull-rom-spline-deriv  [p0 p1 p2 p3 t alpha]
+  (let [t0 0.0
+        t1 (getT t0 alpha p0 p1)
+        t2 (getT t1 alpha p1 p2)
+        t3 (getT t2 alpha p2 p3)
+        tfinal (lerp-unclamped t1 t2 t)
+        a1 (mapv + (mapv #(* % (/ (- t1 tfinal) (- t1 t0))) p0) (mapv #(* % (/ (- tfinal t0) (- t1 t0)) 1) p1))
+        a2 (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t1))) p1) (mapv #(* % (/ (- tfinal t1) (- t2 t1))) p2))
+        a3 (mapv + (mapv #(* % (/ (- t3 tfinal) (- t3 t2))) p2) (mapv #(* % (/ (- tfinal t2) (- t3 t2))) p3))
+        b1 (mapv + (mapv #(* % (/ (- t2 tfinal) (- t2 t0))) a1) (mapv #(* % (/ (- tfinal t0) (- t2 t0))) a2))
+        b2 (mapv + (mapv #(* % (/ (- t3 tfinal) (- t3 t1))) a2) (mapv #(* % (/ (- tfinal t1) (- t3 t1))) a3))
+        a1-deriv (mul (/ 1 (- t1 t0)) (mapv - p1 p0))
+        a2-deriv (mul (/ 1 (- t2 t1)) (mapv - p2 p1))
+        a3-deriv (mul (/ 1 (- t3 t2)) (mapv - p3 p2))
+        b1-deriv (mapv + (mul (/ 1 (- t2 t0)) (mapv - a2 a1))
+                       (mul (/ (- t2 tfinal) (- t2 t0)) a1-deriv)
+                       (mul (/ (- tfinal t0) (- t2 t0)) a2-deriv))
+        b2-deriv (mapv + (mul (/ 1 (- t3 t1)) (mapv - a3 a2))
+                       (mul (/ (- t3 tfinal) (- t3 t1)) a2-deriv)
+                       (mul (/ (- tfinal t1 ) (- t3 t1)) a3-deriv))
+        c-deriv (mapv + (mul (/ 1 (- t2 t1) ) (mapv - b2 b1))
+                      (mul (/ (- t2 tfinal) (- t2 t1)) b1-deriv )
+                      (mul (/ (- tfinal t1) (- t2 t1)) b2-deriv))]
+                      c-deriv)
+  )
 
+(defn catmull-rom-matrix-point [p0 p1 p2 p3 t alpha]
+  (let [tension (pow 0.5 (+ alpha 0.5))
+        t-matrix [(pow t 3) (pow t 2) t 1]
+        basis-matrix [[(- tension) (- 2 tension) (- tension 2) tension]
+                      [(* 2 tension) (- tension 3) (- 3 (* 2 tension) ) (- tension)]
+                      [(- tension ) 0  tension 0]
+                      [0 1 0 0]]
+        p-column-matrix [p0
+                         p1
+                         p2
+                         p3]
+        ]
+    (mmul t-matrix basis-matrix p-column-matrix)
+    )
+  )
+
+(defn catmull-rom-matrix-deriv [p0 p1 p2 p3 t alpha]
+  (let [t-matrix [(* 3(pow t 2)) (* 2 t) 1 ]
+        basis-matrix [[(- alpha) (- 2 alpha) (- alpha 2) alpha]
+                      [(* 2 alpha) (- alpha 3) (- 3 (* 2 alpha)) (- alpha)]
+                      [(- alpha) 0  alpha 0]
+                      ;[0 1 0 0]
+                      ]
+        p-column-matrix [p0
+                         p1
+                         p2
+                         p3]]
+    (mmul t-matrix basis-matrix p-column-matrix)))
+
+(comment (catmull-rom-matrix-deriv  [1 1 1] [2 2 2] [3 3 0] [4 4 0] 0.0 0.5))
 
   
   (defn catmull [p0 p1 p2 p3 t alpha]
@@ -198,15 +254,24 @@
     (for [t (range 0 (inc steps))]
       (catmull-rom-spline-point  p0  p1  p2  p3 (/ t steps) alpha))))
 
+(let [steps (long 27.0)
+      number-of-segments 1
+      increment (/ number-of-segments steps)]
+  (for [index (range 0 (+ increment number-of-segments) increment)
+        :let [i (if (< index number-of-segments) (inc (floor index)) number-of-segments)
+              t (if (< index number-of-segments) (- index (floor index)) 1.0)]]
+    (double (* index steps))
+    ))
+
 (defn catmull-rom-spline-curve [points steps & {:keys [alphaType split-steps drop-last-point-if-not-last-segment]
                                                 :or {alphaType :centripetal split-steps true drop-last-point-if-not-last-segment true}}] 
   (let [number-of-segments (- (count points) 3)
         steps-per-segment (if split-steps (floor (/ steps number-of-segments)) steps)
-        increment (/ number-of-segments steps)
+        increment (/ number-of-segments (long steps))
         drop-last-point-if-not-last-segment (get-drop-last-point-if-not-last-segment number-of-segments drop-last-point-if-not-last-segment)
         alpha (if (keyword? alphaType )(case alphaType
                 :uniform 0
-                :centripetal 0.5
+                :centripetal 0.5 
                 :chordal 1.0)
                 alphaType)
         ]
@@ -219,6 +284,60 @@
                             ;;   i
                             ;;   (catmull-rom-spline-segment (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2)) steps-per-segment :alphaType alphaType))
                              ))))
+
+
+(defn catmull-rom-matrix-curve [points steps & {:keys [alphaType]
+                                                :or {alphaType :centripetal }}]
+  
+  (let [number-of-segments (- (count points) 3) 
+        increment (/ number-of-segments (long steps)) 
+        alpha (if (keyword? alphaType) (case alphaType
+                                         :uniform 0
+                                         :centripetal 0.5
+                                         :chordal 1.0)
+                  alphaType)]
+    (into []  (for [index (range 0 (+ increment number-of-segments) increment)
+                    :let [i (if (< index number-of-segments) (inc (floor index)) number-of-segments)
+                          t (if (< index number-of-segments) (- index (floor index)) 1.0)]]
+
+                (catmull-rom-matrix-point (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2))  t alpha) 
+                ))
+    
+    ))
+
+(defn catmull-rom-deriv-curve [points steps & {:keys [alphaType]
+                                                :or {alphaType :centripetal}}]
+
+  (let [number-of-segments (- (count points) 3)
+        increment (/ number-of-segments (long steps))
+        alpha (if (keyword? alphaType) (case alphaType
+                                         :uniform 0
+                                         :centripetal 0.5
+                                         :chordal 1.0)
+                  alphaType)]
+    (into []  (for [index (range 0 (+ increment number-of-segments) increment)
+                    :let [i (if (< index number-of-segments) (inc (floor index)) number-of-segments)
+                          t (if (< index number-of-segments) (- index (floor index)) 1.0)]]
+
+                (catmull-rom-spline-point (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2))  t alpha)))))
+(defn catmull-rom-spline-derivative-curve [points steps &{:keys [alphaType ]
+                                                :or {alphaType :centripetal  }}]
+  (let [number-of-segments (- (count points) 3) 
+        increment (/ number-of-segments (long steps)) 
+        alpha (if (keyword? alphaType) (case alphaType
+                                         :uniform 0
+                                         :centripetal 0.5
+                                         :chordal 1.0)
+                  alphaType)]
+    (into []  (for [index (range 0 (+ increment number-of-segments) increment)
+                    :let [i (if (< index number-of-segments) (inc (floor index)) number-of-segments)
+                          t (if (< index number-of-segments) (- index (floor index)) 1.0)]]
+
+                (catmull-rom-spline-deriv (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2))  t alpha)
+                             ;;  (drop-last-point-if-not-last-segment
+                            ;;   i
+                            ;;   (catmull-rom-spline-segment (nth points (dec i)) (nth points i) (nth points (inc i)) (nth points (+ i 2)) steps-per-segment :alphaType alphaType))
+                ))))
 
 (defn catmull-rom-spline-as-bezier-cubic-point [p1 x y p2 t]
   (let
@@ -250,7 +369,19 @@ increment (/ number-of-segments steps)]
                         (catmull-rom-spline-as-bezier-cubic-point (nth p1 2) (nth x 2) (nth y 2) (nth p2 2) (/ t steps))])))
       ))
     )
-  
+
+  (defn catmull-rom-experiment-code-point [p0 p1 p2 p3 t]
+    (let [t-squared (pow t 2)
+          t-cubed (pow t 3)
+          basis-fn (fn [a b c d] (/ (+ (* a t-cubed) (* b t-squared) (* c t) d) 2))
+          f-zero (basis-fn -1 2 -1 0)
+          f-one (basis-fn 3 -5 0 2)
+          f-two (basis-fn -3 4 1 0)
+          f-three (basis-fn 1 -2 0 1)
+          ]
+      
+      )
+    )
 
 
   ;; (let [x (mapv + p1 (mapv #(/ % 6) (mapv - p2 p0)))

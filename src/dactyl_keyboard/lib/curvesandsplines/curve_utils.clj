@@ -31,6 +31,10 @@
 (defn project-coordinate [coordinate]
   (mul (/ 1 (mget coordinate 3)) coordinate))
 
+(defn project-coordinate-and-drop-weight [coordinate]
+  (vec (drop-last (project-coordinate coordinate)))
+  )
+
 (defn homogenize-single-point [vector weight]
   (conj (mapv (partial * weight) vector) weight)
   )

@@ -20,6 +20,7 @@
                  [net.mikera/vectorz-clj "0.48.0"]
                  [org.clojure/spec.alpha "0.3.218"]
                  [org.clojure/test.check "1.1.1"]
+                 [expresso "0.2.4"]
                  ;[org.clojars.janherich/chisel "0.1.0-SNAPSHOT"]
                  ;[sicmutils "0.22.0"]
                  ]

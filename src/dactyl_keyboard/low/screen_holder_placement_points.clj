@@ -20,13 +20,20 @@
 (def screen-holder-top-right-outside-point (transform-position
                                             (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
                                             (mapv + [(/ post-size -2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
+(def screen-holder-top-right-outside-point-alt (transform-position
+                                            (partial screen-holder-translate-and-place-side (+ (/ (+ screen-holder-height) 2) (/ screen-holder-depth 4)) (/ (+ screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
+                                            (mapv + [(/ post-size -2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
 
 
 
 (def screen-holder-bottom-right-outside-point (transform-position
                                                (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
                                                (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
+(def screen-holder-bottom-right-outside-point-alt (transform-position
+                                               (partial screen-holder-translate-and-place-side (+ (/ (+ screen-holder-height) 2) (/ screen-holder-depth 4)) (/ (- screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
+                                               (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
 (def screen-holder-bottom-right-outside-floor-point (assoc (vec screen-holder-bottom-right-outside-point) 2 0))
+(def screen-holder-bottom-right-outside-floor-point-alt (assoc (vec screen-holder-bottom-right-outside-point-alt ) 2 0))
 
 
 (def screen-holder-top-left-inside-point (transform-position
@@ -52,7 +59,29 @@
 (def screen-holder-bottom-right-inside-point (transform-position
                                               (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
                                               (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
+(def screen-holder-bottom-right-inside-point-alt (transform-position
+                                              (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  (* (- (/ screen-holder-depth 2)) 1.5))
+                                              (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
 
 
-(def screen-holder-bottom-left-inside-floor-point (assoc (vec screen-holder-bottom-left-inside-point) 2 0))
-(def screen-holder-bottom-right-inside-floor-point (assoc (vec screen-holder-bottom-right-inside-point) 2 0))
+(def screen-holder-bottom-left-inside-floor-point (assoc (vec screen-holder-bottom-left-inside-point) 2 0.0))
+(def screen-holder-bottom-right-inside-floor-point (assoc (vec screen-holder-bottom-right-inside-point) 2 0.0))
+
+(def screen-holder-top-mid-outside-point (transform-position
+                                          (partial screen-holder-translate-and-place-side 0 (/ (+ screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
+                                          (mapv + [0 (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
+
+(def screen-holder-top-mid-inside-point (transform-position
+                                         (partial screen-holder-translate-and-place-side 0 (/ (+ screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
+                                         (mapv + [0 (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
+
+(def screen-holder-bottom-mid-outside-point (transform-position
+                                          (partial screen-holder-translate-and-place-side 0 (/ (- screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
+                                          (mapv + [0 (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
+
+(def screen-holder-bottom-mid-inside-point (transform-position
+                                         (partial screen-holder-translate-and-place-side 0 (/ (- screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
+                                         (mapv + [0 (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
+
+(def screen-holder-bottom-mid-outside-floor-point (assoc (vec screen-holder-bottom-mid-outside-point) 2 0.0))
+(def screen-holder-bottom-mid-inside-floor-point (assoc (vec screen-holder-bottom-mid-inside-point) 2 0.0))

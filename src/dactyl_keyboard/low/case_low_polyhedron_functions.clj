@@ -11,8 +11,9 @@
             [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-cubic
                                                                   bezier-cubic-through-control-points bezier-linear bezier-linear-spline bezier-quadratic
                                                                   bezier-quartic bezier-quintic n-degree-bezier-curve]]
-            [dactyl-keyboard.lib.curvesandsplines.curve-fitting :refer [global-curve-interp global-curve-interp-with-end-unit-derivatives-curve
-                                                                        local-cubic-curve-interpolation local-cubic-curve-interpolation-with-calculated-tangents]]
+            [dactyl-keyboard.lib.curvesandsplines.curve-fitting :refer [global-curve-interp global-curve-interp-with-calculated-first-derivatives-curve
+                                                                        global-curve-interp-with-end-unit-derivatives-curve local-cubic-curve-interpolation
+                                                                        local-cubic-curve-interpolation-with-calculated-tangents]]
             [dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline :refer [non-uniform-b-spline nurbs nurbs-with-calculated-knot-vector]]
             [dactyl-keyboard.lib.curvesandsplines.splines :refer [catmull-rom-spline-curve catmull-rom-spline-segment cubic-hermite-tension-spline-curve]]
             [dactyl-keyboard.lib.curvesandsplines.uniform-b-splines :refer [cubic-uniform-b-spline]]
@@ -576,7 +577,7 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
 (defn left-section-to-screen [place dx-orig dy-orig corner rad-or-deg
                               & {:keys [xy offset slant]
                                  :or {xy wall-xy-offset offset [0 0 0] slant :parallel-by-d}}]
-  (assert (or (= corner :bl) (= corner :lm)) "corner must be :bl or :lm")
+  (assert (or (= corner :bl) (= corner :lm) (= corner :bl-lm)) "corner must be :bl, :lm or :bl-lm")
   (let [cardinal (dx-dy-to-cardinal dx-orig dy-orig)
         transform (get-transform-fn rad-or-deg place)
         position (get-position-tps-65 corner)
@@ -594,23 +595,29 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
          dy :dy} (dx-dy-to-tps-65-dx-dy dx-orig dy-orig)
         screen-holder-top-outside (case corner
                                     :lm screen-holder-top-left-outside-point
-                                    :bl screen-holder-top-right-outside-point)
+                                    :bl-lm screen-holder-top-mid-outside-point
+                                    :bl (if (= cardinal :south) screen-holder-top-right-outside-point-alt screen-holder-top-right-outside-point))
         screen-holder-top-inside (case corner
                                    :lm screen-holder-top-left-inside-point
+                                   :bl-lm screen-holder-top-mid-inside-point
                                    :bl screen-holder-top-right-inside-point)
         screen-holder-bottom-outside (case corner
                                        :lm screen-holder-bottom-left-outside-point
-                                       :bl screen-holder-bottom-right-outside-point)
+                                       :bl-lm screen-holder-bottom-mid-outside-point
+                                       :bl (if (= cardinal :south) screen-holder-bottom-right-outside-point-alt screen-holder-bottom-right-outside-point))
         screen-holder-bottom-inside (case corner
                                       :lm screen-holder-bottom-left-inside-point
+                                      :bl-lm screen-holder-bottom-mid-inside-point
                                       :bl screen-holder-bottom-right-inside-point)
         screen-holder-floor-outside (case corner
                                       :lm screen-holder-bottom-left-outside-floor-point
-                                      :bl screen-holder-bottom-right-outside-floor-point)
+                                      :bl-lm screen-holder-bottom-mid-outside-floor-point
+                                      :bl (if (= cardinal :south) screen-holder-bottom-right-outside-floor-point-alt screen-holder-bottom-right-outside-floor-point)
+                                      )
         screen-holder-floor-inside (case corner
                                      :lm screen-holder-bottom-left-inside-floor-point
+                                     :bl-lm screen-holder-bottom-mid-inside-floor-point
                                      :bl screen-holder-bottom-right-inside-floor-point)]
-
     {:opposite-web-post-position-top tps-65-corner-outer-opposite
      :point-on-tangent-from-plate opposite-position-outer
      :web-post-position-top tps-65-corner-outer
@@ -647,7 +654,8 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
           dy :dy} (dx-dy-to-tps-65-dx-dy dx-orig dy-orig)
          wall-locate1-point (transform (mapv + (wall-locate1 dx dy) tps-65-corner-outer))
          corner-translation-vector (get-tps-65-corner-translation-vector corner)
-         corner-translation-vector-inner (mapv + corner-translation-vector [0 0 (- (/ web-thickness 2))])
+         corner-translation-vector-inner (do (println "corner-translation-vector" corner corner-translation-vector)
+                                             (mapv + corner-translation-vector [0 0 (- (/ web-thickness 2))]))
          wall-locate-1-to-3-curve-for-polyhedron-control-point-point (make-point-z-value-not-below-zero (transform (mapv + (wall-locate-1-to-3-curve-for-polyhedron-control-point dx dy corner-translation-vector)  (get-curve-post-outer-x-and-y-vector dx dy))))
          wall-locate-1-to-3-curve-for-polyhedron-second-control-point (make-point-z-value-not-below-zero (transform (mapv + (wall-locate-1-to-3-curve-for-polyhedron-second-control-point dx dy corner-translation-vector xy) (get-curve-post-outer-x-and-y-vector dx dy))))
          wall-locate3-point (make-point-z-value-not-below-zero (transform (mapv + (wall-locate3-for-polyhedron-point dx dy xy corner-translation-vector)  (get-curve-post-outer-x-and-y-vector dx dy))))
@@ -806,10 +814,16 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
                                                    :wall-locate-2-bottom
                                                    :wall-locate-2-bottom-floor])
 
+
+
 (def outer-wall-catmull-rom-spline-parameters 
   [:opposite-web-post-position-top
    :web-post-position-top :wall-locate-1-to-3-curve-for-polyhedron-second-control-point
    :wall-locate3-point :wall-locate3-point-floor :wall-locate3-point-below-floor])
+(def tps-65-to-screen-outer-wall-catmull-rom-spline-parameters
+  [:opposite-web-post-position-top
+   :web-post-position-top :wall-locate-1-to-3-curve-for-polyhedron-second-control-point 
+   :wall-locate3-point-floor :wall-locate3-point-below-floor])
 
 (def inner-wall-catmull-rom-spline-parameters
   [:opposite-web-post-position-bottom
@@ -818,7 +832,13 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
    :wall-locate-2-bottom
    :wall-locate-2-bottom-floor
    :wall-locate-2-bottom-below-floor])
-(defrecord WallVerticalNurbsParameters [control-point-keywords degree weights knot-vector-calculation-style])
+(def tps-65-to-screen-inner-wall-catmull-rom-spline-parameters
+  [:opposite-web-post-position-bottom
+   :web-post-position-bottom
+   :wall-locate-2-top 
+   :wall-locate-2-bottom-floor
+   :wall-locate-2-bottom-below-floor])
+(defrecord WallVerticalNurbsParameters [control-point-keywords degree weights point-paramater-calculation-method knot-vector-generation-method])
 (defrecord WallVerticalNurbsWithKnotVectorParameters [control-point-keywords degree weights knot-vector])
 (defrecord WallVerticalBezierParameters [control-point-keywords])
 
@@ -845,10 +865,11 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
                                                :screen-holder-below-floor-inner]
                                               alpha))
 
-(defn outer-wall-vertical-nurbs-parameters [&{:keys [control-point-keywords degree weights knot-vector-calculation-style]
+(defn outer-wall-vertical-nurbs-parameters [&{:keys [control-point-keywords degree weights point-paramater-calculation-method knot-vector-calculation-method]
                                                 :or {control-point-keywords wall-vertical-outer-nurbs-control-points-keywords
-                                                     degree 3 weights default-weights-for-vertical-nurbs knot-vector-calculation-style :centripetal}}]
-  (WallVerticalNurbsParameters. control-point-keywords degree weights knot-vector-calculation-style)
+                                                     degree 3 weights default-weights-for-vertical-nurbs point-paramater-calculation-method :chordal
+                                                     knot-vector-calculation-method :average}}]
+  (WallVerticalNurbsParameters. control-point-keywords degree weights point-paramater-calculation-method knot-vector-calculation-method)
   )
 (defn outer-wall-vertical-nurbs-with-knot-vector-parameters [knot-vector & {:keys [control-point-keywords degree weights]
                                                :or {control-point-keywords wall-vertical-outer-nurbs-control-points-keywords
@@ -874,7 +895,7 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
   [all-control-points vertical-wall-parameters steps]
   (nurbs-with-calculated-knot-vector (select-values all-control-points (:control-point-keywords vertical-wall-parameters)) 
                                      (:degree vertical-wall-parameters) (:weights vertical-wall-parameters) steps 
-                                     :style (:knot-vector-calculation-style vertical-wall-parameters))
+                                     :knot-vector-calculation-method (::knot-vector-calculation-method vertical-wall-parameters))
   )
 
 (defmethod vertical-wall-points [clojure.lang.PersistentHashMap  WallVerticalNurbsWithKnotVectorParameters Long]
@@ -932,23 +953,30 @@ opposite-web-corner-translation-vector (get-single-plate-corner-position-vector 
     )
   )
 
-
+(comment (range 10.0))
 (defn tps-to-screen-side-catmull [tps-65-point-opposite tps-65-point top-point bottom-point floor-point below-floor-point steps & {:keys [alphaType] :or {alphaType :centripetal}}]
-  (let [floor-to-bottom  (mapv - bottom-point floor-point)
+  (let [half-steps (/ steps 2)
+        floor-to-bottom  (mapv - bottom-point floor-point)
         bottom-to-top (mapv - top-point bottom-point)
         top-to-tps (mapv - tps-65-point bottom-point)
         floor-to-bottom-length (magnitude floor-to-bottom)
         bottom-to-top-length (magnitude bottom-to-top)
         top-to-tps-65-length (magnitude top-to-tps)
-        total (+ floor-to-bottom-length bottom-to-top-length top-to-tps-65-length)
-        steps-increment (/ steps total)
+        total (+ floor-to-bottom-length bottom-to-top-length)
+        steps-increment (/ half-steps total)
         bottom-to-top-steps (floor (* steps-increment bottom-to-top-length))
-        floor-to-bottom-steps (ceil (* steps-increment floor-to-bottom-length))
-        top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
-    (println "bottom-to-top-steps " bottom-to-top-steps "floor-to")
-    (vec (concat (drop-last (catmull-rom-spline-curve [tps-65-point-opposite tps-65-point top-point bottom-point ] top-to-tps-steps :alphaType alphaType)) 
-          (drop-last (catmull-rom-spline-curve [tps-65-point top-point bottom-point floor-point] bottom-to-top-steps :alphaType alphaType))
-                 (catmull-rom-spline-curve [top-point bottom-point floor-point below-floor-point] floor-to-bottom-steps :alphaType alphaType)))))
+        floor-to-bottom-steps (inc (floor (* steps-increment floor-to-bottom-length)))
+        top-to-tps-steps half-steps
+        top-to-tps-curve (drop-last (catmull-rom-spline-curve [tps-65-point-opposite tps-65-point top-point bottom-point] top-to-tps-steps :alphaType alphaType))
+        bottom-to-top (drop-last (catmull-rom-spline-curve [tps-65-point top-point bottom-point floor-point] bottom-to-top-steps :alphaType alphaType))
+        floor-to-bottom-curve (catmull-rom-spline-curve [top-point bottom-point floor-point below-floor-point] floor-to-bottom-steps :alphaType alphaType)
+        curve (vec (concat top-to-tps-curve
+                     bottom-to-top
+                     floor-to-bottom-curve))]
+    (println "bottom-to-top-steps " bottom-to-top-steps "floor-to" floor-to-bottom-steps "top-to " top-to-tps-steps  "total-steps" (+ bottom-to-top-steps floor-to-bottom-steps  top-to-tps-steps)
+             "bottom-to-top " (count bottom-to-top)"floor-to-bottom-curve" (count floor-to-bottom-curve) "top-to-tps-curve" (count top-to-tps-curve)
+             "curve " (count curve))
+    curve))
 (comment 
   (let  [steps 30
          [tps-65-point-opposite tps-65-point top-point bottom-point floor-point below-floor-point] [tps-65-mid-right-outer tps-65-mid-left-outer screen-holder-top-left-outside-point screen-holder-bottom-left-outside-point screen-holder-bottom-left-outside-floor-point]
@@ -967,6 +995,40 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
     (println "bottom-to-top-steps " bottom-to-top-steps " floor-to-bottom-steps " floor-to-bottom-steps "top-to-tps-steps" top-to-tps-steps)
     (+ bottom-to-top-steps floor-to-bottom-steps top-to-tps-steps)
     ))
+
+(defn tps-to-screen-side-global-with-first-derivatives-outer-curve [control-points steps & {:keys [degree point-paramater-calculation-method magnitude-estimation-method]
+                                                                                       :or {degree 2 point-paramater-calculation-method :dynamic-centripetal magnitude-estimation-method :arc}}]
+  (global-curve-interp-with-calculated-first-derivatives-curve
+   [(:web-post-position-top control-points)
+    (:wall-locate-1-to-3-curve-for-polyhedron-second-control-point control-points)
+    (:wall-locate3-point control-points)
+    (:wall-locate3-point-floor control-points)]
+
+   [(mapv - (:web-post-position-top control-points) (:opposite-web-post-position-top control-points))
+    (mapv - (:wall-locate3-point control-points) (:wall-locate-1-to-3-curve-for-polyhedron-second-control-point control-points))
+    (mapv -  (:wall-locate3-point-floor control-points)  (:wall-locate3-point control-points))
+    (mapv - (:wall-locate3-point-below-floor control-points) (:wall-locate3-point-floor control-points))]
+   degree
+   steps
+   :magnitude-estimation-method magnitude-estimation-method
+   :point-paramater-calculation-method point-paramater-calculation-method))
+
+(defn tps-to-screen-side-global-with-first-derivatives-inner-curve [control-points steps & {:keys [degree point-paramater-calculation-method magnitude-estimation-method]
+                                                                                            :or {degree 2 point-paramater-calculation-method :dynamic-centripetal magnitude-estimation-method :arc}}]
+  (global-curve-interp-with-calculated-first-derivatives-curve
+   [(:web-post-position-bottom control-points)
+    (:wall-locate-2-top control-points)
+    (:wall-locate-2-bottom control-points)
+    (:wall-locate-2-bottom-floor control-points)]
+
+   [(mapv - (:web-post-position-bottom control-points) (:opposite-web-post-position-bottom control-points))
+    (mapv - (:wall-locate-2-bottom control-points) (:wall-locate-2-top control-points))
+    (mapv -  (:wall-locate-2-bottom-floor control-points)  (:wall-locate-2-bottom control-points))
+    (mapv - (:wall-locate-2-bottom-below-floor control-points) (:wall-locate-2-bottom-floor control-points))]
+   degree
+   steps
+   :magnitude-estimation-method magnitude-estimation-method
+   :point-paramater-calculation-method point-paramater-calculation-method))
 
 (defmethod vertical-wall-points [clojure.lang.PersistentHashMap WallVerticalLeftSectionToScreenParameters Long]
   vertical-wall-bezier
@@ -991,9 +1053,9 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
 (defmethod vertical-curve-from-horizontal-control-points [WallVerticalNurbsParameters] [control-points vertical-wall-parameter wall-cross-section-steps]
   (let [degree (:degree vertical-wall-parameter)
         weights (:weights vertical-wall-parameter)
-        knot-vector-calculation-style (:knot-vector-calculation-style vertical-wall-parameter)] 
+        knot-vector-calculation-method (:knot-vector-calculation-method vertical-wall-parameter)] 
       (nurbs-with-calculated-knot-vector control-points degree weights wall-cross-section-steps
-                                         :style knot-vector-calculation-style)
+                                          :knot-vector-calculation-method knot-vector-calculation-method)
       )
   )
 
@@ -1026,6 +1088,8 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
     ;;               (catmull-rom-spline-curve [top-point bottom-point floor-point below-floor-point] floor-to-bottom-steps :alphaType alpha)))
   (catmull-rom-spline-curve control-points wall-cross-section-steps :alphaType alpha)
     ))
+
+
 (defn wall-from-horizontal-control-curves [control-curves vertical-wall-parameters wall-cross-section-steps wall-section-steps total-wall-section-steps] 
   (let [vertical-wall-parameters-divisor (/ total-wall-section-steps (count vertical-wall-parameters))]
     (vec (for [index (range (inc total-wall-section-steps))
@@ -1092,23 +1156,57 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
 (defn wall-section-parameter [wall-cross-section-parameters curve-parameters 
                               &{:keys [steps-distrubution calculation-order] :or {steps-distrubution :per-segment calculation-order :horizontal-first}}]
   (WallSectionParameter. wall-cross-section-parameters curve-parameters steps-distrubution calculation-order))
-(defrecord GlobalCurveInterpolationParameters [degree  point-paramater-calculation-method linear-outer-top linear-inner-top])
+(defrecord GlobalCurveInterpolationParameters [degree  point-paramater-calculation-method knot-vector-generation-method linear-outer-top linear-inner-top])
 
-(defn global-curve-interpolation-parameters [degree &{:keys [point-paramater-calculation-method linear-outer-top linear-inner-top] 
-                                                      :or {point-paramater-calculation-method :centripetal linear-outer-top false linear-inner-top false}}]
-  (GlobalCurveInterpolationParameters. degree point-paramater-calculation-method linear-outer-top linear-inner-top)
+(defn global-curve-interpolation-parameters [degree &{:keys [point-paramater-calculation-method knot-vector-generation-method linear-outer-top linear-inner-top] 
+                                                      :or {point-paramater-calculation-method :chordal knot-vector-generation-method :average
+                                                           linear-outer-top false linear-inner-top false}}]
+  (GlobalCurveInterpolationParameters. degree point-paramater-calculation-method knot-vector-generation-method linear-outer-top linear-inner-top)
   )
 
 (defrecord GlobalCurveInterpolationWithEndDerivativesParameters [degree tangent-endpoint-zero-wall-cross-section-parameter
-                                                                 tangent-endpoint-n-wall-cross-section-parameter 
-                                                            point-paramater-calculation-method linear-outer-top linear-inner-top])
+                                                                 tangent-endpoint-n-wall-cross-section-parameter
+                                                                 point-paramater-calculation-method knot-vector-generation-method
+                                                                 magnitude-estimation-method
+                                                                 linear-outer-top linear-inner-top])
 
 (defn global-curve-interpolation-with-end-derivatives-parameters [degree tangent-endpoint-zero-wall-cross-section-parameter
-                                                                  tangent-endpoint-n-wall-cross-section-parameter
-                                                                  & {:keys [point-paramater-calculation-method linear-outer-top linear-inner-top]
-                                                       :or {point-paramater-calculation-method :centripetal linear-outer-top false linear-inner-top false}}]
-  (GlobalCurveInterpolationWithEndDerivativesParameters. degree tangent-endpoint-zero-wall-cross-section-parameter
-                                                         tangent-endpoint-n-wall-cross-section-parameter point-paramater-calculation-method linear-outer-top linear-inner-top))
+                                                                  tangent-endpoint-n-wall-cross-section-parameter 
+                                                                  &{:keys [point-paramater-calculation-method knot-vector-generation-method
+                                                                            magnitude-estimation-method linear-outer-top linear-inner-top]
+                                                       :or {point-paramater-calculation-method :chordal knot-vector-generation-method :average
+                                                            magnitude-estimation-method :arc
+                                                            linear-outer-top false linear-inner-top false}}]
+  (println "global-curve-interpolation-with-end-derivatives-parameter magnitude-estimation-method" magnitude-estimation-method)
+  (let [rec (GlobalCurveInterpolationWithEndDerivativesParameters. degree tangent-endpoint-zero-wall-cross-section-parameter
+                                                                   tangent-endpoint-n-wall-cross-section-parameter point-paramater-calculation-method
+                                                                   knot-vector-generation-method magnitude-estimation-method linear-outer-top linear-inner-top)]
+    (println "rec " (:magnitude-estimation-method rec))
+    rec))
+
+(defrecord WallCrossSectionTangentParameter [end-point-wall-cross-section-parameter start-point-wall-cross-section-parameter])
+(defn wall-cross-section-tangent-parameter [end-point-wall-cross-section-parameter start-point-wall-cross-section-parameter] (WallCrossSectionTangentParameter. end-point-wall-cross-section-parameter start-point-wall-cross-section-parameter))
+
+(defn wall-cross-section-tangent-vector [wall-cross-section-tangent-vector-parameter wall-cross-section-steps]
+  (let [wall-cross-sections-tangent-parameters-start (:start-point-wall-cross-section-parameter wall-cross-section-tangent-vector-parameter) 
+        wall-cross-sections-tangent-parameters-end (:end-point-wall-cross-section-parameter wall-cross-section-tangent-vector-parameter)
+        wall-cross-section-tangent-vector-start (wall-cross-section wall-cross-sections-tangent-parameters-start wall-cross-section-steps)
+        wall-cross-section-tangent-vector-end (wall-cross-section wall-cross-sections-tangent-parameters-end wall-cross-section-steps)
+        wall-cross-section-tangent-vectors-outer (mapv #(mapv - %1 %2)  (:points (:outer-wall-curve wall-cross-section-tangent-vector-end)) (:points (:outer-wall-curve wall-cross-section-tangent-vector-start)))
+        ;tangent-direciton reversed for inner points as will be computed in the reverse horizontal directin to the outer
+        wall-cross-section-tangent-vectors-inner (mapv #(mapv - %1 %2)   (:points (:inner-wall-curve wall-cross-section-tangent-vector-start)) (:points (:inner-wall-curve wall-cross-section-tangent-vector-end)))]
+    (println "(:points (:outer-curve wall-cross-section-tangent-vector-end))" (:points (:outer-wall-curve wall-cross-section-tangent-vector-end)))
+    {:wall-cross-section-tangent-vectors-outer wall-cross-section-tangent-vectors-outer :wall-cross-section-tangent-vectors-inner wall-cross-section-tangent-vectors-inner}))
+
+(defn wall-cross-section-tangent-vectors-for-wall-section [wall-cross-section-tangent-parameters wall-cross-section-steps]
+  (let [wall-cross-section-tangent-vectors (mapv #(wall-cross-section-tangent-vector %  wall-cross-section-steps) wall-cross-section-tangent-parameters)]
+    wall-cross-section-tangent-vectors) 
+  )
+(defrecord GlobalCurveInterpolationWithCalculatedFirstDerivativesParameters [tangent-vectors-start-and-endpoint-cross-section-parameters degree point-paramater-calculation-method magnitude-estimation-method] )
+
+(defn global-curve-interp-with-first-derivatives-parameters [tangent-vectors-start-and-endpoint-cross-section-parameters degree &{ :keys [point-paramater-calculation-method magnitude-estimation-method]
+                                                                                      :or {point-paramater-calculation-method :chordal magnitude-estimation-method :arc}}]
+(GlobalCurveInterpolationWithCalculatedFirstDerivativesParameters. tangent-vectors-start-and-endpoint-cross-section-parameters degree  point-paramater-calculation-method magnitude-estimation-method))
 (defrecord LocalCubicCurveInterpolationWithCalculatedTangentParameters [corner-preservation key-corner-style linear-outer-top linear-inner-top])
 
 (defn local-cubic-curve-interpolation-with-calculated-tangents-parameter [&{:keys [key-corner-style corner-preservation linear-outer-top linear-inner-top] 
@@ -1227,9 +1325,72 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
         inner-wall (wall-from-horizontal-control-curves inner-wall-horizontal-curves (into [tangent-zero-endpoint-inner-wall-parameter] (conj inner-wall-parameters tangent-n-endpoint-inner-wall-parameter)) wall-cross-section-steps wall-section-steps total-wall-section-steps)]
     {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (peek outer-wall) :inner-floor-points (peek inner-wall)}))
 
+(defn wall-cross-section-tangent-vectors-for-horizontal-first-wall-section [wall-cross-section-tangent-vector-parameters ]
+  (let [wall-cross-sections-tangent-parameters-start (mapv #(:start-point-wall-cross-section-parameter %) wall-cross-section-tangent-vector-parameters)
+        wall-cross-sections-tangent-parameters-end (mapv #(:end-point-wall-cross-section-parameter %) wall-cross-section-tangent-vector-parameters)
+        wall-cross-sections-tangent-parameters-start-wall-position (reverse (mapv #(:wall-position %) wall-cross-sections-tangent-parameters-start))
+        wall-cross-sections-tangent-parameters-end-wall-position (reverse (mapv #(:wall-position %) wall-cross-sections-tangent-parameters-end))
+        wall-cross-sections-tangent-parameters-start-control-points-all (mapv #(calculate-control-points %) wall-cross-sections-tangent-parameters-start-wall-position)
+        wall-cross-sections-tangent-parameters-end-control-points-all (mapv #(calculate-control-points %) wall-cross-sections-tangent-parameters-end-wall-position)
+        outer-wall-cross-sections-tangent-parameters-start (reverse (mapv #(:outer-wall-parameters %) wall-cross-sections-tangent-parameters-start))
+        inner-wall-cross-sections-tangent-parameters-start (reverse (mapv #(:inner-wall-parameters %) wall-cross-sections-tangent-parameters-start))
+        outer-wall-cross-sections-tangent-parameters-end (reverse (mapv #(:outer-wall-parameters %) wall-cross-sections-tangent-parameters-end))
+        inner-wall-cross-sections-tangent-parameters-end (reverse (mapv #(:inner-wall-parameters %) wall-cross-sections-tangent-parameters-end))
+        outer-wall-cross-sections-tangent-parameters-start-keywords (mapv #(:control-point-keywords %) outer-wall-cross-sections-tangent-parameters-start)
+        inner-wall-cross-sections-tangent-parameters-start-keywords (mapv #(:control-point-keywords %) inner-wall-cross-sections-tangent-parameters-start)
+        outer-wall-cross-sections-tangent-parameters-end-keywords (mapv #(:control-point-keywords %) outer-wall-cross-sections-tangent-parameters-end)
+        inner-wall-cross-sections-tangent-parameters-end-keywords (mapv #(:control-point-keywords %) inner-wall-cross-sections-tangent-parameters-end)
+        outer-wall-cross-sections-tangent-parameters-start-control-points (vec (map-indexed (fn [index element]
+                                                                                        (get-curve-control-points-by-key-words element (nth outer-wall-cross-sections-tangent-parameters-start-keywords index))) wall-cross-sections-tangent-parameters-start-control-points-all))
+        outer-wall-cross-sections-tangent-parameters-end-control-points (vec (map-indexed (fn [index element]
+                                                                                        (get-curve-control-points-by-key-words element (nth outer-wall-cross-sections-tangent-parameters-end-keywords index))) wall-cross-sections-tangent-parameters-end-control-points-all))
+        inner-wall-cross-sections-tangent-parameters-start-control-points (vec (map-indexed (fn [index element]
+                                                                   (get-curve-control-points-by-key-words element (nth inner-wall-cross-sections-tangent-parameters-start-keywords index))) wall-cross-sections-tangent-parameters-start-control-points-all))
+        inner-wall-cross-sections-tangent-parameters-end-control-points (vec (map-indexed (fn [index element]
+                                                                   (get-curve-control-points-by-key-words element (nth inner-wall-cross-sections-tangent-parameters-end-keywords index))) wall-cross-sections-tangent-parameters-end-control-points-all))
+        outer-wall-cross-section-tangent-vectors (for [i (range (count outer-wall-cross-sections-tangent-parameters-start-control-points))]
+                                                   (for [j (range (count (peek outer-wall-cross-sections-tangent-parameters-start-control-points)))]
+                                                     (mapv - (get-in outer-wall-cross-sections-tangent-parameters-start-control-points [i j]) (get-in outer-wall-cross-sections-tangent-parameters-end-control-points [i j]))
+                                                     )
+                                                   )
+        inner-wall-cross-section-tangent-vectors (for [i (range (count outer-wall-cross-sections-tangent-parameters-start-control-points))]
+                                                   (for [j (range (count (peek outer-wall-cross-sections-tangent-parameters-start-control-points)))]
+                                                     (mapv -  (get-in inner-wall-cross-sections-tangent-parameters-start-control-points [i j]) (get-in inner-wall-cross-sections-tangent-parameters-end-control-points [i j]) ))) 
+        ]
+        (println "outer-wall-cross-sections-tangent-parameters-start-control-points " outer-wall-cross-sections-tangent-parameters-start-control-points)
+        (println "outer-wall-cross-sections-tangent-parameters-start-keywords" outer-wall-cross-sections-tangent-parameters-start-keywords) 
+        (println "wall-cross-sections-tangent-parameters-start" wall-cross-sections-tangent-parameters-start)
+        (println "wall-cross-sections-tangent-parameters-start-wall-position" wall-cross-sections-tangent-parameters-start-wall-position)
+        (println "wall-cross-sections-tangent-parameters-start-control-points-all" wall-cross-sections-tangent-parameters-start-control-points-all)
+        (println "outer-wall-cross-sections-tangent-parameters-start" outer-wall-cross-sections-tangent-parameters-start)
+        {:outer-wall-cross-section-tangent-vectors outer-wall-cross-section-tangent-vectors :inner-wall-cross-section-tangent-vectors (reverse inner-wall-cross-section-tangent-vectors)}
+        )
+  )
+
+
+(defn horizontal-first-outer-and-inner-walls-with-tangent-vectors [wall-cross-section-parameters tangent-wall-cross-section-parameters outer-wall-curves-fn inner-wall-curves-fn wall-cross-section-steps wall-section-steps total-wall-section-steps]
+(println "horizontal-first-outer-and-inner-walls-with-tangent-vectors tangent-wall-cross-section-parameters" (:end-point-wall-cross-section-parameter (first tangent-wall-cross-section-parameters)))
+  (let [outer-wall-parameters (reverse (mapv #(:outer-wall-parameters %) wall-cross-section-parameters))
+outer-curve-keywords  (mapv #(:control-point-keywords %) outer-wall-parameters)
+inner-wall-parameters (reverse (mapv #(:inner-wall-parameters %) wall-cross-section-parameters))
+inner-curve-keywords   (mapv #(reverse (:control-point-keywords %)) inner-wall-parameters)
+wall-positions (reverse (mapv #(:wall-position %) wall-cross-section-parameters))
+all-control-points-coll (mapv #(calculate-control-points %) wall-positions)
+outer-wall-horizontal-curves-control-points (map-indexed (fn [index element]
+                                                           (get-curve-control-points-by-key-words element (nth outer-curve-keywords index))) all-control-points-coll)
+inner-wall-horizontal-curves-control-points (map-indexed (fn [index element]
+                                                           (get-curve-control-points-by-key-words element (nth inner-curve-keywords index))) all-control-points-coll)
+      {outer-wall-cross-section-tangent-vectors :outer-wall-cross-section-tangent-vectors
+       inner-wall-cross-section-tangent-vectors :inner-wall-cross-section-tangent-vectors} (wall-cross-section-tangent-vectors-for-horizontal-first-wall-section tangent-wall-cross-section-parameters)
+      outer-wall-horizontal-curves (outer-wall-curves-fn outer-wall-horizontal-curves-control-points outer-wall-cross-section-tangent-vectors)
+      inner-wall-horizontal-curves (inner-wall-curves-fn inner-wall-horizontal-curves-control-points inner-wall-cross-section-tangent-vectors)
+      outer-wall (wall-from-horizontal-control-curves outer-wall-horizontal-curves outer-wall-parameters wall-cross-section-steps wall-section-steps total-wall-section-steps)
+inner-wall (wall-from-horizontal-control-curves inner-wall-horizontal-curves inner-wall-parameters wall-cross-section-steps wall-section-steps total-wall-section-steps)]
+  {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (peek outer-wall) :inner-floor-points (peek inner-wall)})
+  )
 (defn horizontal-first-outer-and-inner-walls-with-tangents [wall-cross-section-parameters tangent-wall-cross-section-parameters outer-wall-curves-fn inner-wall-curves-fn wall-cross-section-steps wall-section-steps total-wall-section-steps]
   (let [outer-wall-parameters (mapv #(:outer-wall-parameters %) wall-cross-section-parameters)
-        outer-tangent-parameters (mapv #(:outer-wall-parameters %) tangent-wall-cross-section-parameters)
+        outer-tangent-parameters (mapv #(:outer-wall-parameters %) tangent-wall-cross-section-parameters) 
         outer-curve-keywords (mapv #(:control-point-keywords %) outer-wall-parameters)
         outer-tangent-keywords (mapv #(:control-point-keywords %) outer-tangent-parameters)
         inner-wall-parameters (mapv #(:inner-wall-parameters %) wall-cross-section-parameters)
@@ -1357,28 +1518,31 @@ steps-distrubution wall-cross-section-steps wall-section-steps]
           linear-inner-top :linear-inner-top
           tangent-endpoint-zero-wall-cross-section-parameter  :tangent-endpoint-zero-wall-cross-section-parameter
           tangent-endpoint-n-wall-cross-section-parameter  :tangent-endpoint-n-wall-cross-section-parameter
-          point-paramater-calculation-method :point-paramater-calculation-method} curve-parameters
+          point-paramater-calculation-method :point-paramater-calculation-method
+          knot-vector-generation-method :knot-vector-generation-method
+          magnitude-estimation-method :magnitude-estimation-method
+          degree :degree} curve-parameters
         cross-sections (mapv #(wall-cross-section % wall-cross-section-steps)
                              wall-cross-section-parameters)
         tangent-endpoint-zero-wall-cross-section (wall-cross-section tangent-endpoint-zero-wall-cross-section-parameter wall-cross-section-steps)
         tangent-endpoint-n-wall-cross-section (wall-cross-section tangent-endpoint-n-wall-cross-section-parameter wall-cross-section-steps)
-        degree (:degree curve-parameters)
-        segments (- n degree)
+        segments (- (+ n 3) degree)
         total-wall-section-steps (if (= steps-distrubution :per-segment) (* wall-section-steps segments)
                                      wall-section-steps)
         global-curve-interp-fn (fn [Q] (global-curve-interp Q degree :point-paramater-calculation-method (:point-paramater-calculation-method curve-parameters)))
-        curve-fn (fn [control-points tangent-endpoint-zero tangent-endpoint-n] (global-curve-interp-with-end-unit-derivatives-curve control-points degree 
-                                                                                                                                    tangent-endpoint-zero tangent-endpoint-n 
-                                                                                                                                    total-wall-section-steps
-                                                                                                                                    :point-paramater-calculation-method 
-                                                                                                                                    point-paramater-calculation-method))
+        curve-fn (fn [control-points tangent-endpoint-zero tangent-endpoint-n]
+                   (println "curve-fn magnitude-estimation-method" magnitude-estimation-method)
+                   (global-curve-interp-with-end-unit-derivatives-curve control-points degree tangent-endpoint-zero tangent-endpoint-n
+                                                                        total-wall-section-steps :point-paramater-calculation-method point-paramater-calculation-method
+                                                                        :knot-vector-generation-method knot-vector-generation-method
+                                                                        :magnitude-estimation-method magnitude-estimation-method))
         global-interpolation-curve-fn (fn [cross-section-points tangent-endpoint-zero-wall-cross-section-points
                                            tangent-endpoint-n-wall-cross-section-points]
-                                             (for [index (range (inc wall-cross-section-steps))
+                                             (vec (for [index (range (inc wall-cross-section-steps))
                                                    :let [Q (mapv #(nth % index) cross-section-points)
                                                          tangent-endpoint-zero (nth tangent-endpoint-zero-wall-cross-section-points index)
                                                          tangent-endpoint-n (nth tangent-endpoint-n-wall-cross-section-points index)]]
-                                               (curve-fn Q tangent-endpoint-zero tangent-endpoint-n))) 
+                                               (curve-fn Q tangent-endpoint-zero tangent-endpoint-n)))) 
        
         vertical-first-fn (fn []
                             (let [outer-wall-cross-section-points (mapv #(:points (:outer-wall-curve %)) cross-sections)
@@ -1425,22 +1589,28 @@ steps-distrubution wall-cross-section-steps wall-section-steps]
           (write-scad
           (include "../BOSL2/std.scad")
            key-holes 
-           (union (let [curve-paramater (global-curve-interpolation-with-end-derivatives-parameters 3 (wall-cross-section-parameter (key-wall-position lastcol 2 1 -1 :br))
-                                                                                               (wall-cross-section-parameter (key-wall-position lastcol 0 1 1 :tr))  :linear-outer-top true :linear-inner-top true) 
+           (union (let [curve-paramater (global-curve-interpolation-with-end-derivatives-parameters 2 (wall-cross-section-parameter (key-wall-position lastcol 2 1 -1 :br))
+                                                                                               (wall-cross-section-parameter (key-wall-position lastcol 0 1 1 :tr))
+                                                                                                    :point-paramater-calculation-method :chordal
+                                                                                                    :magnitude-estimation-method :arc
+                                                                                                    ;  :linear-outer-top true :linear-inner-top true
+                                                                                                    ) 
                         wall-section-parameter (wall-section-parameter 
                                        [(wall-cross-section-parameter (key-wall-position lastcol 2 1 0 :br))
                                         (wall-cross-section-parameter (key-wall-position lastcol 2 1 0 :tr))
                                         (wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :br))
                                         (wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :tr))
                                         (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :br))
-                                        (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :tr))
+                                        (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :tr)) 
                                         ]
-                                        curve-paramater :calculation-order) 
+                                        curve-paramater; :calculation-order
+                                                ) 
                wall-cross-section-steps 60 
                wall-section-steps 60
                wall-cross-section-parameters (:wall-cross-section-parameters wall-section-parameter)
                steps-distrubution (:steps-distrubution wall-section-parameter)
                curve-parameters (:curve-parameters wall-section-parameter)]
+                    (println "test magnitude-estimation-method" (:magnitude-estimation-method curve-paramater))
            (vnf-polyhedron (wall-vnf (wall-section wall-section-parameter  wall-cross-section-steps wall-section-steps)
             {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default}))))))
          )
@@ -1454,6 +1624,107 @@ steps-distrubution  wall-cross-section-steps wall-section-steps]
    (global-curve-interp-with-end-derivatives-wall-section wall-section-parameter wall-cross-section-parameters curve-parameters
 steps-distrubution  wall-cross-section-steps wall-section-steps)
   )
+
+(defn global-curve-interp-with-first-derivatives-wall-section [wall-section-parameter wall-cross-section-parameters curve-parameters
+                                                             steps-distrubution wall-cross-section-steps wall-section-steps]
+  (let [n (dec (count (:wall-cross-section-parameters wall-section-parameter)))
+        {linear-outer-top :linear-outer-top
+         linear-inner-top :linear-inner-top 
+         point-paramater-calculation-method :point-paramater-calculation-method 
+         magnitude-estimation-method :magnitude-estimation-method
+         tangent-vectors-start-and-endpoint-cross-section-parameters :tangent-vectors-start-and-endpoint-cross-section-parameters 
+         degree :degree} curve-parameters
+        cross-sections (mapv #(wall-cross-section % wall-cross-section-steps)
+                             wall-cross-section-parameters)
+        ;tangent-vector-cross-section (mapv tangent-vector-cross-section-fn tangent-vectors-start-and-endpoint-cross-section-parameters) 
+        segments (+ (- (* 2 n) degree) 2)
+        total-wall-section-steps (if (= steps-distrubution :per-segment) (* wall-section-steps segments)
+                                     wall-section-steps)
+        global-curve-interp-fn (fn [Q] (global-curve-interp Q degree :point-paramater-calculation-method (:point-paramater-calculation-method curve-parameters)))
+        curve-fn (fn [control-points  tangent-vectors]
+                   (global-curve-interp-with-calculated-first-derivatives-curve control-points tangent-vectors degree 
+                                                                        total-wall-section-steps :point-paramater-calculation-method point-paramater-calculation-method 
+                                                                        :magnitude-estimation-method magnitude-estimation-method))
+        global-interpolation-curve-fn (fn [cross-section-points tangent-vector-cross-section]
+                                        
+                                        (vec (for [index (range (inc wall-cross-section-steps))
+                                              :let [Q (mapv #(nth % index) cross-section-points)
+                                                    tangent-vectors (mapv #(nth % index) tangent-vector-cross-section) ]] 
+                                           (curve-fn Q tangent-vectors))))
+
+        vertical-first-fn (fn []
+                            (let [outer-wall-cross-section-points (mapv #(:points (:outer-wall-curve %)) cross-sections)
+                                  inner-wall-cross-section-points  (reverse (mapv #(:points (:inner-wall-curve %)) cross-sections))
+                                  wall-cross-section-tangent-vectors (wall-cross-section-tangent-vectors-for-wall-section tangent-vectors-start-and-endpoint-cross-section-parameters wall-cross-section-steps)
+                                  outer-tangent-vector-cross-section-points (mapv #(:wall-cross-section-tangent-vectors-outer %) wall-cross-section-tangent-vectors)
+                                  inner-tangent-vector-cross-section-points (reverse (mapv #(:wall-cross-section-tangent-vectors-inner %) wall-cross-section-tangent-vectors))
+
+                                  outer-wall (global-interpolation-curve-fn outer-wall-cross-section-points outer-tangent-vector-cross-section-points)
+                                  inner-wall (global-interpolation-curve-fn inner-wall-cross-section-points inner-tangent-vector-cross-section-points)]
+                              {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (peek outer-wall) :inner-floor-points (peek inner-wall)}))
+        horizontal-first-fn (fn []
+                              (let [outer-wall-curves-fn  (fn [outer-wall-horizontal-curves-control-points tangent-vectors-for-wall-section]
+                                                            (for [index (range (count (nth outer-wall-horizontal-curves-control-points 0)))
+                                                                  :let [points (mapv  #(nth % index) outer-wall-horizontal-curves-control-points)
+                                                                        tangent-vectors (mapv #(nth % index) tangent-vectors-for-wall-section)]]
+                                                              (if (and (zero? index) linear-outer-top) (bezier-linear-spline points total-wall-section-steps)
+                                                                  (curve-fn points tangent-vectors))))
+                                    inner-wall-curves-fn (fn [inner-wall-horizontal-curves-control-points tangent-vectors-for-wall-section]
+                                                           (for [index (range (count (nth inner-wall-horizontal-curves-control-points 0)))
+                                                                 :let [points  (mapv  #(nth % index) inner-wall-horizontal-curves-control-points) 
+                                                                       tangent-vectors (mapv #(nth % index) tangent-vectors-for-wall-section)]]
+                                                             (if (and (= (dec (count (nth inner-wall-horizontal-curves-control-points 0))) index) linear-inner-top)
+                                                               (bezier-linear-spline points total-wall-section-steps)
+                                                               (curve-fn points tangent-vectors))))]
+                                (horizontal-first-outer-and-inner-walls-with-tangent-vectors wall-cross-section-parameters tangent-vectors-start-and-endpoint-cross-section-parameters
+                                                                                   outer-wall-curves-fn inner-wall-curves-fn wall-cross-section-steps wall-section-steps total-wall-section-steps)))
+        calculation-order (:calculation-order wall-section-parameter)
+        walls (cond (= calculation-order :vertical-first) (vertical-first-fn)
+                    (= calculation-order :horizontal-first) (horizontal-first-fn))
+        {outer-wall :outer-wall
+         inner-wall :inner-wall
+         outer-floor-points :outer-floor-points
+         inner-floor-points :inner-floor-points} walls
+        combined-wall (vec (concat inner-wall outer-wall))]
+    (WallSection. cross-sections outer-wall inner-wall combined-wall outer-floor-points inner-floor-points)))
+
+(defmethod create-wall-section [WallSectionParameter GlobalCurveInterpolationWithCalculatedFirstDerivativesParameters]
+  [wall-section-parameter wall-cross-section-parameters curve-parameters
+   steps-distrubution  wall-cross-section-steps wall-section-steps]
+  (global-curve-interp-with-first-derivatives-wall-section wall-section-parameter wall-cross-section-parameters curve-parameters
+                                                         steps-distrubution  wall-cross-section-steps wall-section-steps))
+
+(comment (spit "things-low/horizontal-first-test.scad"
+               (write-scad
+                (include "../BOSL2/std.scad")
+                key-holes
+                (union (let [curve-paramater (global-curve-interp-with-first-derivatives-parameters
+                                              [(wall-cross-section-tangent-parameter (wall-cross-section-parameter (key-wall-position lastcol 2 1 0 :tr)) (wall-cross-section-parameter (key-wall-position lastcol 2 1 0 :br)))
+                                               (wall-cross-section-tangent-parameter (wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :br)) (wall-cross-section-parameter (key-wall-position lastcol 2 1 0 :tr)))
+                                               (wall-cross-section-tangent-parameter (wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :tr))(wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :br)))
+                                               (wall-cross-section-tangent-parameter (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :br)) (wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :tr)))
+                                               (wall-cross-section-tangent-parameter (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :tr)) (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :br)))
+                                               (wall-cross-section-tangent-parameter (wall-cross-section-parameter (key-wall-position lastcol 0 1 1 :tr :offset [0.001 0.0001 0])) (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :tr)))]
+                                              3  :point-paramater-calculation-method :circular :magnitude-estimation-method :chord
+                                                                                                    ;  :linear-outer-top true :linear-inner-top true
+                                                                                                         )
+                             wall-section-parameter (wall-section-parameter
+                                                     [(wall-cross-section-parameter (key-wall-position lastcol 2 1 0 :br))
+                                                      (wall-cross-section-parameter (key-wall-position lastcol 2 1 0 :tr))
+                                                      (wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :br))
+                                                      (wall-cross-section-parameter (key-wall-position lastcol 1 1 0 :tr))
+                                                      (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :br))
+                                                      (wall-cross-section-parameter (key-wall-position lastcol 0 1 0 :tr))]
+                                                     curve-paramater ;:calculation-order :vertical-first
+                                                     )
+                             wall-cross-section-steps 60
+                             wall-section-steps 60
+                             wall-cross-section-parameters (:wall-cross-section-parameters wall-section-parameter)
+                             steps-distrubution (:steps-distrubution wall-section-parameter)
+                             curve-parameters (:curve-parameters wall-section-parameter)]
+                         (println "test magnitude-estimation-method" (:magnitude-estimation-method curve-paramater))
+                         (vnf-polyhedron (wall-vnf (wall-section wall-section-parameter  wall-cross-section-steps wall-section-steps)
+                                                   {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})))))))
 
 (defn local-cubic-curve-interpolation-with-calculated-tangents-wall-section [wall-section-parameter wall-cross-section-parameters curve-parameters
 steps-distrubution wall-cross-section-steps wall-section-steps]

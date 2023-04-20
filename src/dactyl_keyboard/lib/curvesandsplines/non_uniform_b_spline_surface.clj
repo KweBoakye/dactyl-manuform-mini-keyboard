@@ -59,8 +59,15 @@ Nv (calculate-non-vanishing-basis-functions v-span v q V)
       (nurbs-surface-point n p U m q V Pw u v)))
   )
 
+
 (comment (nurbs-surface 8 2 4 2 [0 0 0 1 2 3 4 4 5 5 5]
                                        [0 0 0 1 2 3 3 3] 
                                        [[0 2 4 1] [0 6 4 2] [0 2 0 1] 
                                         [4 6 8 2] [12 24 12 6] [4 6 0 2]
                                         [4 2 2 1] [8 6 4 2] [4 2 0 1]] 10))
+
+(defn make-corner-fillet-surf 
+  "from p359 of The Nurbs Book"
+  [C1 C2 C3]
+  
+  )

@@ -1,5 +1,6 @@
 (ns dactyl-keyboard.lib.openscad.bosl2-wrappers.constants)
 
+(def include-bosl2  "../BOSL2/std.scad")
 (def LEFT [-1 0 0])
 
 (def RIGHT [1 0 0])

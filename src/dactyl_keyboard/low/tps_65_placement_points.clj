@@ -69,6 +69,8 @@
                                (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-left-position)
                                [(- (+ tps-65-corner-radius 0.05))  (+ tps-65-corner-radius 0.05) (- (/ web-thickness 2))]))
 
+
+
 (def tps-65-mid-left-outer    (transform-position
                                (partial tps-65-translate-and-place-at-position [(- tps-65-corner-radius (/ tps-65-mount-width 2)),
                                                                                 0,
@@ -98,6 +100,31 @@
                            (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-top-mid-position)
                            [0 (+ tps-65-corner-radius 0.05) (/ web-thickness -2)]))
 
+(def tps-65-top-mid-right-outer (transform-position
+                           (partial tps-65-translate-and-place-at-position [(/ (- (/ tps-65-mount-width 2) tps-65-corner-radius) 2),
+                                                                            (- (/ tps-65-mount-length 2) tps-65-corner-radius),
+                                                                            0])
+                           [0 (+ tps-65-corner-radius 0.05) 0]))
+(def tps-65-top-mid-right-inner (transform-position
+                           (partial tps-65-translate-and-place-at-position [(/ (- (/ tps-65-mount-width 2) tps-65-corner-radius) 2),
+                                                                            (- (/ tps-65-mount-length 2) tps-65-corner-radius),
+                                                                            0])
+                           [0 (+ tps-65-corner-radius 0.05) (/ web-thickness -2)]))
+
+(def tps-65-top-mid-left-outer (transform-position
+                                (partial tps-65-translate-and-place-at-position
+                                         [(/ (- tps-65-corner-radius (/ tps-65-mount-width 2)) 2),
+                                          (- (/ tps-65-mount-length 2) tps-65-corner-radius),
+                                          0])
+                                [0 (+ tps-65-corner-radius 0.05) 0]))
+(def tps-65-top-mid-left-inner (transform-position
+                                (partial tps-65-translate-and-place-at-position
+                                         [(/ (- tps-65-corner-radius (/ tps-65-mount-width 2)) 2),
+                                          (- (/ tps-65-mount-length 2) tps-65-corner-radius),
+                                          0])
+                                [0 (+ tps-65-corner-radius 0.05) (/ web-thickness -2)]))
+
+
 (def tps-65-bottom-mid-outer (transform-position
                            (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-mid-position)
                            [0 (- (+ tps-65-corner-radius 0.05)) 0]))
@@ -105,6 +132,29 @@
 (def tps-65-bottom-mid-inner (transform-position
                               (partial tps-65-translate-and-place-at-position tps-65-mount-corner-cylinder-bottom-mid-position)
                               [0 (- (+ tps-65-corner-radius 0.05)) (- (/ web-thickness 2))]))
+
+(def tps-65-bottom-mid-right-outer (transform-position
+                              (partial tps-65-translate-and-place-at-position [(/ (- (/ tps-65-mount-width 2) tps-65-corner-radius) 2),
+                                                                               (- tps-65-corner-radius (/ tps-65-mount-length 2)),
+                                                                               0])
+                              [0 (- (+ tps-65-corner-radius 0.05)) 0]))
+
+(def tps-65-bottom-mid-right-inner (transform-position
+                              (partial tps-65-translate-and-place-at-position [(/ (- (/ tps-65-mount-width 2) tps-65-corner-radius) 2),
+                                                                               (- tps-65-corner-radius (/ tps-65-mount-length 2)),
+                                                                               0])
+                              [0 (- (+ tps-65-corner-radius 0.05)) (- (/ web-thickness 2))]))
+(def tps-65-bottom-mid-left-outer (transform-position
+                                    (partial tps-65-translate-and-place-at-position [(/ (- tps-65-corner-radius (/ tps-65-mount-width 2)) 2),
+                                                                                     (- tps-65-corner-radius (/ tps-65-mount-length 2)),
+                                                                                     0])
+                                    [0 (- (+ tps-65-corner-radius 0.05)) 0]))
+
+(def tps-65-bottom-mid-left-inner (transform-position
+                                    (partial tps-65-translate-and-place-at-position [(/ (- tps-65-corner-radius (/ tps-65-mount-width 2)) 2),
+                                                                                     (- tps-65-corner-radius (/ tps-65-mount-length 2)),
+                                                                                     0])
+                                    [0 (- (+ tps-65-corner-radius 0.05)) (- (/ web-thickness 2))]))
 (defn get-tps-65-corner-translation-vector [corner]
   (case corner
     :tl (mapv + tps-65-mount-corner-cylinder-top-right-position [(+ tps-65-corner-radius 0.05)  (+ tps-65-corner-radius 0.05) 0])
@@ -114,18 +164,38 @@
     :tm (mapv + tps-65-mount-corner-cylinder-right-mid-position [(+ tps-65-corner-radius 0.05) 0  0 ])
     :bm (mapv + tps-65-mount-corner-cylinder-left-mid-position [(- (+ tps-65-corner-radius 0.05)) 0 0])
     :lm (mapv + tps-65-mount-corner-cylinder-top-mid-position [0 (+ tps-65-corner-radius 0.05) 0])
-    :rm (mapv + tps-65-mount-corner-cylinder-bottom-mid-position [0 (- (+ tps-65-corner-radius 0.05)) 0])))
+    :rm (mapv + tps-65-mount-corner-cylinder-bottom-mid-position [0 (- (+ tps-65-corner-radius 0.05)) 0])
+    :tl-lm (mapv + [(/ (- (/ tps-65-mount-width 2) tps-65-corner-radius) 2)
+                    (- (/ tps-65-mount-length 2) tps-65-corner-radius)
+                    0] [0 (+ tps-65-corner-radius 0.05) 0]) 
+    :tr-rm (mapv + [(/ (- (/ tps-65-mount-width 2) tps-65-corner-radius) 2)
+                    (- tps-65-corner-radius (/ tps-65-mount-length 2))
+                    0] [0 (- (+ tps-65-corner-radius 0.05)) 0])
+    :bl-lm (mapv + [(/ (- tps-65-corner-radius (/ tps-65-mount-width 2)) 2)
+                    (- (/ tps-65-mount-length 2) tps-65-corner-radius)
+                    0] [0 (+ tps-65-corner-radius 0.05) 0])
+    :br-rm (mapv + [(/ (- tps-65-corner-radius (/ tps-65-mount-width 2)) 2)
+                    (- tps-65-corner-radius (/ tps-65-mount-length 2))
+                    0] [0 (- (+ tps-65-corner-radius 0.05)) 0])))
 
 (defn get-position-tps-65 [corner]
   (case corner
     :tl {:tps-65-corner-outer tps-65-top-right-outer
          :tps-65-corner-inner tps-65-top-right-inner}
+    :tl-lm {:tps-65-corner-outer tps-65-top-mid-right-outer
+            :tps-65-corner-inner tps-65-top-mid-right-inner}
     :tr {:tps-65-corner-outer tps-65-bottom-right-outer
          :tps-65-corner-inner tps-65-bottom-right-inner}
+    :tr-rm {:tps-65-corner-outer tps-65-bottom-mid-right-outer
+            :tps-65-corner-inner tps-65-bottom-mid-right-inner}
     :bl {:tps-65-corner-outer tps-65-top-left-outer
          :tps-65-corner-inner tps-65-top-left-inner}
+    :bl-lm {:tps-65-corner-outer tps-65-top-mid-left-outer
+            :tps-65-corner-inner tps-65-top-mid-left-inner}
     :br {:tps-65-corner-outer tps-65-bottom-left-outer
          :tps-65-corner-inner tps-65-bottom-left-inner}
+    :br-rm {:tps-65-corner-outer tps-65-bottom-mid-left-outer
+         :tps-65-corner-inner tps-65-bottom-mid-left-inner}
     :bm {:tps-65-corner-outer tps-65-mid-left-outer
          :tps-65-corner-inner tps-65-mid-left-inner}
     :tm {:tps-65-corner-outer tps-65-mid-right-outer
@@ -199,8 +269,8 @@
           :north-east {:tps-65-corner-outer-opposite tps-65-top-left-outer
                        :tps-65-corner-inner-opposite tps-65-top-left-inner})
     :bm (case cardinal
-          :south {:tps-65-corner-outer-opposite tps-65-top-mid-outer
-                  :tps-65-corner-inner-opposite tps-65-top-mid-inner}
+          :south {:tps-65-corner-outer-opposite tps-65-mid-right-outer
+                  :tps-65-corner-inner-opposite tps-65-mid-right-inner}
           :south-east {:tps-65-corner-outer-opposite tps-65-top-right-outer
                        :tps-65-corner-inner-opposite tps-65-top-right-inner}
           :south-west {:tps-65-corner-outer-opposite tps-65-top-left-outer
@@ -218,7 +288,29 @@
           :north-east {:tps-65-corner-outer-opposite tps-65-top-left-outer
                       :tps-65-corner-inner-opposite tps-65-top-left-outer}  
           :south-east {:tps-65-corner-outer-opposite tps-65-top-right-outer
-                       :tps-65-corner-inner-opposite tps-65-top-right-inner})))
+                       :tps-65-corner-inner-opposite tps-65-top-right-inner})
+    :tl-lm (case cardinal
+             :west {:tps-65-corner-outer-opposite tps-65-bottom-mid-right-outer
+                    :tps-65-corner-inner-opposite tps-65-bottom-mid-right-inner}
+             :north-west {:tps-65-corner-outer-opposite tps-65-bottom-left-outer
+                          :tps-65-corner-inner-opposite tps-65-bottom-left-inner}
+             :south-west {:tps-65-corner-outer-opposite tps-65-bottom-right-outer
+                          :tps-65-corner-inner-opposite tps-65-bottom-right-inner})
+    :tr-rm (case cardinal
+          :east {:tps-65-corner-outer-opposite tps-65-top-mid-outer
+                 :tps-65-corner-inner-opposite tps-65-top-mid-inner}
+          :north-east {:tps-65-corner-outer-opposite tps-65-top-mid-right-outer
+                       :tps-65-corner-inner-opposite tps-65-top-mid-right-inner}
+          :south-east {:tps-65-corner-outer-opposite tps-65-top-right-outer
+                       :tps-65-corner-inner-opposite tps-65-top-right-inner})
+    :bl-lm (case cardinal
+             :west {:tps-65-corner-outer-opposite tps-65-bottom-mid-right-outer
+                    :tps-65-corner-inner-opposite tps-65-bottom-mid-right-inner}
+             :south-west {:tps-65-corner-outer-opposite tps-65-bottom-mid-right-outer
+                          :tps-65-corner-inner-opposite tps-65-bottom-mid-right-inner})
+    :br-rm (case cardinal
+             :east {:tps-65-corner-outer-opposite tps-65-top-mid-right-outer
+                    :tps-65-corner-inner-opposite tps-65-top-mid-right-inner})))
 
 (defn get-tps-65-dx-dy [cardinal]
   (case cardinal
