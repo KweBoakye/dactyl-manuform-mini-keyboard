@@ -1,6 +1,6 @@
 (ns dactyl-keyboard.lib.geometry
   (:require [clojure.math :refer [PI sin]]
-            [clojure.core.matrix :refer [magnitude-squared dot distance cross magnitude]])
+            [clojure.core.matrix :refer [magnitude-squared dot distance cross magnitude div]])
   )
 
 (defn deg2rad [degrees]
@@ -31,6 +31,15 @@
 (comment
   (minimum-distance [0 0 0] [0 4 0] [0 4.1 0.1])
   )
+
+(defn two-d-intersection-for-3d [v1-start v1-end v2-start v2-end]
+  (let [project #(assoc % 2 1.0)
+         l1 (cross (project v1-start) (project v1-end))
+        l2 (cross (project v2-start) (project v2-end)) 
+        solution (cross l1 l2)
+        intersection (if solution (drop-last (div solution (peek solution))) :no-intersection)
+        ]
+    intersection))
 
 (defn is-point-on-line-of-two-points? [point-a point-b point-to-check]
   )

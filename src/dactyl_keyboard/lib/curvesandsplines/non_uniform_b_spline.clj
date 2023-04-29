@@ -1,6 +1,7 @@
 (ns dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline
-  (:require [clojure.core.matrix :refer [cross div magnitude mul log]] 
+  (:require [clojure.core.matrix :refer [cross div magnitude mul log dot]] 
             [clojure.math :refer [asin pow sqrt floor]]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-point bezier-basis-fn]]
             [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [homogenize-cooridinates homogenize-single-point project-coordinate
                                                                       project-coordinate-and-drop-weight]]
             [dactyl-keyboard.lib.general-maths :refer [all-binomials-for-n
@@ -621,6 +622,24 @@
     )
   )
 
+(defn florez-parameterisation [n Q]
+  (let [
+        u-k-values (double-array (inc n) 0.0)
+        ]
+    (doseq [index (range (dec n))]
+      (if (zero? index) (aset u-k-values index 0.0)
+          (let [i (dec index)
+                u-i (aget u-k-values i)
+                Q-k (nth Q index)
+                Q-k-minus-one (nth Q (dec index))
+                Q-k-plus-one (nth Q (inc index))
+                Q-k-plus-two (nth Q (+ index 2))]
+            (aset u-k-values index 
+                  (+ u-i (magnitude (mapv - Q-k Q-k-minus-one))
+                     (magnitude (mapv - Q-k-plus-one Q-k))
+                     (magnitude (mapv - Q-k-plus-two Q-k-plus-one)))))))
+    (vec u-k-values)))
+
 (defn calculate-average-radii [Q &{:keys [n] :or {n (dec (count Q))}}]
   (vec (for [k (range (dec n))
              :let [Qk (nth Q k)
@@ -656,9 +675,7 @@
                                              q-mag (magnitude (mapv - (nth Q 1) (nth Q 0)))
                                              q-mag-over-two-r-zero (/ q-mag two-r-zero)
                                              asin-q-mag-over-two-r-zero (asin q-mag-over-two-r-zero)
-                                             asin-q-mag-over-two-r-zero-times-two-r-zero (* asin-q-mag-over-two-r-zero two-r-zero)]
-                                         (println "two-r-zero" two-r-zero "q-mag" q-mag "q-mag-over-two-r-zero" q-mag-over-two-r-zero "asin-q-mag-over-two-r-zero" asin-q-mag-over-two-r-zero 
-                                                  "asin-q-mag-over-two-r-zero-times-two-r-zero" asin-q-mag-over-two-r-zero-times-two-r-zero)
+                                             asin-q-mag-over-two-r-zero-times-two-r-zero (* asin-q-mag-over-two-r-zero two-r-zero)] 
                                          asin-q-mag-over-two-r-zero-times-two-r-zero)
                              :else (let [rk (nth rk-values k)
                                          rk-minus-one (nth rk-values (dec k))
@@ -689,6 +706,8 @@
     ) 
   )
 
+
+
 (defn equally-spaced-parameterisation [n]
   (vec (for [k (range (inc n))]
          (/ k n)))
@@ -714,6 +733,46 @@
     (mapv #(pow (* %1 %2 %3) (/ 1 3)) equally-spaced-u-k chordal-u-k centripetal-u-k)
     ))
 
+(defn farin-simple-parameterisation [n Q]
+  (let [ck (for [k (range n)
+                 :let [Qk (nth Q k)
+                       Qk-minus-one (nth Q (inc k))]] 
+             (magnitude (map - Qk-minus-one Qk)))
+        uk-plus-one-fn (fn [ak uk uk-minus-one bk-minus-one]
+                         (+ (/ (* ak (- uk uk-minus-one))
+                            bk-minus-one) uk))
+        a-k-values (mapv #(* 1.2 %) ck)
+        u-k-values (double-array (inc n) 0.0) 
+        ]
+    (doseq [index (range (inc n))]
+      (cond (zero? index ) (aset u-k-values 0 0.0)
+            (= 1 index) (aset u-k-values 1 1.0)
+            :else (let [k (dec index)
+                        ak (nth a-k-values k)
+                        bk-minus-one (nth a-k-values (dec k))
+                        uk (aget u-k-values k)
+                        uk-minus-one  (aget u-k-values (dec k))
+                        uk-plus-one (uk-plus-one-fn ak uk uk-minus-one bk-minus-one)]
+                    (aset u-k-values index uk-plus-one)))
+      )
+    (let [vec-u-k-values (vec u-k-values)
+          last-u-k (peek vec-u-k-values)
+          normalised-u-k-values (mapv #(/ % last-u-k) vec-u-k-values)]
+       normalised-u-k-values)
+)
+  )
+
+
+
+(comment (let [Q [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]
+               n 4
+               p 3]
+           (println (florez-parameterisation n Q))
+           (println  "farin-simple-parameterisation" (farin-simple-parameterisation n Q))
+           (u-k-centripetal n Q)))
+
+
+
 (defn find-u [p U i n]
   (let [tolerance 1e-6  
         max-iter 1000
@@ -726,7 +785,11 @@
         (cond 
           (<= abs-f tolerance) u
           (>= iter max-iter) nil
-          :else (recur (- u (nth (nth (ders-basis-funs i u (dec p) n U) p) 1)) (inc iter))))))
+          :else (let [ders (ders-basis-funs i u (dec p) n U)
+                      ders-1 (nth ders 1)
+                      ders-1-p (nth ders-1 p)] 
+                  (recur (- u ders-1-p)
+                       (inc iter)))))))
   )
 
 (comment(let [Q [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]
@@ -739,41 +802,7 @@
           (println "span" span)
           (find-u p (div U (peek U)) span n)))
 
-(defn improved-hybrid-parameterisation [n Q p]
-  (let [alpha 0.8
-        u-k-initial (exponential-parameterisation n Q alpha)
-        U-average (calculate-averaged-knot-vector-from-u-k u-k-initial n p) 
-        theta-i-vals (vec (for [i (range 1 n)
-                 :let [u (nth u-k-initial i)
-                       span (calculate-knot-span-index n p u U-average)
-                       basis-functions (calculate-non-vanishing-basis-functions span u p U-average)
-                       B-i (apply max basis-functions)
-                       degree-of-B-i (.indexOf basis-functions B-i)
-                       theta-i (find-u degree-of-B-i U-average span n)]]
-              theta-i
-             ))
-        u-k-new (double-array (inc n) 0.0)
-        i-max (if (zero? (mod n 2)) (/ n 2) (/ (dec n) 2))
-        ]
-    
-      (doseq [i (range 1 i-max)
-            :let [theta-two-i (nth theta-i-vals  (* 2 i))
-                  theta-two-i-minus-one (nth theta-i-vals (dec (* 2 i)))
-                  u-two-i (nth u-k-initial  (* 2 i))
-                  u-two-i-minus-one (nth u-k-initial (dec (* 2 i)))
-                  m-theta-i (/ (+ theta-two-i-minus-one theta-two-i) 2)
-                  m-u-i (/ (+ u-two-i-minus-one u-two-i) 2)
-                  s-i (- m-theta-i m-u-i)]
-              ]
-        (aset u-k-new (dec (* 2 i)) (+ u-two-i-minus-one s-i))
-        (aset u-k-new (* 2 i) (+ u-two-i s-i)) 
-      )
-      (aset u-k-new 1 0.0)
-      (aset u-k-new n 1.0)
-    )
-)
 
-(comment (improved-hybrid-parameterisation 4 [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]] 3))
 
 (comment (pow 27 (/ 1 3)))
 
@@ -813,7 +842,36 @@
             (> index j-max) (aset knot-vector index (* 1.0 num-segments))))
     (vec knot-vector)))
 
+(defn improved-hybrid-parameterisation [n Q p]
+  (let [alpha 0.8
+        u-k-initial (exponential-parameterisation n Q alpha)
+        U-average (calculate-averaged-knot-vector-from-u-k u-k-initial n p)
+        U-average-normalised (div U-average (peek U-average))
+        theta-i-vals (vec (for [i (range 1 n)
+                                :let [u (nth u-k-initial i)
+                                      span (calculate-knot-span-index n p u U-average)
+                                      basis-functions (calculate-non-vanishing-basis-functions span u p U-average)
+                                      B-i (apply max basis-functions)
+                                      degree-of-B-i (.indexOf basis-functions B-i)
+                                      theta-i (find-u degree-of-B-i U-average span n)]]
+                            theta-i))
+        u-k-new (double-array (inc n) 0.0)
+        i-max (if (zero? (mod n 2)) (/ n 2) (/ (dec n) 2))]
 
+    (doseq [i (range 1 i-max)
+            :let [theta-two-i (nth theta-i-vals  (* 2 i))
+                  theta-two-i-minus-one (nth theta-i-vals (dec (* 2 i)))
+                  u-two-i (nth u-k-initial  (* 2 i))
+                  u-two-i-minus-one (nth u-k-initial (dec (* 2 i)))
+                  m-theta-i (/ (+ theta-two-i-minus-one theta-two-i) 2)
+                  m-u-i (/ (+ u-two-i-minus-one u-two-i) 2)
+                  s-i (- m-theta-i m-u-i)]]
+      (aset u-k-new (dec (* 2 i)) (+ u-two-i-minus-one s-i))
+      (aset u-k-new (* 2 i) (+ u-two-i s-i)))
+    (aset u-k-new 1 0.0)
+    (aset u-k-new n 1.0)))
+
+(comment (improved-hybrid-parameterisation 4 [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]] 3))
 (defn calculate-natural-knot-vector-from-u-k [uk-values n p &{:keys [constrained] :or {constrained false}}]
   (let [num-segments (if constrained (+ (- n p) 3) (inc (- n p)))
         m (if constrained (+ n p 3) (inc (+ n p)))
@@ -929,6 +987,7 @@
     :circular circular-arc-parameterisation
     :average-geometric average-geometric-parameterisation
     :average-harmonic average-harmonic-parameterisation
+    :farin-simple farin-simple-parameterisation
     :orthgonal-construction nil))
 
 (defn get-knot-vector-generation-fn [knot-vector-generation-method-keyword & {:keys [constrained] :or {constrained false}}]
@@ -1115,6 +1174,43 @@
 ;;         tau-zero (1.2 )
 ;;         ]))
 
+(defn farins-simple-derivative-magnitude-estimation [Q]
+  (let [n (dec (count Q))
+        uk-values (farin-simple-parameterisation n Q)
+        c-zero (magnitude (mapv - (nth Q 1) (nth Q 0)))
+        c-n (magnitude (mapv - (nth Q n) (nth Q (dec n)) ))
+        ;qk-values (vec (for [k (range n)] (mapv - (nth Q (inc k)) (nth Q k))))
+        tau-zero (/ (* 1.2 c-zero)
+                    (- (nth uk-values 1) (nth uk-values 0)))
+        tau-n (/ (* 1.2 c-n)
+                 (- (nth uk-values n) (nth uk-values (dec n))))
+        ]
+    {:tau-zero tau-zero :tau-n tau-n}
+    )
+  )
+
+(defn farins-sophisticated-derivative-magnitude-estimation [Q t-zero t-n]
+  (let [n (dec (count Q))
+        uk-values (farin-simple-parameterisation n Q)
+        q-zero (mapv - (nth Q 1) (nth Q 0))
+        q-n (mapv - (nth Q n) (nth Q (dec n)))
+        c-zero (magnitude q-zero)
+        c-n (magnitude q-n)
+        S-zero (div q-zero c-zero)
+        S-n (div q-n c-n)
+        tau-zero (/ c-zero
+                    (* (- (nth uk-values 1) (nth uk-values 0))
+                       (max (dot S-zero t-zero) 0.5)))
+        tau-n (/ c-zero 
+                 (* (- (nth uk-values n) (nth uk-values (dec n)))
+                    (max (dot S-n t-n) 0.5)))]
+           {:tau-zero tau-zero :tau-n tau-n}
+    ;; (println "S-zero" S-zero)
+    ;; (println "S-n" S-n)
+    ;; (println "(dot S-zero t-zero)" (dot S-zero t-zero))
+    ;(println "(dot S-n t-n)" (dot S-n t-n))
+    )
+  )
 (defn total-arc-length-derivative-magnitude-estimation [Q] 
   (let [n (dec (count Q))
         qk-values (vec (for [k (range n)] (mapv - (nth Q (inc k)) (nth Q k))))
@@ -1122,7 +1218,12 @@
         ]
     (reduce + l-k-values)))
 
+
+
 (comment (total-arc-length-derivative-magnitude-estimation [[0 0 0] [1 1 1] [3 9 8] [6 8 9]]))
+(comment (total-chord-length-derivative-magnitude-estimation [[0 0 0] [1 1 1] [3 9 8] [6 8 9]]))
+(comment (farins-simple-derivative-magnitude-estimation [[0 0 0] [1 1 1] [3 9 8] [6 8 9]]))
+(comment (farins-sophisticated-derivative-magnitude-estimation [[0 0 0] [1 1 1] [3 9 8] [6 8 9]] [1 0 0] [1 0 0]))
 
 (defn clamped-end-condition [Q knot-vector D-zero D-n &{:keys [n] :or {n (dec (count Q))}}]
   (let [P-zero (nth Q 0)
@@ -1156,6 +1257,17 @@
         P-n-plus-one (mapv + (mul (/ 2 3) (mapv + (mul alpha-zero (nth Q n)) (mul beta-n a-n))) (mul (/ 1 8) (nth Q n)))
         ]
      {:P-zero P-zero :P-one P-one :P-n-plus-one P-n-plus-one :P-n-plus-two P-n-plus-two}) 
+  )
+
+(defn removef-curve-knot [n p U Pw u r s num]
+  (let [m (inc (+ n p))
+        ord (inc p)
+        fout (/ (- (* r 2) s p) 2)
+        last (- r s)
+        first (- r p)]
+    (doseq )
+    )
+  
   )
 
 (defn decompose-curve [n p U Pw]
@@ -1200,6 +1312,15 @@
     )
   )
 
+(defn decompose-non-homogoneus-nurbs-curve [p U P W]
+  (let [n (dec (count P))
+        Pw (homogenize-cooridinates P W)
+        {nb :nb
+         Qw :Qw} (decompose-curve n p U Pw)
+        Q (mapv #(mapv project-coordinate-and-drop-weight %) Qw)] 
+    {:nb nb :Q Q})
+  )
+
 (defn decompose-b-spline-curve [p U P]
   (let [n (dec (count P))
         Pw (homogenize-cooridinates P (vec (repeat (inc n) 1.0)))
@@ -1210,11 +1331,60 @@
     {:nb nb :Q Q}
     )
   )
+(comment (vec [1 0 0]))
+
+(defn decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves [p U P W start-index end-index-inclusive steps & {:keys [reverse-curve] :or {reverse-curve false}}] 
+  (let [params (decompose-non-homogoneus-nurbs-curve p U P W)
+        reverse-fn (fn [element] (vec (reverse (mapv #(vec (reverse %)) element))))
+        param-points  (cond->> (subvec (:Q params) start-index (inc end-index-inclusive))
+                        reverse-curve reverse-fn)
+        number-of-segments (do
+                             (count param-points))
+        increment (/ number-of-segments (long steps))]
+    (println number-of-segments "number-of-segments" )
+    (vec (for [index (range 0 (+ increment number-of-segments) increment)
+               :let [i (dec (if (< index number-of-segments) (inc (floor index)) number-of-segments))
+                     t (if (< index number-of-segments) (- index (floor index)) 1.0)]]
+
+
+           (n-degree-bezier-point (nth param-points i) t ;:basis-functions (nth basis-functions-coll i)
+                                  ))))
+  )
+(defn decompose-b-spline-curve-and-calculate-bezier-curves [p U P start-index end-index-inclusive steps &{:keys [reverse-curve] :or {reverse-curve false}}] 
+  (let [params (decompose-b-spline-curve p U P)
+        reverse-fn (fn [element](vec (reverse (mapv #(vec (reverse %)) element))))
+        param-points  (cond->> (subvec (:Q params) start-index (inc end-index-inclusive))
+                       reverse-curve reverse-fn)
+        number-of-segments (do 
+                            (count param-points))
+        increment (/ number-of-segments (long steps)) 
+        ]
+    (vec (for [index (range 0 (+ increment number-of-segments) increment)
+               :let [i (dec (if (< index number-of-segments) (inc (floor index)) number-of-segments))
+                     t (if (< index number-of-segments) (- index (floor index)) 1.0)]]
+
+           
+           (n-degree-bezier-point (nth param-points i) t ;:basis-functions (nth basis-functions-coll i)
+                                  ) 
+           )))
+  )
 
 (comment (decompose-curve 5 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0 1] [1 1 0 1] [3 2 1 1] 
                                                      [8 2 2 1] [10 3 1 1] [13 2 1 1]]))
+
+
 (comment (decompose-b-spline-curve 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
                                                      [8 2 2] [10 3 1] [13 2 1]]))
+
+(comment (decompose-b-spline-curve 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
+                                                            [8 2 2] [10 3 1] [13 2 1]]))
+(comment (decompose-non-homogoneus-nurbs-curve 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
+                                                            [8 2 2] [10 3 1] [13 2 1]]
+                                               [1 1 1 1 1 1]))
+
+(comment (decompose-b-spline-curve-and-calculate-bezier-curves 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
+                                                                                        [8 2 2] [10 3 1] [13 2 1]]
+                                                               0 1 30))
 (defn natural-end-conditions [Q u-k-values]
   
   )

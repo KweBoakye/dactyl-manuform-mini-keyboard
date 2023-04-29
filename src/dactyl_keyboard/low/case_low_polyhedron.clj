@@ -38,7 +38,8 @@
             [dactyl-keyboard.tps-65 :refer :all]
             [dactyl-keyboard.utils :refer :all]
             [scad-clj.model :refer :all]
-            [scad-clj.scad :refer :all]))
+            [scad-clj.scad :refer :all])
+            )
 
 
 

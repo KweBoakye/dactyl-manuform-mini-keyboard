@@ -1,4 +1,7 @@
-(ns dactyl-keyboard.lib.matrices)
+(ns dactyl-keyboard.lib.matrices
+  (:refer-clojure :exclude [use import])
+(:require [clojure.core.matrix :refer [rotate]])
+  )
 
 
 (defn transpose
@@ -135,6 +138,27 @@
         (vec (for [dimension (range dimensions)]
           (get-in (nth coordinate-matrix dimension) [row column])
           ))))))))
+
+(comment (rotate [[1 2 3 4]
+                  [5 6 7 8]
+                  [9 10 11 12]] 3 0))
+(comment (peek [[1 2 3 4]
+                [5 6 7 8]
+                [9 10 11 12]]))
+(defn rotate-matrix [matrix &{:keys [reverse-new-row reverse-new-column] :or {reverse-new-row false reverse-new-column false}}]
+  (let [row-count (count matrix)
+        column-count (count (peek matrix))
+        column-reverse (fn [matrix](mapv #(vec (reverse %)) matrix))]
+    (vec (cond-> (vec (for [col (range column-count)]
+                   (vec (for [row (range row-count)]
+                          (get-in matrix [row col])))))
+      reverse-new-row (reverse)
+      reverse-new-column (column-reverse)))
+    ))
+
+(comment  (rotate-matrix [[1 2 3 4]
+                          [5 6 7 8]
+                          [9 10 11 12]] :reverse-new-row true :reverse-new-column true))
 
 
 (comment 

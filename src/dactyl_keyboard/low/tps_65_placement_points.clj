@@ -245,7 +245,9 @@
           :north-east {:tps-65-corner-outer-opposite tps-65-top-left-outer
                        :tps-65-corner-inner-opposite tps-65-top-left-inner}
           :east {:tps-65-corner-outer-opposite tps-65-top-right-outer
-                 :tps-65-corner-inner-opposite tps-65-top-right-inner})
+                 :tps-65-corner-inner-opposite tps-65-top-right-inner}
+          {:tps-65-corner-outer-opposite tps-65-bottom-left-outer
+                    :tps-65-corner-inner-opposite tps-65-bottom-left-inner})
     :bl  (case cardinal
            :south {:tps-65-corner-outer-opposite tps-65-top-right-outer
                    :tps-65-corner-inner-opposite tps-65-top-right-inner}

@@ -8,6 +8,22 @@
                       [1 0 0] [1 0 0]]))
 
 (comment (negate [4 -10 1]))
+
+(defn cubic-hermite-f-one-t [t] 
+  (+ (+ 1 (* 2 (pow t 3)) (* -3 (pow t 2)))))
+
+(defn cubic-hermite-f-2-t [t]
+  (- (* 3 (pow t 3)) (* 2 (pow t 3))))
+
+(defn degree-5-hermite-f-one-t [t]
+  (+ 1 (* -10 (pow t 3)) (* 15 (pow t 4)) (* -6 (pow t 5))))
+
+(defn degree-5-hermite-f-2-t [t]
+  (+ (* 10 (pow t 3)) (* -15 (pow t 4)) (* 6 (pow t 5))))
+
+;H-five-zero-t (fn [t] (+ 1 (* -10 (pow t 3)) (* 15 (pow t 4)) (* -6 (pow t 5))))
+;H-five-five-t (fn [t] (+ (* 10 (pow t 3)) (* -15 (pow t 4)) (* 6 (pow t 5))))
+
 (defn linear-coons-surface-point [P-zero-zero P-zero-one P-one-zero P-one-one P-zero-w P-one-w P-u-zero P-u-one u w]
   (let [
         u-row-vector [(- 1 u) u 1]
@@ -51,8 +67,8 @@
             (mapv double (translational-surface-point P-u-zero P-zero-w P-zero-zero u w)))))))
 
 (defn bicubic-coons-surface-point [P-zero-zero P-zero-one P-one-zero P-one-one P-zero-w P-one-w P-u-zero P-u-one u w]
-  (let [u-row-vector  [ (+ 1 (* 2 (pow u 3)) (* -3 (pow u 2)))
-                       (+ (* 3 (pow u 2)) (* -2 (pow u 3)))
+  (let [u-row-vector  [ (degree-5-hermite-f-one-t u)
+                       (degree-5-hermite-f-2-t u)
                        1];(negate [-1 (- (* 3 (pow u 2)) (* 2 (pow u 3))) (+ 1 (* 2 (pow u 3)) (* -3 (pow u 2))) ])
         P-matrix [[(negate P-zero-zero) (negate P-zero-one)  P-zero-w]
                   [(negate P-one-zero) (negate P-one-one) P-one-w]
@@ -60,8 +76,8 @@
         P-matrix2 [[[0 0 0]  P-u-zero P-u-one]
                    [P-zero-w P-zero-zero P-zero-one]
                    [P-one-w P-one-zero P-one-one]]
-        w-column-vector [[(+ 1 (* 2 (pow w 3) ) (* -3 (pow w 2)))]
-                         [(+ (* 3 (pow w 2)) (* -2 (pow w 3)))] 
+        w-column-vector [[(degree-5-hermite-f-one-t w)]
+                         [(degree-5-hermite-f-2-t w)] 
                          [1]]
         [P-x-matrix P-y-matrix P-z-matrix] (split-matrix-into-coordinate-matrices P-matrix)
         result-fn (fn [coordinate-matrix] (mmul  u-row-vector coordinate-matrix w-column-vector))
@@ -181,12 +197,12 @@
                                             &{:keys [P-u-zero-w P-u-one-w P-w-u-zero P-w-u-one
                                             P-u-w-zero-zero P-u-w-zero-one P-u-w-one-zero P-u-w-one-one]}
                                             ]
-  (let [H-five-zero-t (fn [t] (+ 1 (* -10 (pow t 3)) (* 15 (pow t 4)) (* -6 (pow t 5))))
-        H-five-five-t (fn [t] (+ (* 10 (pow t 3)) (* -15 (pow t 4)) (* 6 (pow t 5)))) 
+  (let [B-zero-t (fn [t] (+ 1 (* -10 (pow t 3)) (* 15 (pow t 4)) (* -6 (pow t 5))))
+        B-one-t (fn [t] (+ (* 10 (pow t 3)) (* -15 (pow t 4)) (* 6 (pow t 5)))) 
         C-zero-t (fn [t] (+ t (* -2 (pow t 2)) (pow t 3)))
         C-one-t (fn [t] (- (pow t 3) (pow t 2)))
-        u-row-vector  [(H-five-zero-t u)
-                       (H-five-five-t u)
+        u-row-vector  [(B-zero-t u)
+                       (B-one-t u)
                        (C-zero-t u)
                        (C-one-t u)
                        1];(negate [-1 (- (* 3 (pow u 2)) (* 2 (pow u 3))) (+ 1 (* 2 (pow u 3)) (* -3 (pow u 2))) ])
@@ -198,8 +214,8 @@
         P-matrix2 [[[0 0 0]  P-u-zero P-u-one]
                    [P-zero-w P-zero-zero P-zero-one]
                    [P-one-w P-one-zero P-one-one]]
-        w-column-vector [[(H-five-zero-t w)]
-                         [(H-five-five-t w)]
+        w-column-vector [[(B-zero-t w)]
+                         [(B-one-t w)]
                          [(C-zero-t w)]
                          [(C-one-t w)]
                          [1]]
@@ -251,3 +267,39 @@
 ;;         P-u-w-zero-zero P-u-w-zero-one P-u-w-one-zero P-u-w-one-one])
   
 ;;   )
+
+(defn triangular-coons-surface-point [P-zero-zero P-one-zero P-one-one P-u-zero P-zero-w P-one-w u w &{:keys [blending-fn ] :or{blending-fn :H-five}}]
+  (let [B-zero-t (case blending-fn
+                   :H-five degree-5-hermite-f-one-t
+                   :H-cubic cubic-hermite-f-one-t)
+        B-one-t (case blending-fn
+                  :H-five degree-5-hermite-f-2-t
+                  :H-cubic cubic-hermite-f-2-t)
+        u-row-vector [(B-zero-t u) (B-one-t u) 1]
+        P-matrix [[(negate P-zero-zero) (negate P-one-one) P-zero-w]
+                  [(negate P-one-zero) (negate P-one-one) P-one-w]
+                  [P-u-zero P-one-one [0 0 0]]]
+        w-column-vector [[(B-zero-t w)]
+                         [(B-one-t w)]
+                         [1]]
+        [P-x-matrix P-y-matrix P-z-matrix] (split-matrix-into-coordinate-matrices P-matrix)
+        result-fn (fn [coordinate-matrix] (mmul  u-row-vector coordinate-matrix w-column-vector))
+        x-result (result-fn P-x-matrix)
+        y-result (result-fn P-y-matrix)
+        z-result (result-fn P-z-matrix)
+        result-matrix (vec (flatten [x-result y-result z-result]))]
+    result-matrix
+    )
+  )
+
+(defn triangular-coons-surface [P-zero-zero P-one-zero P-one-one P-u-zero P-zero-w P-one-w u-steps w-steps & {:keys [boundary-curves-generated blending-fn triangular?]
+                                                                                                              :or  {boundary-curves-generated true
+                                                                                                                    blending-fn :H-five}
+                                                                                                              triangular? false}]
+  (vec
+   (for  [u-index (range (inc u-steps))
+          :let [u (/ u-index u-steps)]]
+     (vec (for [w-index  (if triangular? (range u-index (inc (- w-steps u-index)))(range(inc w-steps)))
+                :let [w (/ w-index w-steps)]]
+            (if boundary-curves-generated (triangular-coons-surface-point P-zero-zero P-one-zero P-one-one (nth P-u-zero u-index) (nth P-zero-w w-index) (nth P-one-w w-index) u w :blending-fn blending-fn)
+                (triangular-coons-surface-point P-zero-zero P-one-zero P-one-one (P-u-zero u) (P-zero-w w) (P-one-w w) u w :blending-fn blending-fn)))))))

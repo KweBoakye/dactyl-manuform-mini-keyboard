@@ -37,12 +37,28 @@
 (def oled-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) oled-post-adj) 0])
 (def oled-post-rm-translation-vector  [(- (/ mount-width 1.95)  oled-post-adj) 0 0])
 (def oled-post-lm-translation-vector  [(+ (/ mount-width -1.95)  oled-post-adj) 0 0])
+(def oled-post-tr-tm-translation-vector [(/ (- (/ mount-width 1.95)  oled-post-adj) 2) (- (/ mount-height 1.95) oled-post-adj) 0])
+(def oled-post-tr-rm-translation-vector [(- (/ mount-width 1.95)  oled-post-adj) (/ (- (/ mount-height 1.95) oled-post-adj) 2) 0])
+(def oled-post-tl-tm-translation-vector [(/ (+ (/ mount-width -1.95) oled-post-adj) 2) (- (/ mount-height 1.95) oled-post-adj) 0])
+(def oled-post-bl-lm-translation-vector [(+ (/ mount-width -1.95) oled-post-adj) (/ (+ (/ mount-height -1.95) oled-post-adj)  2) 0])
+(def oled-post-br-rm-translation-vector [(- (/ mount-width 1.95)  oled-post-adj) (/ (+ (/ mount-height -1.95) oled-post-adj)) 0])
+(def oled-post-tl-lm-translation-vector [(+ (/ mount-width -1.95) oled-post-adj) (/ (- (/ mount-height 1.95) oled-post-adj) 2) 0])
+(def oled-post-bl-bm-translation-vector [(/ (+ (/ mount-width -1.95) oled-post-adj) 2) (+ (/ mount-height -1.95) oled-post-adj) 0])
+(def oled-post-br-bm-translation-vector [(/ (- (/ mount-width 1.95)  oled-post-adj) 2 )(+ (/ mount-height -1.95) oled-post-adj) 0])
   
 (def oled-post-tr (translate oled-post-tr-translation-vector oled-post))
 (def oled-post-tl (translate oled-post-tl-translation-vector oled-post))
 (def oled-post-bl (translate oled-post-bl-translation-vector  oled-post))
 (def oled-post-br (translate oled-post-br-translation-vector  oled-post))
 (def oled-post-bm (translate oled-post-bm-translation-vector  oled-post))
+(def oled-post-tr-tm (translate oled-post-tr-tm-translation-vector oled-post))
+(def oled-post-tr-rm (translate oled-post-tr-rm-translation-vector oled-post))
+(def oled-post-tl-tm (translate oled-post-tl-tm-translation-vector oled-post))
+(def oled-post-bl-lm (translate oled-post-bl-lm-translation-vector oled-post))
+(def oled-post-br-rm (translate oled-post-br-rm-translation-vector oled-post))
+(def oled-post-tl-lm (translate oled-post-tl-lm-translation-vector oled-post))
+(def oled-post-bl-bm (translate oled-post-bl-bm-translation-vector oled-post))
+(def oled-post-br-bm (translate oled-post-br-bm-translation-vector oled-post))
 
 (def curve-post-size (/ oled-post-size 2))
 (def curve-post-translation-vector [0 0 (+ (/ oled-post-size -2)  plate-thickness)])
@@ -58,12 +74,29 @@
 (def curve-post-bm-translation-vector  [0 (+ (/ mount-height -1.95) curve-post-adj) 0])
 (def curve-post-rm-translation-vector  [(- (/ mount-width 1.95)  curve-post-adj) 0 0])
 (def curve-post-lm-translation-vector  [(+ (/ mount-width -1.95)  curve-post-adj) 0 0])
+(def curve-post-tr-tm-translation-vector [(/ (- (/ mount-width 1.95)  curve-post-adj) 2) (- (/ mount-height 1.95) curve-post-adj) 0])
+(def curve-post-tr-rm-translation-vector [(- (/ mount-width 1.95)  curve-post-adj) (/ (- (/ mount-height 1.95) curve-post-adj) 2) 0])
+(def curve-post-tl-tm-translation-vector [(/ (+ (/ mount-width -1.95) curve-post-adj) 2) (- (/ mount-height 1.95) curve-post-adj) 0])
+(def curve-post-bl-lm-translation-vector [(+ (/ mount-width -1.95) curve-post-adj) (/ (+ (/ mount-height -1.95) curve-post-adj)  2) 0])
+(def curve-post-br-rm-translation-vector [(- (/ mount-width 1.95)  curve-post-adj) (/ (+ (/ mount-height -1.95) curve-post-adj)) 0])
+(def curve-post-tl-lm-translation-vector [(+ (/ mount-width -1.95) curve-post-adj) (/ (- (/ mount-height 1.95) curve-post-adj) 2) 0])
+(def curve-post-bl-bm-translation-vector [(/ (+ (/ mount-width -1.95) curve-post-adj) 2) (+ (/ mount-height -1.95) curve-post-adj) 0])
+(def curve-post-br-bm-translation-vector [(/ (- (/ mount-width 1.95)  curve-post-adj) 2) (+ (/ mount-height -1.95) curve-post-adj) 0])
 
 (def curve-post-tr (translate curve-post-tr-translation-vector curve-post))
 (def curve-post-tl (translate curve-post-tl-translation-vector curve-post))
 (def curve-post-bl (translate curve-post-bl-translation-vector  curve-post))
 (def curve-post-br (translate curve-post-br-translation-vector  curve-post))
 (def curve-post-bm (translate curve-post-bm-translation-vector  curve-post))
+
+(def curve-post-tr-tm (translate curve-post-tr-tm-translation-vector curve-post))
+(def curve-post-tr-rm (translate curve-post-tr-rm-translation-vector curve-post))
+(def curve-post-tl-tm (translate curve-post-tl-tm-translation-vector curve-post))
+(def curve-post-bl-lm (translate curve-post-bl-lm-translation-vector curve-post))
+(def curve-post-br-rm (translate curve-post-br-rm-translation-vector curve-post))
+(def curve-post-tl-lm (translate curve-post-tl-lm-translation-vector curve-post))
+(def curve-post-bl-bm (translate curve-post-bl-bm-translation-vector curve-post))
+(def curve-post-br-bm (translate curve-post-br-bm-translation-vector curve-post))
 
 (def sphere-post (->> (sphere (/ oled-post-size 2))
                      (translate [0 0 (+ (/ oled-holder-thickness -2) plate-thickness)])))
@@ -98,6 +131,14 @@
     :bm oled-post-bm-translation-vector
     :rm oled-post-rm-translation-vector
     :lm oled-post-lm-translation-vector
+    :tr-tm oled-post-tr-tm-translation-vector
+    :tr-rm oled-post-tr-rm-translation-vector
+    :tl-tm oled-post-tl-tm-translation-vector
+    :bl-lm oled-post-bl-lm-translation-vector
+    :br-rm oled-post-br-rm-translation-vector
+    :tl-lm oled-post-tl-lm-translation-vector
+    :bl-bm oled-post-bl-bm-translation-vector
+    :br-bm oled-post-br-bm-translation-vector
     [0 0 0]))
 
 (defn get-curve-corner-translation-vector [position]
@@ -110,6 +151,14 @@
     :bm curve-post-bm-translation-vector
     :rm curve-post-rm-translation-vector
     :lm curve-post-lm-translation-vector
+     :tr-tm curve-post-tr-tm-translation-vector
+:tr-rm curve-post-tr-rm-translation-vector
+:tl-tm curve-post-tl-tm-translation-vector
+:bl-lm curve-post-bl-lm-translation-vector
+:br-rm curve-post-br-rm-translation-vector
+:tl-lm curve-post-tl-lm-translation-vector
+:bl-bm curve-post-bl-bm-translation-vector
+:br-bm curve-post-br-bm-translation-vector
     [0 0 0]))
 
 (defn get-oled-post-outer-x-and-y-vector [dx dy]

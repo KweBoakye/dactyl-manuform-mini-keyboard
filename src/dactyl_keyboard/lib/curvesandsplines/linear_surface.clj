@@ -25,16 +25,18 @@
 
 
 (defn lofted-surface-point [P-u-one P-u-zero u w]
-  (mapv + (mul (P-u-zero u) (- 1 w)) (mul w (P-u-one u)))
+  (mapv + (mul P-u-zero (- 1 w)) (mul w P-u-one))
   )
 
-(defn lofted-surface [P-u-one P-u-zero u-steps w-steps]
+(defn lofted-surface [P-u-one P-u-zero u-steps w-steps &{:keys [boundary-curves-generated]
+                                                        :or {boundary-curves-generated true}}] 
   (vec
    (for [u-index (range (inc u-steps))
          :let [u (/ u-index u-steps)]]
      (vec (for [w-index (range (inc w-steps))
                 :let [w (/ w-index w-steps)]]
-            (mapv double (lofted-surface-point P-u-one P-u-zero u w)))))))
+            (if boundary-curves-generated (mapv double (lofted-surface-point (P-u-one u-index) (P-u-zero u-index) u w))
+                (mapv double (lofted-surface-point (P-u-one u) (P-u-zero u) u w))))))))
 
 ()
 

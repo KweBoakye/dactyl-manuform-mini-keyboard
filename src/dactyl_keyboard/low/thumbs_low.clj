@@ -403,8 +403,8 @@ column-radius (+ (/ (/ (+ mount-width extra-width) 2)
 
 (defn thumb-1x-layout [shape]
   (union
-   (thumb-mr-place shape)
-   (thumb-br-place shape)
+   (cond (= thumb-rows 2) (thumb-mr-place shape))
+   (cond (= thumb-rows 2) (thumb-br-place shape)) 
    (thumb-tl-place shape)
    (thumb-bl-place shape)))
 

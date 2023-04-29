@@ -45,8 +45,14 @@
                                        element)) 
          (call :vnf_vertex_array  (cl-format nil "points = ~A" points-for-scad) (format "caps =  %b" caps)
           (cond (false? caps) (format "cap1 =  %b" cap1)) (cond (false? caps) (format "cap2 =  %b" cap2))
-          (format "col_wrap =  %b" col-wrap) (format "row_wrap =  %b" row-wrap) (format "reverse =  %b" reverse)
+          (format "col_wrap =  %b" col-wrap) (format "row_wrap =  %b" row-wrap) (format "reverse =  %b" reverse) 
           (format "style =\"%s\"" style-string)))))
+
+(defn vnf_tri_array [points &{:keys [row-wrap reverse] :or {row-wrap false  reverse false}}]
+  (let [points-for-scad (matrix-to-scad points)]
+    (call :vnf_tri_array (cl-format nil "points = ~A" points-for-scad) (format "row_wrap =  %b" row-wrap) (format "reverse =  %b" reverse)) 
+    ) 
+  )
 
 (comment  (vnf-vertex-array [[[0 0 0] [0 4 0] [0 8 -3] [0 10 -3]]
                              [[2 0 6] [2 4 0] [2 8 0] [2 10 0]]
@@ -92,7 +98,7 @@
     (call :vnf_reverse_faces vnf-string)))
 
 (defn vnf-merge-points [vnf & {:keys [eps] :or {eps "EPSILON"}}]
-  (call :vnf_merge_points (format-vnf-as-argument vnf) [eps]))
+  (call :vnf_merge_points (format-vnf-as-argument vnf) eps))
 
 (defn vnf-drop-unused-points [vnf]
   (call :vnf_drop_unused_points (format-vnf-as-argument vnf)))
@@ -105,13 +111,27 @@
 
 
 
-(defn vnf-polyhedron [vnf & {:keys [convexity  extent  cp  anchor  spin orient atype]
-                             :or {convexity 2 extent true cp  "centroid" anchor  "origin" spin 0 orient "UP" atype  "hull"}}]
+(defn vnf-polyhedron [vnf & {:keys [convexity  extent  cp  anchor  spin orient atype multiple-vnf]
+                             :or {convexity 2 extent true cp  "centroid" anchor  "origin" spin 0 orient "UP" atype  "hull" multiple-vnf false}}]
 
-  (let [vnf-string (string/replace (write-scad vnf) #";" "")]
-    (call-module :vnf_polyhedron (format "vnf = %s" vnf-string) (format "convexity = %d" convexity) (format "extent = %b" extent) (format "cp = \"%s\"" cp)
+  (let [vnf-string  (if multiple-vnf   (mapv #(string/replace (write-scad %) #";" "") vnf) (string/replace (write-scad vnf) #";" "")) 
+        vnf-format (if multiple-vnf
+                     (format "vnf = [%s]"(string/join ","(for [index (range (count vnf-string))]
+                                                     (format "%s" (nth vnf-string index)))))
+                     (format "vnf = %s" vnf-string))]
+    ;(println "vnf-string" vnf-string)
+    ;(println "vnf-format" vnf-format)
+    (call-module :vnf_polyhedron vnf-format (format "convexity = %d" convexity) (format "extent = %b" extent) (format "cp = \"%s\"" cp)
                  (format "anchor = \"%s\"" anchor) (format "spin = %d" spin) (format "orient = %s" orient)
                  (format "atype = \"%s\"" atype))))
+
+(comment (let [vnf (vnf-vertex-array [[[0 0 0] [0 4 0] [0 8 -3] [0 10 -3]]
+                                      [[2 0 6] [2 4 0] [2 8 0] [2 10 0]]
+                                      [[4 0 0] [4 4 0] [4 8 3] [4 10 3]]
+                                      [[6 0 0] [6 4 -3] [6 8 0] [6 10 0]]
+                                      [[8 0 0] [8 4 -3] [8 8 0] [8 10 0]]]
+                                     :caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default)]
+           (write-scad (vnf-polyhedron vnf :multiple-vnf false))))
 
 (defn vnf-wireframe [vnf width]
   (call-module :vnf_wireframe (format-vnf-as-argument vnf) (format "width = %s" width)))

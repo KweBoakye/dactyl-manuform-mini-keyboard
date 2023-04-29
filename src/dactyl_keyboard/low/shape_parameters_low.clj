@@ -124,6 +124,7 @@
 (def thumb-well-angle 10)
 (def thumb-alpha 15)
 (def thumb-beta 3.75)
+(def thumb-rows 1)
 
 
 (def keyboard-z-offset 10)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2

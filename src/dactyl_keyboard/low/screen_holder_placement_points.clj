@@ -21,7 +21,7 @@
                                             (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (+ screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
                                             (mapv + [(/ post-size -2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
 (def screen-holder-top-right-outside-point-alt (transform-position
-                                            (partial screen-holder-translate-and-place-side (+ (/ (+ screen-holder-height) 2) (/ screen-holder-depth 4)) (/ (+ screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
+                                            (partial screen-holder-translate-and-place-side (+ (/ (+ screen-holder-height) 2) (/ screen-holder-depth 4)) (+ (/ (+ screen-holder-width) 2) (/ screen-holder-depth 4))  (- (/ screen-holder-depth 1)))
                                             (mapv + [(/ post-size -2) (/ post-size -2) 0] [0 0 (/ oled-holder-thickness 2)])))
 
 
@@ -30,7 +30,7 @@
                                                (partial screen-holder-translate-and-place-side (/ (+ screen-holder-height) 2) (/ (- screen-holder-width) 2)  (+ (/ screen-holder-depth 2)))
                                                (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
 (def screen-holder-bottom-right-outside-point-alt (transform-position
-                                               (partial screen-holder-translate-and-place-side (+ (/ (+ screen-holder-height) 2) (/ screen-holder-depth 4)) (/ (- screen-holder-width) 2)  (- (/ screen-holder-depth 2)))
+                                               (partial screen-holder-translate-and-place-side (+ (/ (+ screen-holder-height) 2) (/ screen-holder-depth 4)) (/ (- screen-holder-width) 2)  (- (/ screen-holder-depth 1)))
                                                (mapv + [(/ post-size -2) (/ post-size 2) 0] [0 0 (/ oled-holder-thickness 2)])))
 (def screen-holder-bottom-right-outside-floor-point (assoc (vec screen-holder-bottom-right-outside-point) 2 0))
 (def screen-holder-bottom-right-outside-floor-point-alt (assoc (vec screen-holder-bottom-right-outside-point-alt ) 2 0))
