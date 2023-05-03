@@ -33,8 +33,9 @@
             [scad-clj.scad :refer :all]))
 
 (defn fractyl-back-wall [wall-cross-section-steps wall-section-steps] 
-     (vnf-polyhedron
-      (wall-vnf (wall-section
+     ;(vnf-polyhedron
+     ; (wall-vnf 
+       (wall-section
                  (wall-section-parameter
                   (vec (concat
                         [(wall-cross-section-parameter (key-wall-position lastcol 0 1 1 :tr))]
@@ -54,9 +55,10 @@
                    :linear-outer-top true :linear-inner-top true) 
                   )
                  wall-cross-section-steps wall-section-steps)
-                {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :alt})))
+                ;{:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :alt}))
+       )
 
-(spit "things-low/back-wall-test.scad"
+(comment (spit "things-low/back-wall-test.scad"
       (write-scad
        (include "../BOSL2/std.scad")
        (let [curve-points (vec (concat
@@ -76,10 +78,10 @@
                                                        (vec (drop-last (drop 1 curve-points))) 
                                                        50)
                                                                           (sphere 0.1))
-        (fractyl-back-wall 10 30)
+        (vnf-polyhedron (wall-vnf (fractyl-back-wall 10 30) {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :alt}))
         (tps-65-place tps-65-mount-new))
          )
-       ))
+       )))
 
 (defn thumb-tr-br-to-middle-lm-local-cubic-curve-interpolation-wall-section-fn [wall-cross-section-steps wall-section-steps]
   (wall-section
@@ -199,16 +201,16 @@
 ;;    (vnf-polyhedron (wall-vnf (thumb-wall-section-for-single-thumb-row-fn wall-cross-section-steps wall-section-steps)
 ;;                              {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse true :style :default}))
    ))
-(spit "things-low/thumb-section-test.scad"
+(comment (spit "things-low/thumb-section-test.scad"
       (write-scad
        (include "../BOSL2/std.scad")
        (union
         ;thumb-type
-        (thumb-wall-section 30 30))))
+        (thumb-wall-section 30 30)))))
 
 
 (defn front-wall-nurbs [wall-cross-section-steps wall-section-steps]
-  (union (let [weights [1 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 1];(vec (reverse [1 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 1]))
+  (let [weights [1 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 1];(vec (reverse [1 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 1]))
                knot-vector (let [denom 10]
                              (mapv (partial * (dec denom)) [0 0 0 (/ 1 denom) (/ 2 denom) (/ 3 denom) (/ 5 denom) (/ 6 denom) (/ 7 denom) (/ 7.5 denom) (/ 9.0 denom)  1 1 1]))
                knot-vector-2 (let [denom 10]
@@ -219,7 +221,7 @@
                                                  :linear-inner-top false)
             ;;    wall-positions [
             ;;                   (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant)
-
+               
             ;;                   (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant)
             ;;                   (key-wall-position 2 2 -1 -1 :br :slant :no-slant :xy 4)
             ;;                   (key-wall-position 3 2 -1 0 :bl :offset [0.000001 0 0] :slant :no-slant :xy 4)
@@ -230,7 +232,7 @@
             ;;                   (key-wall-position lastcol 2 -1 -1 :bl :slant :no-slant)
             ;;                   (key-wall-position lastcol 2 0 -1 :bl :slant :no-slant :offset [0 0.000001 0])
             ;;                   (key-wall-position lastcol 2 0 -1 :br)
-
+               
             ;;                    ]
                wall-section-parameter (wall-section-parameter
                                        [;(wall-cross-section-parameter (thumb-wall-position thumb-tr-place 1 0 :tr :xy 3 :slant :parallel-by-d-opposite))
@@ -296,40 +298,44 @@
                                            pinky-bl-to-fourth-bl-outer-steps pinky-bl-to-fourth-bl-outer-steps :boundary-curves-generated true)]
 
            
-           (union
-             (vnf-polyhedron (wall-vnf wall-section
-                                       {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default}))
-            ;(plot-bezier-points c1 (sphere 0.2))
-            ;(color [1 0 0 1](plot-bezier-points nurbs-curve (sphere 0.1)))
-            ;(plot-bezier-points wall-top (sphere 0.2))
-           ;(plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere 0.2))
-
-            ;(translate (nth wall-top (* (nth knot-vector 8) wall-section-steps)) (sphere 0.1))
-            ;(color [1 0 0 1](plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere 0.1)))
-            ;(plot-bezier-points pinky-bl-to-fourth-bl-inner-curve (sphere 0.2))
-            ;; (translate (find-point-on-line-using-x (main-body-web-post-point-top lastcol cornerrow :bl) (main-body-web-post-point-top lastcol cornerrow :tl) (nth intersec 0))
-            ;;            (sphere 1))
-            ;(vnf-polyhedron (vnf_tri_array pinky-bl-to-fourth-bl-P-w-one-outer-surface :reverse true))
-            (chained-hull-to-points (plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 3 cornerrow :br) (sphere epsilon))
-                                    (plot-bezier-points pinky-bl-to-fourth-bl-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 3 cornerrow :br) (sphere epsilon))
-                                    pinky-bl-to-fourth-bl-outer-steps)
-            (chained-hull-to-points (plot-bezier-points fourth-bl-to-middle-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :br) (sphere epsilon))
-                                    (plot-bezier-points fourth-bl-to-middle-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :br) (sphere epsilon))
-                                    fourth-bl-to-middle-outer-steps)
-            (chained-hull-to-points (plot-bezier-points middle-to-index-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :bl) (sphere epsilon))
-                                    (plot-bezier-points middle-to-index-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :bl) (sphere epsilon))
-                                    middle-to-index-outer-steps)
+           {:front-wall-wall-section wall-section
+            :chained-hull-shapes [(chained-hull-to-points (plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 3 cornerrow :br) (sphere epsilon))
+                                                          (plot-bezier-points pinky-bl-to-fourth-bl-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 3 cornerrow :br) (sphere epsilon))
+                                                          pinky-bl-to-fourth-bl-outer-steps)
+                                  (chained-hull-to-points (plot-bezier-points fourth-bl-to-middle-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :br) (sphere epsilon))
+                                                          (plot-bezier-points fourth-bl-to-middle-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :br) (sphere epsilon))
+                                                          fourth-bl-to-middle-outer-steps)
+                                  (chained-hull-to-points (plot-bezier-points middle-to-index-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :bl) (sphere epsilon))
+                                                          (plot-bezier-points middle-to-index-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :bl) (sphere epsilon))
+                                                          middle-to-index-outer-steps)]
+            }
+      ;;      (union
+      ;;       (vnf-polyhedron (wall-vnf wall-section
+      ;;                                 {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default}))
+      ;;       ;(plot-bezier-points c1 (sphere 0.2))
+      ;;       ;(color [1 0 0 1](plot-bezier-points nurbs-curve (sphere 0.1)))
+      ;;       ;(plot-bezier-points wall-top (sphere 0.2))
+      ;;      ;(plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere 0.2))
             
-      
-            ;(vnf-polyhedron (vnf-vertex-array pinky-bl-to-fourth-bl-P-w-one-outer-surface :caps false :col-wrap false :reverse true :style :default))
-            ))
+      ;;       ;(translate (nth wall-top (* (nth knot-vector 8) wall-section-steps)) (sphere 0.1))
+      ;;       ;(color [1 0 0 1](plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere 0.1)))
+      ;;       ;(plot-bezier-points pinky-bl-to-fourth-bl-inner-curve (sphere 0.2))
+      ;;       ;; (translate (find-point-on-line-using-x (main-body-web-post-point-top lastcol cornerrow :bl) (main-body-web-post-point-top lastcol cornerrow :tl) (nth intersec 0))
+      ;;       ;;            (sphere 1))
+      ;;       ;(vnf-polyhedron (vnf_tri_array pinky-bl-to-fourth-bl-P-w-one-outer-surface :reverse true))
+            
+            
+            
+      ;;       ;(vnf-polyhedron (vnf-vertex-array pinky-bl-to-fourth-bl-P-w-one-outer-surface :caps false :col-wrap false :reverse true :style :default))
+      ;;       )
+           
          ))
 
-(spit "things-low/horizontal-first-test.scad"
+(comment (spit "things-low/horizontal-first-test.scad"
       (write-scad
        (include "../BOSL2/std.scad")
        (union key-holes
-              (front-wall-nurbs 30 30))))
+              (front-wall-nurbs 30 30)))))
 
 (defrecord LeftSectionData [vnf-array outer-wall inner-wall outer-floor-points  inner-floor-points trackpad-to-main-body-data
                             thumb-bl-to-tl-outer-curve-fn thumb-tl-to-tr-outer-curve-fn
@@ -688,7 +694,7 @@
         vnf-array (wall-vnf-array outer-wall inner-wall
                                   {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :quincunx})
          ] 
-    {:left-section-data (LeftSectionData. vnf-array outer-wall inner-wall  (peek outer-wall) (peek inner-wall)  trackpad-to-main-body-data
+    {:left-section-data (LeftSectionData. vnf-array outer-wall inner-wall  (filter #(zero? (nth % 2))(peek outer-wall)) (peek inner-wall)  trackpad-to-main-body-data
                                           outer-wall-trackpad-to-keys-gap-border-tangent-outer-fn thumb-tl-to-tr-outer-curve-fn
                                           inner-wall-trackpad-to-keys-gap-border-tangent-outer-fn thumb-tl-to-tr-inner-curve-fn)
      :thumb-outer-points-fn thumb-outer-points-fn
@@ -796,9 +802,12 @@
                                         (mapv - (nth thumb-bl-bl-west-outer-curve index) (nth  thumb-bl-lm-outer-curve index))]
                                        (* cross-section-steps 2))))
         ]
-    (walls-to-vnf [local-outer-thumb-wall inner-thumb-wall] :args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})))
+    {:wall-vnf (walls-to-vnf [local-outer-thumb-wall inner-thumb-wall] :args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default}) 
+               :outer-floor-points (peek local-outer-thumb-wall) :inner-thumb-points (peek inner-thumb-wall)
+               }
+    ))
 
-(spit "things-low/left-test.scad"
+(comment (spit "things-low/left-test.scad"
       (write-scad
        (include "../BOSL2/std.scad")
        (let [steps 30
@@ -832,9 +841,9 @@
           (vnf-polyhedron thumb-tl-to-tr-vnf)
           (vnf-polyhedron (:trackpad-to-main-body-vnf trackpad-to-main-body-data))
           (vnf-polyhedron left-section-vnf-array) 
-          ))))
+          )))))
 
-(defrecord FractylRightWallData [fractyl-right-wall-vnf key-gap-outer-curve-fn-coll 
+(defrecord FractylRightWallData [fractyl-right-wall-vnf bottom-outer bottom-inner key-gap-outer-curve-fn-coll 
                                   key-gap-inner-curve-fn-coll])
 (defn fractyl-right-wall [wall-cross-section-steps wall-section-steps ]
 (let [pinky-row-2-bl-south-wall-position  (key-wall-position lastcol 2 0 -1 :bl  :slant :no-slant :offset [0 0.000001 0])
@@ -981,6 +990,7 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
       ]
                     (FractylRightWallData. (vnf-join [(wall-vnf wall-section {:caps false :cap1 false :cap2 true :col-wrap true :row-wrap false :reverse false :style :concave})
                                                       (vnf-vertex-array top-cap :caps false :col-wrap false)])
+                                           (peek (:outer-wall wall-section)) (peek (:inner-wall wall-section))
                                            [(fn [steps] (decompose-b-spline-curve-and-calculate-bezier-curves 2 (:U outer-coll) (:P outer-coll) 6 7 steps))
                                             (fn [steps] (decompose-b-spline-curve-and-calculate-bezier-curves 2 (:U outer-coll) (:P outer-coll) 12 13 steps))] 
                                            [(fn [steps] (decompose-b-spline-curve-and-calculate-bezier-curves 2 (:U inner-coll) (:P inner-coll) 6 7 steps))
@@ -1001,7 +1011,7 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                     )  
   )
 
-(spit "things-low/fractyl-right-wall-test.scad"
+(comment (spit "things-low/fractyl-right-wall-test.scad"
       (write-scad
        (include include-bosl2)
        (let []
@@ -1010,17 +1020,17 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
         ;(front-wall-nurbs 10 30)
           (fractyl-back-wall 5 5)
         key-holes
-        ))))
+        )))))
 
 
 
-(spit "things-low/fractyl-case-walls-test.scad"
+(comment (spit "things-low/fractyl-case-walls-test.scad"
       (write-scad
        (include include-bosl2)
-       (let [steps 10
+       (let [steps 30
              
-             wall-cross-section-steps 10
-             wall-section-steps  10
+             wall-cross-section-steps 30
+             wall-section-steps  30
              {thumb-single-row-wall-section :wall-section 
               outer-key-gap-fn-coll :outer-key-gap-fn-coll 
               inner-key-gap-fn-coll :inner-key-gap-fn-coll} (thumb-wall-section-for-single-thumb-row-fn wall-cross-section-steps wall-section-steps)
@@ -1176,9 +1186,9 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
           fractyl-back-wall-polyhedron
           front-wall-nurbs-polyhedron  
           ))
-       ))
+       )))
 
-(spit "things-low/fractyl-connecter-test.scad"
+(comment (spit "things-low/fractyl-connecter-test.scad"
       (write-scad
        (include include-bosl2)
        (let [wall-cross-section-steps 5
@@ -1245,4 +1255,4 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
           (fractyl-right-wall wall-cross-section-steps wall-section-steps)
           )
          )
-       ))
+       )))

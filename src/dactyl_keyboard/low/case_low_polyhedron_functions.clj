@@ -1323,7 +1323,7 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
         inner-wall-horizontal-curves (inner-wall-curves-fn inner-wall-horizontal-curves-control-points)
         outer-wall (wall-from-horizontal-control-curves outer-wall-horizontal-curves outer-wall-parameters  wall-cross-section-steps wall-section-steps total-wall-section-steps) 
         inner-wall (wall-from-horizontal-control-curves inner-wall-horizontal-curves inner-wall-parameters wall-cross-section-steps wall-section-steps total-wall-section-steps)]
-    {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (peek outer-wall) :inner-floor-points (peek inner-wall)}))
+    {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (mapv #(peek %) outer-wall) :inner-floor-points (mapv #(peek %) inner-wall)}))
 
 (defn horizontal-first-outer-and-inner-walls-for-global [wall-cross-section-parameters tangent-endpoint-zero-wall-cross-section-parameter tangent-endpoint-n-wall-cross-section-parameter
                                                          outer-wall-curves-fn inner-wall-curves-fn  
@@ -1357,7 +1357,7 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
         inner-wall-horizontal-curves (inner-wall-curves-fn inner-wall-horizontal-curves-control-points tangent-zero-endpoint-inner-horizontal-curve-control-points tangent-n-endpoint-inner-horizontal-curve-control-points)
         outer-wall (wall-from-horizontal-control-curves outer-wall-horizontal-curves (into [tangent-n-endpoint-outer-wall-parameter ] (conj outer-wall-parameters tangent-zero-endpoint-outer-wall-parameter))  wall-cross-section-steps wall-section-steps total-wall-section-steps)
         inner-wall (wall-from-horizontal-control-curves inner-wall-horizontal-curves (into [tangent-zero-endpoint-inner-wall-parameter] (conj inner-wall-parameters tangent-n-endpoint-inner-wall-parameter)) wall-cross-section-steps wall-section-steps total-wall-section-steps)]
-    {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (peek outer-wall) :inner-floor-points (peek inner-wall)}))
+    {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (mapv #(peek %) outer-wall) :inner-floor-points (peek inner-wall)}))
 
 (defn wall-cross-section-tangent-vectors-for-horizontal-first-wall-section [wall-cross-section-tangent-vector-parameters ]
   (let [wall-cross-sections-tangent-parameters-start (mapv #(:start-point-wall-cross-section-parameter %) wall-cross-section-tangent-vector-parameters)
@@ -1413,7 +1413,7 @@ inner-wall-horizontal-curves-control-points (map-indexed (fn [index element]
       inner-wall-horizontal-curves (inner-wall-curves-fn inner-wall-horizontal-curves-control-points inner-wall-cross-section-tangent-vectors)
       outer-wall (wall-from-horizontal-control-curves outer-wall-horizontal-curves outer-wall-parameters wall-cross-section-steps wall-section-steps total-wall-section-steps)
 inner-wall (wall-from-horizontal-control-curves inner-wall-horizontal-curves inner-wall-parameters wall-cross-section-steps wall-section-steps total-wall-section-steps)]
-  {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (peek outer-wall) :inner-floor-points (peek inner-wall)})
+  {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (mapv #(peek %) outer-wall) :inner-floor-points (peek inner-wall)})
   )
 (defn horizontal-first-outer-and-inner-walls-with-tangents [wall-cross-section-parameters tangent-wall-cross-section-parameters outer-wall-curves-fn inner-wall-curves-fn wall-cross-section-steps wall-section-steps total-wall-section-steps]
   (let [outer-wall-parameters (mapv #(:outer-wall-parameters %) wall-cross-section-parameters)
@@ -1795,6 +1795,7 @@ steps-distrubution wall-cross-section-steps wall-section-steps]
                                   outer-wall (mapv #(curve-fn (:P %) (:U %)) outer-wall-local-interpolation-parameters)
                                   inner-wall (mapv #(curve-fn (:P %) (:U %)) inner-wall-local-interpolation-parameters)
                                   ]
+                              
                               {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (peek outer-wall) :inner-floor-points (peek inner-wall)}))
         horizontal-first-fn (fn []
                               (let [outer-wall-curves-fn  (fn [outer-wall-horizontal-curves-control-points] 
