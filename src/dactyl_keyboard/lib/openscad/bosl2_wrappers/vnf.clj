@@ -75,8 +75,8 @@
                 [[8 0 0] [8 4 -3] [8 8 0] [8 10 0]]]))) )
 )
 
-(comment (partition 2 (interleave
-                        [[[0 0 0] [0 4 0] [0 8 -3] [0 10 -3]]
+(comment (partition 3 (apply interleave
+                        [[[[0 0 0] [0 4 0] [0 8 -3] [0 10 -3]]
                                 [[2 0 6] [2 4 0] [2 8 0] [2 10 0]]
                                 [[4 0 0] [4 4 0] [4 8 3] [4 10 3]]
                                 [[6 0 0] [6 4 -3] [6 8 0] [6 10 0]]
@@ -85,7 +85,12 @@
                                 [[2 0 6] [2 4 0] [2 8 0] [2 10 0]]
                                 [[4 0 0] [4 4 0] [4 8 3] [4 10 3]]
                                 [[6 0 0] [6 4 -3] [6 8 0] [6 10 0]]
-                                [[8 0 0] [8 4 -3] [8 8 0] [8 10 0]]])))
+                                [[8 0 0] [8 4 -3] [8 8 0] [8 10 0]]]
+                       [[[0 0 0] [0 4 0] [0 8 -3] [0 10 -3]]
+                        [[2 0 6] [2 4 0] [2 8 0] [2 10 0]]
+                        [[4 0 0] [4 4 0] [4 8 3] [4 10 3]]
+                        [[6 0 0] [6 4 -3] [6 8 0] [6 10 0]]
+                        [[8 0 0] [8 4 -3] [8 8 0] [8 10 0]]]])))
 (defn format-vnf-as-argument [vnf]
   (string/replace (write-scad vnf) #";" ""))
 
@@ -133,7 +138,7 @@
                                      :caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default)]
            (write-scad (vnf-polyhedron vnf :multiple-vnf false))))
 
-(defn vnf-wireframe [vnf width]
+(defn vnf-wireframe [vnf &{:keys [width] :or {width 1}}]
   (call-module :vnf_wireframe (format-vnf-as-argument vnf) (format "width = %s" width)))
 
 (defn vnf-volume [vnf]
@@ -145,9 +150,17 @@
 ;(defn vnf-halfspace [vnf r {:keys [d axis] :or {d axis}}])
 
 (defn debug-vnf [vnf &{:keys [faces vertices opacity convexity size filter] :or {faces true vertices true opacity 0.5 convexity 6 size 1 filter nil}}]
+  (println (write-scad (filter-nil-args
+            (call :debug_vnf (format-vnf-as-argument vnf) (format "faces = %b" faces) (format "vertices = %b" vertices) (format "opacity = %f" opacity) (format "convexity = %d" convexity) (format "size = %d" size) (if (false? (nil? filter)) filter)))))
   (filter-nil-args
    (call :debug_vnf (format-vnf-as-argument vnf) (format "faces = %b" faces) (format "vertices = %b" vertices) (format "opacity = %f" opacity) (format "convexity = %d" convexity) (format "size = %d" size) (if (false? (nil? filter)) filter))))
 
+(defn vnf-validate [vnf &{:keys [size show-warns check-isects opacity label-verts label-faces wireframe adjacent] 
+                               :or {size 1 show-warns true check-isects false opacity 0.67  label-verts false label-faces false wireframe false adjacent false}}]
+  
+   (call :vnf_validate (format-vnf-as-argument vnf) (format "size = %d" size) (format "show_warns = %b" show-warns) (format "check_isects = %b" check-isects)
+         (format "opacity = %f" opacity) (format "label_verts = %b" label-verts) (format "label_faces = %b" label-faces)  (format "wireframe = %b" wireframe) (format "adjacent = %b" adjacent)
+         ))
 (comment  (debug-vnf (vnf-vertex-array [[[0 0 0] [0 4 0] [0 8 -3] [0 10 -3]]
                              [[2 0 6] [2 4 0] [2 8 0] [2 10 0]]
                              [[4 0 0] [4 4 0] [4 8 3] [4 10 3]]

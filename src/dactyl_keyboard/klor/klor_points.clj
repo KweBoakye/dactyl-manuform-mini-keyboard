@@ -21,13 +21,14 @@
 
 
 
-(def thumb-right-inner-corner [153.828964 121.795181])
-(def bottom-left-thumb-key-bottom-right-corner [98.331777 151.941367])
-(def bottom-left-thumb-key-bottom-left-corner [85.321318 163.541477] )
- (def bottom-left-thumb-key-bottom-mid-point [93.148749 156.666031])
-(def bottom-left-thumb-key-top-left-corner [71.46465 148.697567])
- (def bottom-left-thumb-key-top-right-corner [81.019757 139.177719])
+(def thumb-right-inner-corner [153.828964 121.795181 0])
+(def bottom-left-thumb-key-bottom-right-corner [98.331777 151.941367 0])
+(def bottom-left-thumb-key-bottom-left-corner [85.321318 163.541477 0] )
+ (def bottom-left-thumb-key-bottom-mid-point [93.148749 156.666031 0])
+(def bottom-left-thumb-key-top-left-corner [71.46465 148.697567 0])
+ (def bottom-left-thumb-key-top-right-corner [81.019757 139.177719 0])
  
+(def thumb-right-inner-corner-wall-point (mapv + thumb-right-inner-corner [2 2 0]))
 (def middle-left-thumb-key-bottom-mid-point  [107.816364 145.277472])
 (def middle-left-thumb-key-bottom-right-point  [113.351981 142.068933])
  (def middle-left-thumb-key-bottom-left-point [98.649106 150.531019])

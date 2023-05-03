@@ -1,5 +1,5 @@
 (ns dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline
-  (:require [clojure.core.matrix :refer [cross div magnitude mul log dot]] 
+  (:require [clojure.core.matrix :refer [cross div magnitude mul log dot mmul]] 
             [clojure.math :refer [asin pow sqrt floor]]
             [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-point bezier-basis-fn]]
             [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [homogenize-cooridinates homogenize-single-point project-coordinate
@@ -329,8 +329,7 @@
 
 (defn curve-deriv-control-points [n p U P d & {:keys [r1 r2] :or {r1 0 r2 n}}]
   (let [r (- r2 r1)
-        PK (into-array (repeat (inc d) (into-array (repeat (inc r) (vec (repeat (count (nth P 0)) 0.0))))))]
-    (println "PK " PK)
+        PK (into-array (repeat (inc d) (into-array (repeat (inc r) (vec (repeat (count (nth P 0)) 0.0))))))] 
     (doseq [i (range (inc r))]
       (aset PK 0 i (nth P (+ r1 i))))
 
@@ -347,8 +346,7 @@
   (let [n (dec (count P))
         control-points (nth (curve-deriv-control-points n p U P d) d)
         knot-vector (subvec U 1 (dec (count U))) 
-        ]
-    (println "b-spline-deriv-curve" control-points knot-vector)
+        ] 
     (non-uniform-b-spline control-points (dec p) knot-vector steps :u-start u-start :u-end u-end)
     )
   )
@@ -363,7 +361,7 @@
         w-u (calculate-non-uniform-b-spline-point n p U w-list u)
         w-u-deriv  (vec (flatten (curve-derivs-alg1 n p U w-list u d)))
         C-u (calculate-non-uniform-b-spline-point n p U P u)]
-    (println "Au-deriv " Au-deriv " w-u-deriv" w-u-deriv "w-u " w-u " C-u" C-u)
+    
       (mapv - Au-deriv 
            (mapv (partial *  (nth w-u-deriv 0)) C-u)
            )
@@ -385,10 +383,7 @@
         CK (into-array (repeat (inc d) zero-vec) )]
     (doseq [k (range (inc du))]
       (aset CK k zero-vec)
-      (doseq [j (range (inc (- p k)))]
-             (println "(get-in N [j (- p k)]) " (get-in N [j (- p k)]))
-             (println "(get-in PK [k j]) " (get-in PK [k j]))
-             (println "(aget CK k) " (aget CK k)) 
+      (doseq [j (range (inc (- p k)))] 
         (aset CK k (mapv + (aget CK k) (mapv (partial * (get-in N [j (- p k)])) (get-in PK [k j]))))))
     (vec CK)))
 
@@ -397,7 +392,6 @@
        zero-vec (vec (repeat (inc (count (nth P 0))) 0.0))
         d (into-array (repeat (inc p) zero-vec))
         q (into-array (repeat (inc p) zero-vec))] 
-    (println "d " (repeat (inc p) zero-vec))
     (doseq [i (range (inc p))
             :let [Pw-i-plus-k-minus-p (homogenize-single-point (nth P  (- (+ i span) p)) (nth weights (- (+ i span) p)))]]
            (aset d i Pw-i-plus-k-minus-p)
@@ -445,9 +439,7 @@
                              (if (<= i k) (let [multiplier (* (binomial-coefficient-2 k i) (nth wderivs i))](recur
                                            (mapv - v-inner (mapv #(* multiplier  %) (aget CK (- k i))))
                                            (inc i)))
-                                 v-inner))]]
-           (println "(nth wderivs ) " (nth wderivs 0))
-           (println "v-result" v-result)
+                                 v-inner))]] 
            (aset CK k (div v-result (nth wderivs 0)))
            )
     (vec CK)
@@ -691,15 +683,10 @@
         rk-values (calculate-average-radii Q n)
         l-k-values (calculate-circular-arc-span-length Q qk-values :rk-values rk-values)
         u-k-values (double-array (+ n 1) 0.0)
-        sum-lc (reduce + (for [c (range 1 n)] (nth l-k-values c)))]
-    (println (last l-k-values) (nth l-k-values (dec n)))
+        sum-lc (reduce + (for [c (range 1 n)] (nth l-k-values c)))] 
     (doseq [k (range 1 (inc n))]
           (aset u-k-values k (+ (aget u-k-values (dec k)) 
-             (/ (nth l-k-values (dec k)) sum-lc))))
-    
-    ;(aset u-k-values n 1.0)
-  
-    ;(mapv #(/ % 2) (vec u-k-values))
+             (/ (nth l-k-values (dec k)) sum-lc)))) 
     (let [u-k-values-vec (vec u-k-values) 
           u-k-n (peek u-k-values-vec)]
       (mapv #(/ % u-k-n) u-k-values-vec))
@@ -822,8 +809,7 @@
     (doseq [i (range (inc m))]
       (cond (<= i p) (aset knot-vector i 0.0)
             (>= i (- m p)) (aset knot-vector i (* 1.0 num-segments))
-            :else (aset knot-vector i (/ i (inc (- n p))))))
-    (println "knot-vector " knot-vector)
+            :else (aset knot-vector i (/ i (inc (- n p)))))) 
     knot-vector
     ) 
   )
@@ -920,29 +906,113 @@
           (>= index (- m p))
           (aset knot-vector index (* 1.0 num-segments)))))
 
-(defn calculate-en [u-k n p]
-  (let [m (+ n p 3)
+(defn calculate-en [u-k n p &{:keys [constrained] :or {constrained false}}]
+  (let [m (if constrained (+ n p 3) (inc (+ n p)))
+        num-of-data-points (+ (inc n) 2)
         num-segments (+ (- n p) 3)
         knot-vector (double-array (inc m) 0.0)
-        c (/ (inc m) (inc (- n p)))
+        c (/ (+ num-of-data-points 2) (inc (- n p)))
         l-fn (fn [j] (floor (* j c)))
         alpha-fn (fn [j] (- (* j c) (l-fn j))) 
         knot-fn (fn [j] (let [alpha (alpha-fn j)
                               l (l-fn j)]
                           (println "l" l )
-                          (+ (* (- 1 alpha) (nth u-k (dec j)))
-                             (* alpha (nth u-k j)))))]
+                          (+ (* (- 1 alpha) (nth u-k j))
+                             (* alpha (nth u-k (inc j))))))]
     (blah m knot-vector p knot-fn num-segments)
     
     (vec knot-vector)
     )
   )
 
+(comment [])
+
+(defn piegl-and-tiller [u-k n p &{:keys [constrained] :or {constrained false}}]
+  (let [m (inc (+ n p))
+        num-segments (+ (- n p) 1)]
+     (->>(for [i (range (inc m))]
+       (cond (<= i p) 0.0
+             (>= i (- m p)) 1.0
+             :else (/ (reduce + (subvec u-k 0 (+ (- i p) 2))) p))
+       )
+      (vec)
+      (mapv #(* num-segments %))
+      )
+    )
+  (let [m (+ (+ n p) 3)
+        num-segments (+ (- n p) 3)])
+ 
+  )
+
+(defn modified-knot-placement-technique [u-k n p & {:keys [constrained m] :or {constrained false m (if constrained (+ n p 3) (+ n p 1))}}]
+  (println "m" m)
+  (if constrained
+    (let [;m (+ n p 3)
+          num-segments (- m p)
+          c (/ (+ m 2) (inc (- n p)))
+          l-fn (fn [j] (floor (* j c)))
+          alpha-fn (fn [j] (- (* j c) (l-fn j)))
+          ]
+      (println c)
+      (vec (for [i (range (inc (+ m p 1)))]
+        (cond (<= i p) 0.0
+              (>= i (inc (- m p))) (* 1.0 )
+              :else (let [j (- i p)
+                          alpha (alpha-fn j)
+                          l (l-fn j)
+                          u-l (nth u-k j)
+                          u-l-minus-one (nth u-k  (dec j))]
+                      (* (+ (* (- 1 alpha) u-l-minus-one) (* alpha u-l)) 1.0)))))
+      )
+   (let [;m (inc (+ n p))
+        num-segments (- m p)]
+     (vec (for [i (range (inc m))]
+           (cond (<= i p) 0.0
+                 (>= i (- m p)) 1.0
+                 :else (let [j (- i p)
+                             ](* (/ (reduce + (subvec u-k j (+ j p))) p) 1.0))))
+)))
+  )
+
+(defn unified-average-technique [u-k n p]
+  (let [m (+ n p 1) 
+        num-segments( + (- n p) 1)
+        ]
+    (vec (for [index (range 0 (inc m))]
+      (cond (<= index p ) 0.0
+            (>=  index (inc n)) num-segments
+            :else (let [j (- index p)
+                        multiplier (/ 1 (+ (- m n) p))
+                        sum-end (+ m (- n) p -1 j)
+                        u-sum (reduce + (subvec u-k j (inc sum-end)))]
+                    (* multiplier u-sum num-segments)))))
+    )
+  )
+
+(comment (let [u-k [0 0.1 0.3 0.7 0.9 1.0]
+               av (calculate-averaged-knot-vector-from-u-k u-k 4 2)
+               p (piegl-and-tiller u-k 4 2)]
+           (println "p" p)
+           av))
+
+(comment (let [u-k [0.0 0.15 0.35 0.5 0.65 0.85 1.00]
+               av (calculate-averaged-knot-vector-from-u-k-with-end-derivs u-k 6 3)
+               mkpt (modified-knot-placement-technique u-k 6 3 :constrained true :m 6)
+               ]
+           (println av)
+           mkpt
+           ))
 
 (comment (let [u-k [0 0.1 0.3 0.7 0.9 1.0]
                av (calculate-averaged-knot-vector-from-u-k-with-end-derivs u-k 4 2)
-               en (calculate-en u-k 4 2)]
+               en (calculate-en u-k 4 2 :constrained true)
+               mkpt (modified-knot-placement-technique u-k 4 2 :constrained true)
+               ;uavg (unified-average-technique u-k 4 2)
+               ]
+           
            (println "en" en)
+           (println "mkpt" mkpt)
+           ;(println "uavg" uavg)
            av
            ))
 (comment (let [Q [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]]
@@ -967,6 +1037,140 @@
     (println span)
     (calculate-non-vanishing-basis-functions 4 1 p U)))
 
+(defn riesenfield-even-knot-vector [L l-values p m n num-segments]
+  (vec (for [index (range (inc m))] 
+    (cond (<= index p) 0.0
+          (>= index (- m p) ) (double num-segments )
+          (= index (dec (- m p))) (* (/ (+ (reduce + (subvec l-values 1  (- n (/ p 2)))) (/ (nth l-values (- n (/ p 2))) 2)) L) num-segments)
+          :else (*  (/ (+ (reduce + (subvec l-values 1 (inc (/ p 2))) ) (/ (nth l-values (+ (/ p 2) (- index p))) 2)) L) num-segments))
+    )))
+
+(defn riesenfield-odd-knot-vector [L l-values p m n num-segments]
+  (vec (for [index (range (inc m))]
+         (cond (<= index p) 0.0
+               (>= index (- m p)) (double num-segments)
+               (= index (dec (- m p))) (* (/(reduce + (subvec l-values 1  (inc (- n (/ (inc p) 2)))))  L) num-segments)
+               :else (*  (/ (reduce + (subvec l-values 1 (inc (+ (/ (inc p) 2) (dec (- index p)))))) L) num-segments)
+               ))))
+(defn riesenfield-knot-vector
+  "seems intended for chordal parameterisatin"
+  [n p Q & {:keys [u-k constrained] :or {constrained false}}]
+  (let [num-segments (if constrained (+ (- n p) 3) (inc (- n p)))
+        m (if constrained (+ n p 3) (inc (+ n p)))
+        qk-values (vec (for [k (range 1 (inc n))] (mapv - (nth Q k) (nth Q (dec k)))))
+        l-values (if u-k u-k (mapv magnitude qk-values))
+        L (reduce + l-values)]
+    (if (even? p) (vec (riesenfield-even-knot-vector L l-values p m n num-segments))
+        (vec (riesenfield-odd-knot-vector L l-values p m n num-segments)))))
+
+
+
+(defn hartley-judd-method [n p Q &{:keys [u-k constrained] :or {constrained false}}] 
+  (let [num-segments (if constrained (+ (- n p) 3) (inc (- n p)))
+        m (if constrained (+ n p 3) (inc (+ n p)))
+        qk-values (vec (for [k (range 1 (inc n))] (mapv - (nth Q k) (nth Q (dec k)))))
+        l-values (if u-k u-k (mapv magnitude qk-values))
+        ;L (reduce + l-values)
+        ;; domain-length-fn (fn [i] (/ (reduce + (for [j (range (- i p) i) ]
+        ;;                                         (nth l-values j)))
+        ;;                             (reduce + (for [s (range  (inc p) (+ n 1)) 
+        ;;                                   :let [sum-fn (fn [s] (reduce + (for [j (range (- s p) (dec s))] (nth l-values j))))]] 
+        ;;                               (sum-fn s)))))
+        ;; domain-lengths (vec (for [i (range (inc p ) (+ n 1)) ] (domain-length-fn i)))
+        knot-fn (fn [i] (/ (reduce + (for [s (range (inc p) (inc i))]
+                                       (reduce + (for [j (range (- s p) s)] (nth l-values (dec j))))))
+                           (reduce + (for [s (range (inc p) (+ n 2))]
+                                       (reduce + (for [j (range (- s p) s)] 
+                                                   (nth l-values (dec j))
+                                                   
+                                                   ))
+                                       ))
+                           ))
+        ]
+    
+    (vec (for [index (range (inc m))]
+      (cond (<= index p) 0.0
+            (>= index (- m p) ) (double num-segments)
+            :else (* (knot-fn index) num-segments))
+      ))
+    )
+  )
+
+(defn rogers-method [n p Q & {:keys [u-k constrained] :or {constrained false}}]
+  (let [num-segments (if constrained (+ (- n p) 3) (inc (- n p)))
+        m (if constrained (+ n p 3) (inc (+ n p)))
+        qk-values (vec (for [k (range 1 (inc n))] (mapv - (nth Q k) (nth Q (dec k)))))
+        l-values (if u-k u-k (mapv magnitude qk-values)) 
+        ]
+    (vec (for [index (range (inc m))]
+           (cond (<= index p ) 0.0
+                 (>= index (- m p)) (double num-segments)
+                 :else (* (/ (+ (* (/ (- index p) (inc (- n p))) (nth l-values  (- index p)))
+                                (reduce + (for [j (range 1 (inc (- index p)))] (nth l-values (dec j))))) 
+                             (reduce + (for [j (range 1 (inc n))] (nth l-values (dec j))))) num-segments))
+           ))
+    ))
+
+(defn weighted-average-algorithm [n p Q & {:keys [u-k constrained] :or {constrained false}}]
+  (let [num-segments (if constrained (+ (- n p) 3) (inc (- n p)))
+        m (if constrained (+ n p 3) (inc (+ n p)))
+        qk-values (vec (for [k (range 1 (inc n))] (mapv - (nth Q k) (nth Q (dec k)))))
+        l-values (if u-k u-k (mapv magnitude qk-values))
+        L (reduce + l-values)
+        a (/ 1 L)
+        k (/ 1 (reduce + (for [s (range (inc p) (+ n 2))]
+                              (reduce + (for [j (range (- s p) s)] (nth l-values (dec j)))))))
+        b-j-fn (fn [j i] (cond 
+                           (or (= j 1) (= j (- i 1))) 1
+                           (or (= j 2) (= j (- i 2))) 2
+                           (or (= j 3) (and (>= j 4) (<= j (- 3)))) 3))
+        u-i-fn (fn [i]
+                 (let [row-one (vec (for [j (range 1 i)]
+                                      (if (= j (dec i) ) 0.0 a)))
+                       row-two (vec (for [j (range 1 i)]
+                                      (cond (= j (- i 2)) (* (/ (- i 3) (- n 2)) a)
+                                            (= j (dec i)) 0.0
+                                            :else a)))
+                       row-three (vec (for [j  (range 1 i)]
+                                        (if (>= j (- i 3)) (* (b-j-fn j i) k) (b-j-fn j i))))
+                       l-column-vector (vec (for [j (range 1 i)] (nth l-values (dec j))))]
+                   (println row-one)
+                   (reduce + (div (mmul [row-one
+                          row-two
+                          row-three] l-column-vector) 3)))
+                 )
+        ]
+        (u-i-fn 7)))
+
+(comment (let [Q [[0 0 0] [3 4 0] [5 2 1] [8 4 2] [7 2 1] [9 1 1]]
+               n (dec (count Q))
+               p 3
+               uk (u-k-chordal n Q)]
+         (weighted-average-algorithm n p Q)  )
+         )
+(comment (let [Q [[0 0 0] [3 4 0] [5 2 1] [8 4 2] [7 2 1] [9 1 1]]
+               n (dec (count Q))
+               p 3
+               uk (u-k-chordal n Q)]
+           (println (riesenfield-knot-vector n p  Q :u-k uk))
+           (println (riesenfield-knot-vector n p  Q :u-k (u-k-centripetal n Q)))
+           (println (riesenfield-knot-vector n p  Q :u-k (circular-arc-parameterisation n Q)))
+           (println (riesenfield-knot-vector n p  Q))
+           (println (hartley-judd-method n p Q))
+           (rogers-method n p Q)) 
+         )
+
+(comment (let [Q [[0 0 0] [1 10 0] [10 11 0] [11 0 0]
+                  [21 1 0] [22 12 0] [32 10 0] [35 0 0]]
+               n (dec (count Q))
+               p 3]
+           (println (div (hartley-judd-method n p Q) 5.0))
+           (println (div (riesenfield-knot-vector n p  Q ) 5.0)) 
+           (div (rogers-method n p Q) 5.0)))
+(defn de-boors-algorithm-knot-placement [u-k n p]
+  (let [])
+  )
+
 (defn calculate-knot-vector [degree control-point-count is-uniform]
   (let [n control-point-count
         m (+ n degree 1)
@@ -982,6 +1186,7 @@
 (defn get-function-for-u-k-values [point-paramater-calculation-method]
   (case point-paramater-calculation-method
     :chordal u-k-chordal
+    :equal (fn [n Q] (equally-spaced-parameterisation n))
     :centripetal u-k-centripetal
     :dynamic-centripetal dynamic-centripetal-parameterisation
     :circular circular-arc-parameterisation
@@ -992,10 +1197,14 @@
 
 (defn get-knot-vector-generation-fn [knot-vector-generation-method-keyword & {:keys [constrained] :or {constrained false}}]
   (case knot-vector-generation-method-keyword
-    :natural (fn [uk-values n p] (calculate-natural-knot-vector-from-u-k uk-values n p :constrained constrained))
-    :average (if constrained calculate-averaged-knot-vector-from-u-k-with-end-derivs
-                 calculate-averaged-knot-vector-from-u-k)
-    :equal calculate-equally-spaced-knot-vector-from-u-k ))
+    :natural (fn [uk-values n p Q] (calculate-natural-knot-vector-from-u-k uk-values n p :constrained constrained))
+    :average (if constrained (fn [uk-values n p Q] (calculate-averaged-knot-vector-from-u-k-with-end-derivs uk-values n p))
+                 (fn [uk-values n p Q] (calculate-averaged-knot-vector-from-u-k uk-values n p)))
+    :equal (fn [uk-values n p Q] calculate-equally-spaced-knot-vector-from-u-k  uk-values n p)
+    :riesenfield (fn [uk-values n p Q ] (riesenfield-knot-vector n p Q :constrained constrained))
+    :hartley-judd (fn [uk-values n p Q] (hartley-judd-method n p Q :constrained constrained))
+    :rogers (fn [uk-values n p Q] (rogers-method n p Q :constrained constrained))
+    ))
 
 (defn non-uniform-rational-b-spline-point [p0 p1 p2 w t]
   (let [one-minus-t (- 1 t)
@@ -1071,7 +1280,7 @@
         u-k-fn (get-function-for-u-k-values point-paramater-calculation-method)
         u-k (u-k-fn n points)
         knot-vector-generation-fn (get-knot-vector-generation-fn knot-vector-generation-method :constrained false)
-        knot-vector (knot-vector-generation-fn u-k n p)] 
+        knot-vector (knot-vector-generation-fn u-k n p points)] 
     (nurbs points p knot-vector weights steps)))
 
 (defn make-one-arc [P-zero T-zero P-two T-two P P1 wa])
@@ -1259,16 +1468,16 @@
      {:P-zero P-zero :P-one P-one :P-n-plus-one P-n-plus-one :P-n-plus-two P-n-plus-two}) 
   )
 
-(defn removef-curve-knot [n p U Pw u r s num]
-  (let [m (inc (+ n p))
-        ord (inc p)
-        fout (/ (- (* r 2) s p) 2)
-        last (- r s)
-        first (- r p)]
-    (doseq )
-    )
+;; (defn removef-curve-knot [n p U Pw u r s num]
+;;   (let [m (inc (+ n p))
+;;         ord (inc p)
+;;         fout (/ (- (* r 2) s p) 2)
+;;         last (- r s)
+;;         first (- r p)]
+;;     (doseq )
+;;     )
   
-  )
+;;   )
 
 (defn decompose-curve [n p U Pw]
   (let [m (+ n p 1)
@@ -1340,8 +1549,7 @@
                         reverse-curve reverse-fn)
         number-of-segments (do
                              (count param-points))
-        increment (/ number-of-segments (long steps))]
-    (println number-of-segments "number-of-segments" )
+        increment (/ number-of-segments (long steps))] 
     (vec (for [index (range 0 (+ increment number-of-segments) increment)
                :let [i (dec (if (< index number-of-segments) (inc (floor index)) number-of-segments))
                      t (if (< index number-of-segments) (- index (floor index)) 1.0)]]

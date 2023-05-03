@@ -1,6 +1,8 @@
 (ns dactyl-keyboard.klor.klor-placement-functions
   (:refer-clojure :exclude [use import])
   (:require [dactyl-keyboard.klor.klor-config :refer :all]
+            [dactyl-keyboard.klor.klor-points :refer :all]
+            [dactyl-keyboard.klor.klor-constants :refer :all]
             [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-x-in-degrees
                                                                 rotate-around-z-in-degrees]]
             [dactyl-keyboard.lib.transformations :refer [rdz]]
@@ -27,6 +29,12 @@
   (klor-apply-key-geometry translate rdz rotate-around-z-in-degrees column row shape)
   )
 
+(defn klor-key-position [column row vector]
+  (klor-apply-key-geometry (partial mapv +) rotate-around-z-in-degrees rotate-around-z-in-degrees column row vector))
+
+
+(defn klor-key-place-with-offset [column row offset shape]
+  (translate (klor-key-position column row offset ) (rdz anchor-rotation shape)))
 (defn klor-apply-key-geometry-thumb [translate-fn rotate-z-fn vector-rotate-fn column shape]
   (->> shape
        (klor-apply-key-geometry translate-fn rotate-z-fn vector-rotate-fn 0 0)
@@ -64,6 +72,9 @@
 
 (defn klor-thumb-place [column  shape]
   (klor-apply-key-geometry-thumb translate rdz rotate-around-z-in-degrees column  shape))
+(defn klor-thumb-position [column vector]
+  (klor-apply-key-geometry-thumb (partial mapv +) rotate-around-z-in-degrees rotate-around-z-in-degrees column  vector))
+
 
 (def columns (range 0 ncols))
 (def rows (range 0 nrows))
@@ -80,8 +91,13 @@
       (write-scad 
        (let [key-shape (difference (square (dec key-spacing-horizontal) (dec key-spacing-vertical)) 
                          (square 14 14))]
+         
        (union
+        (translate (klor-thumb-position 3 [-12.5 -12.5 0]) (cylinder 0.5 20))
+        (translate (klor-point-place (mapv + bottom-left-thumb-key-bottom-right-corner [2 2 0])) (cylinder 0.5 20))
         (translate  (klor-point-place [170.303964 118.080182 0] ) (cylinder 3.2 20))
+        (color [1 0 0 1](klor-key-place-with-offset 0 1 [-32.5 -10 12] (cube 40 43 2)))
+        (color [0 1 0 1](klor-key-place-with-offset 0 2 [-30 7 11] (import "../parts/oled.stl")))
         (->> (import "../parts/klor-ks27-polydactyl-body-right.stl")
              (rdz 10)
              (translate [715.75 85 0]))

@@ -119,9 +119,9 @@
         function-for-u-k-values (get-function-for-u-k-values point-paramater-calculation-method)
         knot-vector-generation-fn (get-knot-vector-generation-fn knot-vector-generation-method :constrained false)
         u-k-values (function-for-u-k-values n Q)
-        U-knot-vector (mapv #(/ % (- (inc n) p)) (knot-vector-generation-fn u-k-values n p))
+        U-knot-vector (mapv #(/ % (- (inc n) p)) (knot-vector-generation-fn u-k-values n p Q))
         q (+ n 1)
-        dim (do (println "knot-vec" U-knot-vector (knot-vector-generation-fn u-k-values n p)) (count (nth Q 0)))
+        dim  (count (nth Q 0))
         A (for [i (range 0 q)
                 :let [uk-i (nth u-k-values i)
                       span (calculate-knot-span-index n p uk-i U-knot-vector)
@@ -185,7 +185,7 @@
         u-k-values (if (= point-paramater-calculation-method :orthgonal-construction)
                      orthoganal-uk-values
                      (function-for-u-k-values n Q))
-        U-knot-vector (knot-vector-generation-fn u-k-values n p)
+        U-knot-vector (knot-vector-generation-fn u-k-values n p Q)
         ] 
     (global-curve-interp-with-end-derivatives-and-provided-parameters-and-knot-vector Q p D-zero D-n u-k-values U-knot-vector )
     ))
@@ -297,11 +297,42 @@
     )
   )
 
+(defn quad-to-av [u-k-values]
+  (let [n (dec (count u-k-values))]
+    (vec (concat [0.0] (apply concat (for [k (range 1  n)
+                      :let [uk (nth u-k-values k)
+                            uk-minus-one (nth u-k-values (dec k))]]
+    ;(if (= k (- (count u-k-values) 2))
+      ;[(/ (+ (nth u-k-values (dec k)) 1) 2)]
+                  [(/ (+ uk-minus-one uk) 2)
+                   uk]
+      ;)
+                  ))[(/ (+ (nth u-k-values (dec n)) 1) 2) 1.0]))))
 (comment (let [u-k-values [0.0 0.3157486525980598 0.6314973051961192 0.7806428519951074 0.8903214259975537 1.0]]
            (nth u-k-values (- (count u-k-values) 2)))
          )
 
+
+
+(comment (let [u-k-values [0.0 0.3157486525980598 0.6314973051961192 0.7806428519951074 0.8903214259975537 1.0]
+               new (vec (concat [0.0] (apply concat (mapv #(vector % %) (subvec u-k-values 1 (dec (count u-k-values))))) [1.0]))
+               av (calculate-averaged-knot-vector-from-u-k-with-end-derivs new (dec (count new)) 3)]))
+(comment (let [u-k-values [0.0 0.3157486525980598 0.6314973051961192 0.7806428519951074 0.8903214259975537 1.0]
+               new-uk (quad-to-av u-k-values)
+               n (dec (count new-uk))
+               new-av (calculate-averaged-knot-vector-from-u-k-with-end-derivs (drop 0 new-uk) (dec n) 2)
+               ] 
+           (println "new-av" (div new-av (peek new-av)))
+          (global-curve-interp-with-first-derivatives-quadratic-knot-vector u-k-values) 
+           ))
 (comment (global-curve-interp-with-first-derivatives-quadratic-knot-vector [0.0 0.3157486525980598 0.6314973051961192 0.7806428519951074 0.8903214259975537 1.0]))
+(comment (let [p 2
+               av (calculate-averaged-knot-vector-from-u-k-with-end-derivs [0.0 0.3157486525980598 0.6314973051961192 0.7806428519951074 0.8903214259975537 1.0] 4 2)
+               av-norm (div av (peek av)) 
+               ]
+           (global-curve-interp-with-first-derivatives-quadratic-knot-vector (vec (drop-last p (drop p av-norm))))
+           ;(div av (peek av))
+           ))
 (defn global-curve-interp-with-first-derivatives-cubic-knot-vector [u-k-values] 
   (let [n (dec (count u-k-values))
         knot-vector (vec (concat  [0.0 0.0 0.0 0.0 (/ (nth u-k-values 1) 2)]
@@ -316,6 +347,13 @@
     knot-vector
     )
   )
+
+(comment (let [u-k-values [0.0 0.3157486525980598 0.6314973051961192 0.7806428519951074 0.8903214259975537 1.0]
+               new (vec (concat [0.0] (apply concat (mapv #(vector % %) (subvec u-k-values 1 (dec (count u-k-values))))) [1.0]))
+               av (calculate-averaged-knot-vector-from-u-k-with-end-derivs new (dec (count new)) 3)]
+           (println (global-curve-interp-with-first-derivatives-cubic-knot-vector u-k-values))
+           (println (/ (reduce + (subvec new 1 3)) 3))
+           (div av (peek av))))
 
 (comment (global-curve-interp-with-first-derivatives-cubic-knot-vector [0.0 0.3709837081833865 0.6941014688567921 1.0])
   )
@@ -479,7 +517,7 @@
         ;;                                                 )))
         p 3 
         knot-vector-generation-fn (get-knot-vector-generation-fn knot-vector-generation-method :constrained true)
-        knot-vector (knot-vector-generation-fn u-k-values n p)
+        knot-vector (knot-vector-generation-fn u-k-values n p Q)
         P-zero (nth Q 0)
         P-one (mapv + (mul (/ (nth knot-vector 4) 3) D-zero) P-zero)
         P-n-plus-two (peek Q)
@@ -998,7 +1036,7 @@
         knot-vector-generation-fn (get-knot-vector-generation-fn knot-vector-generation-method)
         p 3
         u-k-values (point-paramater-calculation-fn n Q)
-        knot-vector (knot-vector-generation-fn u-k-values n p)
+        knot-vector (knot-vector-generation-fn u-k-values n p Q)
         
         P-zero (nth Q 0)
         P-n (peek Q)
@@ -1179,7 +1217,7 @@
         ;D-zero (mul tau-zero (nth tangent-directions 0))
         ;D-n (mul tau-n (peek tangent-directions)) 
         knot-vector-generation-fn (get-knot-vector-generation-fn knot-vector-generation-method :constrained true)
-        knot-vector (knot-vector-generation-fn u-k-values n p)
+        knot-vector (knot-vector-generation-fn u-k-values n p Q)
         mag-fn (fn [D] {:D-zero (mul D (nth tangent-directions 0)) 
                         :D-n (mul D (peek tangent-directions))})  
          {D-zero :D-zero

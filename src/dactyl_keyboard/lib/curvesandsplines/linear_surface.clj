@@ -35,7 +35,7 @@
          :let [u (/ u-index u-steps)]]
      (vec (for [w-index (range (inc w-steps))
                 :let [w (/ w-index w-steps)]]
-            (if boundary-curves-generated (mapv double (lofted-surface-point (P-u-one u-index) (P-u-zero u-index) u w))
+            (if boundary-curves-generated  (lofted-surface-point (nth P-u-one u-index) (nth P-u-zero u-index) u w)
                 (mapv double (lofted-surface-point (P-u-one u) (P-u-zero u) u w))))))))
 
 ()

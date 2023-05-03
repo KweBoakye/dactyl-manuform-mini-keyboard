@@ -66,8 +66,7 @@
 (defn chained-hull-for-three-lists [shapes1 shapes2 shapes3 steps]
   (for [index (range 0 (- steps 1))]
     (hull (nth shapes1 index) (nth shapes2 index) (nth shapes3 index) (nth shapes1 (+ index 1)) (nth shapes2 (+ index 1)) (nth shapes3 (+ index 1)))))
-(defn chained-hull-for-four-lists [shapes1 shapes2 shapes3 shapes4 steps]
-  (println "steps is " steps)
+(defn chained-hull-for-four-lists [shapes1 shapes2 shapes3 shapes4 steps] 
   (for [index (range 0 (- steps 1))]
     (hull (nth shapes1 index) (nth shapes2 index) (nth shapes3 index) (nth shapes4 index) (nth shapes1 (+ index 1)) (nth shapes2 (+ index 1)) (nth shapes3 (+ index 1)) (nth shapes4 (+ index 1)))))
 
