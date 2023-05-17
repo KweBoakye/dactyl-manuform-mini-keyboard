@@ -1,4 +1,10 @@
-(ns dactyl-keyboard.klor.klor-points)
+(ns dactyl-keyboard.klor.klor-points
+(:refer-clojure :exclude [use import])
+  (:require
+ [dactyl-keyboard.klor.klor-config :refer :all]
+ [dactyl-keyboard.oled :refer [oled-holder-height oled-holder-width]]
+ [dactyl-keyboard.tps-43 :refer [tps-43-mount-width tps-43-mount-length]]
+ ))
 
 (def tolerance 0.5)
 (def extra-pinky-top-left-corner [213.627717 86.501225])
@@ -9,7 +15,7 @@
 (def pinky-top-right-corner   [215.038063 72.715076])
 (def pinky-bottom-left-corner  [184.292479 126.343555])
 (def pinky-bottom-right-corner  [204.178385 130.504079])
-(def pcb-top-right-corner [210.595468 50.255285])
+(def pcb-top-right-corner [210.595468 50.255285 0])
 (def pcb-top-left-corner  (mapv + [80.984498 50.220026] [-0.5 -0.5]))
 (def pcb-bottom-left-corner-before-bottom-left-thumb [80.984498 133.430551] )
 (def pcb-bottom-inner-left-corner-before-bottom-left-thumb  [89.199773 134.135726])
@@ -110,3 +116,181 @@
   )
 
 
+(def keycap-spacing-south-east [(/ keycap-width 2) (/ keycap-width -2) 0])
+(def keycap-spacing-south-west [(/ keycap-width -2) (/ keycap-width -2) 0])
+(def keycap-spacing-south [0 (/ keycap-width -2) 0])
+(def keycap-spacing-north [0 (/ keycap-width 2) 0])
+(def keycap-spacing-east [(/ keycap-width 2) 0 0])
+(def keycap-spacing-west [(/ keycap-width -2) 0 0])
+(def keycap-spacing-north-east [(/ keycap-width 2) (/ keycap-width 2) 0])
+(def keycap-spacing-north-west [(/ keycap-width -2) (/ keycap-width 2) 0])
+
+(def key-spacing-south-east [(/ key-spacing-width 2) (/ key-spacing-length -2) 0])
+(def key-spacing-south-west [(/ key-spacing-width -2) (/ key-spacing-length -2) 0])
+(def key-spacing-south [0 (/ key-spacing-length -2) 0])
+(def key-spacing-north [0 (/ key-spacing-length 2) 0])
+(def key-spacing-east [(/ key-spacing-width 2) 0 0])
+(def key-spacing-west [(/ key-spacing-width -2) 0 0])
+(def key-spacing-north-east [(/ key-spacing-width 2) (/ key-spacing-length 2) 0])
+(def key-spacing-north-west [(/ key-spacing-width -2) (/ key-spacing-length 2) 0])
+
+(def key-spacing-inner-south-east [(/ inner-spacing-width 2) (/ inner-spacing-length -2) 0])
+(def key-spacing-inner-south-west [(/ inner-spacing-width -2) (/ inner-spacing-length -2) 0])
+(def key-spacing-inner-south [0 (/ inner-spacing-length -2) 0])
+(def key-spacing-inner-north [0 (/ inner-spacing-length 2) 0])
+(def key-spacing-inner-east [(/ inner-spacing-width 2) 0 0])
+(def key-spacing-inner-west [(/ inner-spacing-width -2) 0 0])
+(def key-spacing-inner-north-east [(/ inner-spacing-width 2) (/ inner-spacing-length 2) 0])
+(def key-spacing-inner-north-west [(/ inner-spacing-width -2) (/ inner-spacing-length 2) 0])
+
+(defn klor-spacing [corner]
+  (case corner
+    :tm key-spacing-north
+    :rm key-spacing-east
+    :bm key-spacing-south
+    :lm key-spacing-west
+    :tl key-spacing-north-west
+    :tr key-spacing-north-east
+    :br key-spacing-south-east
+    :bl key-spacing-south-west) 
+  )
+
+(defn klor-inner-spacing [corner]
+  (case corner
+    :tm key-spacing-inner-north
+    :rm key-spacing-inner-east
+    :bm key-spacing-inner-south
+    :lm key-spacing-inner-west
+    :tl key-spacing-inner-north-west
+    :tr key-spacing-inner-north-east
+    :br key-spacing-inner-south-east
+    :bl key-spacing-inner-south-west))
+
+(defn oled-holder-spacing [corner]
+  (case corner
+    :tm [0 (/ oled-holder-height 2) 0]
+    :rm [(/ oled-holder-width 2) 0 0]
+    :bm [0 (/ oled-holder-height 2) 0]
+    :lm [(/ oled-holder-width -2) 0 0]
+    :tl [(/ oled-holder-width -2) (/ oled-holder-height 2) 0]
+    :tr [(/ oled-holder-width 2) (/ oled-holder-height 2) 0]
+    :br [(/ oled-holder-width 2) (/ oled-holder-height 2) 0]
+    :bl [(/ oled-holder-width -2) (/ oled-holder-height -2) 0])
+  )
+
+(defn oled-holder-spacing-inner [corner]
+  (let [oled-holder-inner-height (- oled-holder-height 2.5)
+        oled-holder-inner-width (- oled-holder-width 2.5)]
+    (case corner
+    :tm [0 (/ oled-holder-inner-height 2) 0]
+    :rm [(/ oled-holder-inner-width 2) 0 0]
+    :bm [0 (/ oled-holder-inner-height 2) 0]
+    :lm [(/ oled-holder-inner-width -2) 0 0]
+    :tl [(/ oled-holder-inner-width -2) (/ oled-holder-inner-height 2) 0]
+    :tr [(/ oled-holder-inner-width 2) (/ oled-holder-inner-height 2) 0]
+    :br [(/ oled-holder-inner-width 2) (/ oled-holder-inner-height 2) 0]
+    :bl [(/ oled-holder-inner-width -2) (/ oled-holder-inner-height -2) 0])))
+
+(defn tps-43-mount-spacing [corner]
+  (case corner
+    :tm [0 (/ tps-43-mount-length 2) 0]
+    :rm [(/ tps-43-mount-width 2) 0 0]
+    :bm [0 (/ tps-43-mount-length -2) 0]
+    :lm [(/ tps-43-mount-width -2) 0 0]
+    :tl [(/ tps-43-mount-width -2) (/ tps-43-mount-length 2) 0]
+    :tr [(/ tps-43-mount-width 2) (/ tps-43-mount-length 2) 0]
+    :br [(/ tps-43-mount-width 2) (/ tps-43-mount-length -2) 0]
+    :bl [(/ tps-43-mount-width -2) (/ tps-43-mount-length -2) 0]))
+
+
+(defn tps-43-mount-inner-spacing [corner]
+  (case corner
+    :tm [0 (/ tps-43-mount-inner-length 2) 0]
+    :rm [(/ tps-43-mount-inner-width 2) 0 0]
+    :bm [0 (/ tps-43-mount-inner-length -2) 0]
+    :lm [(/ tps-43-mount-inner-width -2) 0 0]
+    :tl [(/ tps-43-mount-inner-width -2) (/ tps-43-mount-inner-length 2) 0]
+    :tr [(/ tps-43-mount-inner-width 2) (/ tps-43-mount-inner-length 2) 0]
+    :br [(/ tps-43-mount-inner-width 2) (/ tps-43-mount-inner-length -2) 0]
+    :bl [(/ tps-43-mount-inner-width -2) (/ tps-43-mount-inner-length -2) 0]))
+
+
+
+(def outer-thumb-tm-north-inset {:type :thumb :column 3 :corner :tm :offset [2.5 3.0 0] :direction :north })
+(def outer-thumb-tm-north {:type :thumb :column 3 :corner :tm :offset [0 3.0 0] :direction :north })
+(def outer-thumb-tm-north-inset-left {:type :thumb :column 3 :corner :tm :offset [-5 3.0 0] :direction :north})
+(def outer-thumb-tl-north {:type :thumb :column 3 :corner :tl :offset [-2.5 3.0 0] :direction :north})
+(def outer-thumb-tl-north-west {:type :thumb :column 3 :corner :tl :offset [-2.5 3.0 0] :direction :north-west})
+(def outer-thumb-tl-west {:type :thumb :column 3 :corner :tl :offset [-2.5 3.0 0] :direction :west})
+(def outer-thumb-bl-west {:type :thumb :column 3 :corner :bl :offset [-2.5 -3.0 0] :direction :west})
+(def outer-thumb-bl-south-west {:type :thumb :column 3 :corner :bl :offset [-2.5 -3.0 0] :direction :south-west})
+(def outer-thumb-bl-south {:type :thumb :column 3 :corner :bl :offset [-2.5 -3.0 0] :direction :south})
+(def outer-thumb-br-south {:type :thumb :column 3 :corner :br :offset [-0.75 -3.25 0] :direction :south})
+(def mid-left-thumb-bl-south {:type :thumb :column 2 :corner :bl :offset [0.75 -3.25 0] :direction :south})
+(def mid-left-thumb-br-south {:type :thumb :column 2 :corner :br :offset [0 -3.25 0] :direction :south})
+(def mid-right-thumb-bl-south {:type :thumb :column 1 :corner :bl :offset [0 -3.25 0] :direction :south})
+(def mid-right-thumb-br-south {:type :thumb :column 1 :corner :br :offset [-0.75 -3.25 0] :direction :south})
+(def inner-thumb-bl-south {:type :thumb :column 0 :corner :bl :offset [0.75 -3.25 0] :direction :south})
+(def inner-thumb-br-south {:type :thumb :column 0 :corner :br :offset [2.75 -3.25 0] :direction :south})
+(def inner-thumb-br-south-east {:type :thumb :column 0 :corner :br :offset [2.75 -3.25 0] :direction :south-east})
+(def inner-thumb-br-east {:type :thumb :column 0 :corner :br :offset [2.75 -3.25 0] :direction :east})
+(def inner-thumb-rm {:type :thumb :column 0 :corner :rm  :offset [3 1 0] :direction :south-east})
+(def fourth-bottom-bl {:type :main-body :column 3 :row 0 :corner :bl :offset [0 -11 0] :direction :south})
+(def fourth-bottom-br {:type :main-body :column 3 :row 0 :corner :br :offset [-4 -11 0] :direction :south-west :xy 2})
+(def fourth-bottom-bm {:type :main-body :column 3 :row 0 :corner :bm :offset [0 -11 0] :direction :south :xy 1})
+(def pinky-bottom-bl-south-west-inset {:type :main-body :column 4 :row 0 :corner :bl :offset [-3 0.75 0] :direction :south-west :xy 2})
+(def pinky-bottom-bl-west {:type :main-body :column 4 :row 0 :corner :bl :offset [-2.75 -3 0] :direction :west :xy 2})
+(def pinky-bottom-lm-south-west {:type :main-body :column 4 :row 0 :corner :lm :offset [-2.75 -6 0] :direction :south-west :xy 2})
+(def pinky-bottom-bl-south-west {:type :main-body :column 4 :row 0 :corner :bl :offset [-2.75 -3 0] :direction :south-west :xy 2})
+(def pinky-bottom-bl-south {:type :main-body :column 4 :row 0 :corner :bl :offset [-2.75 -3 0] :direction :south :xy 2})
+(def pinky-bottom-bm {:type :main-body :column 4 :row 0 :corner :bm :offset [0 -3 0] :direction :south})
+(def pinky-bottom-br-south {:type :main-body :column 4 :row  0 :corner :br :offset [2.5 -3 0] :direction :south})
+(def pinky-bottom-br-south-east {:type :main-body :column 4 :row 0 :corner :br :offset [2.5 -3 0] :direction :south-east})
+(def pinky-bottom-br-east {:type :main-body :column 4 :row 0 :corner :br :offset [2.5 -3 0] :direction :east})
+(def pinky-bottom-br-south-east-inset {:type :main-body :column 4 :row 0 :corner :br :offset [2.5 1.5 0] :direction :south-east})
+(def outer-pinky-bottom-bl {:type :main-body :column 5 :row 0 :corner :bl :offset [2.8 -3.25 0] :direction :south-east})
+(def outer-pinky-bottom-bm {:type :main-body :column 5 :row 0 :corner :bm :offset [0 -3.0 0] :direction :south})
+(def outer-pinky-bottom-br-south {:type :main-body :column 5 :row 0 :corner :br :offset [2.75 -3.0 0] :direction :south})
+(def outer-pinky-bottom-br-south-east {:type :main-body :column 5 :row 0 :corner :br :offset [2.75 -3.0 0] :direction :south-east})
+(def outer-pinky-bottom-br-east {:type :main-body :column 5 :row 0 :corner :br :offset [2.75 -3.0 0] :direction :east})
+(def outer-pinky-top-br {:type :main-body :column 5 :row 1 :corner :br :offset [2.75 0 0] :direction :east})
+(def outer-pinky-top-tr-east {:type :main-body :column 5 :row 1 :corner :tr :offset [2.75 2.6 0] :direction :east})
+(def outer-pinky-top-tr-north-east {:type :main-body :column 5 :row 1 :corner :tr :offset [2.75 2.6 0] :direction :north-east})
+(def outer-pinky-top-tr-north {:type :main-body :column 5 :row 1 :corner :tr :offset [2.75 2.6 0] :direction :north})
+(def outer-pinky-top-tl {:type :main-body :column 5 :row 1 :corner :tl :offset [2.9 2.6 0] :direction :north-east})
+(def pinky-top-tr-east {:type :main-body :column 4 :row 2 :corner :tr :offset [2.75 2.6 0] :direction :east})
+(def pinky-top-tr-north-east {:type :main-body :column 4 :row 2 :corner :tr :offset [2.75 2.6 0] :direction :north-east})
+(def pinky-top-tr-north {:type :main-body :column 4 :row 2 :corner :tr :offset [2.75 2.6 0] :direction :north})
+(def pinky-top-tr-inset {:type :main-body :column 4 :row 2 :corner :tr :offset [0.5 2.8 0] :direction :north-east})
+(def pinky-top-tm-north-east {:type :main-body :column 4 :row 2 :corner :tm :offset [2.75 2.6 0] :direction :north-east})
+(def pcb-top-right-corner-point-east  {:type :pcb-top-right :direction :east})
+(def pcb-top-right-corner-point-north-east {:type :pcb-top-right :direction :north-east})
+(def pcb-top-right-corner-point-north {:type :pcb-top-right :direction :north})
+(def middle-top-tr-inset {:type :main-body :column 2 :row 2 :corner :tr :offset [3 -1 0] :direction :north-east})
+(def middle-top-tr-east {:type :main-body :column 2 :row 2 :corner :tr :offset [3 2.6 0] :direction :east})
+(def middle-top-tr-north-east {:type :main-body :column 2 :row 2 :corner :tr :offset [3 2.6 0] :direction :north-east})
+(def middle-top-tr-north {:type :main-body :column 2 :row 2 :corner :tr :offset [3 2.6 0] :direction :north})
+(def middle-top-bm {:type :main-body :column 2 :row 2 :corner :tm :offset [0 2.6 0] :direction :north})
+(def middle-top-tl-inset {:type :main-body :column 2 :row 2 :corner :tl :offset [-3 -1 0] :direction :north-west})
+
+(def middle-top-tl-north  {:type :main-body :column 2 :row 2 :corner :tl :offset [-3 2.6 0] :direction :north})
+(def middle-top-tl-north-west {:type :main-body :column 2 :row 2 :corner :tl :offset [-3 2.6 0] :direction :north-west})
+(def middle-top-tl-west {:type :main-body :column 2 :row 2 :corner :tl :offset [-3 2.6 0] :direction :west})
+(def inner-index-top-tr  {:type :main-body :column 0 :row 2 :corner :tr :offset [0 10.5 0] :direction :north})
+(def oled-holder-tr-inset {:type :oled :corner :tr :direction :north-east :offset [1.5 (- klor-case-offset 2.5) 0]})
+(def oled-holder-tr-east {:type :oled :corner :tr :direction :east})
+(def oled-holder-tr-north-east {:type :oled :corner :tr :direction :north-east})
+(def oled-holder-tr-north {:type :oled :corner :tr :direction :north})
+(def oled-holder-tm-north {:type :oled :corner :tm :direction :north})
+(def oled-holder-tl-north {:type :oled :corner :tl :direction :north})
+(def oled-holder-tl-north-west {:type :oled :corner :tl :direction :north-west})
+(def oled-holder-tl-west {:type :oled :corner :tl :direction :west})
+(def oled-holder-lm-west {:type :oled :corner :lm :direction :west})
+(def oled-holder-bl-west {:type :oled :corner :bl :direction :west})
+(def oled-holder-bl-inset {:type :oled :corner :bl :direction :west :offset [0 3 0]})
+(def tps-43-tl-north {:type :tps-43 :corner :tl :direction :north})
+(def tps-43-tl-north-west {:type :tps-43 :corner :tl :direction :north-west})
+(def tps-43-tl-west {:type :tps-43 :corner :tl :direction :west})
+(def above-trrs-jack {:type :tps-43 :corner :bl :direction :west :xy 0.5 :offset (mapv + key-spacing-inner-west [(/ tps-43-mount-width 2) -2 0])})
+(def below-trrs-jack {:type :tps-43 :corner :bl :direction :west :xy 0.5 :offset (mapv + key-spacing-inner-south-west [(/ tps-43-mount-width 2) -6 0])})
+;(def above-outer-thumb {:type :tps-43 :corner :bl :direction :west :offset (mapv + key-spacing-inner-south-west [(/ tps-43-mount-width 2) -2 0])} )

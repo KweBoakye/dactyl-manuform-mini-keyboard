@@ -8,6 +8,62 @@
             [scad-clj.model :refer :all]
             [scad-clj.scad :refer :all]))
 
+
+(defn fractyl-bottom-points [wall-cross-section-steps wall-section-steps ;&{:keys []}
+                             ]
+  
+   (let [{thumb-single-row-wall-section :wall-section
+              outer-key-gap-fn-coll :outer-key-gap-fn-coll
+              inner-key-gap-fn-coll :inner-key-gap-fn-coll} (thumb-wall-section-for-single-thumb-row-fn wall-cross-section-steps wall-section-steps)
+             fractyl-back-wall (fractyl-back-wall wall-cross-section-steps wall-section-steps)
+             fractyl-back-wall-bottom-points (:outer-floor-points fractyl-back-wall)
+             local-thumb-floor-points (:outer-floor-points (thumb-tr-br-to-middle-lm-local-cubic-curve-interpolation-wall-section-fn wall-cross-section-steps wall-section-steps))
+             ;front-wall-nurbs-polyhedron (front-wall-nurbs wall-cross-section-steps wall-section-steps)
+             {left-section-data :left-section-data
+              thumb-outer-points-fn :thumb-outer-points-fn
+              thumb-inner-points-fn :thumb-inner-points-fn
+              inner-index-to-index-connector-outer-curve-fn :inner-index-to-index-connector-outer-curve-fn
+              inner-index-to-index-connector-inner-curve-fn :inner-index-to-index-connector-inner-curve-fn} (left-section-data wall-section-steps :screen-outer-curve-type :local)
+             {left-section-vnf-array :vnf-array
+              trackpad-to-main-body-data :trackpad-to-main-body-data
+              left-sction-outer-floor :outer-floor-points
+              thumb-bl-to-tl-outer-curve-fn :thumb-bl-to-tl-outer-curve-fn
+              thumb-tl-to-tr-outer-curve-fn :thumb-tl-to-tr-outer-curve-fn
+              thumb-bl-to-tl-inner-curve-fn :thumb-bl-to-tl-inner-curve-fn
+              thumb-tl-to-tr-inner-curve-fn :thumb-tl-to-tr-inner-curve-fn} left-section-data
+             {fractyl-right-wall-vnf :fractyl-right-wall-vnf
+              key-gap-outer-curve-fn-coll :key-gap-outer-curve-fn-coll
+              key-gap-inner-curve-fn-coll :key-gap-inner-curve-fn-coll
+              fractyl-right-wall-bottom-outer :bottom-outer} (fractyl-right-wall wall-cross-section-steps (/ wall-section-steps 2))
+             {thumb-tr-rm-to-index-br-vnf-array :vnf-array
+              thumb-tr-rm-to-index-br-outer-bottom-points :outer-bottom-points
+              thumb-tr-rm-to-index-br-inner-bottom-points :inner-bottom-points} (thumb-tr-rm-to-index-br wall-cross-section-steps wall-section-steps)
+             {trackpad-to-main-body-vnf :trackpad-to-main-body-vnf
+              left-side-key-gap-outer-curve-fn-coll :left-side-key-gap-outer-curve-fn-coll
+              left-side-key-gap-inner-curve-fn-coll :left-side-key-gap-inner-curve-fn-coll} trackpad-to-main-body-data
+             {thumb-to-left-section-outer-floor-points :outer-floor-points
+              thumb-to-left-section-inner-floor-points :inner-floor-points} (thumb-to-left-section wall-section-steps thumb-outer-points-fn thumb-inner-points-fn)]
+            ;(println local-thumb-floor-points)
+            ;(println (:outer-floor-points (:front-wall-wall-section (front-wall-nurbs wall-cross-section-steps wall-section-steps))))
+
+         (union
+             ;(vnf-polyhedron (wall-vnf (:front-wall-wall-section (front-wall-nurbs wall-cross-section-steps wall-section-steps)) default-vnf-vertex-array-args))
+            ;;  (plot-bezier-points fractyl-back-wall-bottom-points (sphere 1))
+            ;;        (plot-bezier-points left-sction-outer-floor (sphere 1))
+            ;;        (plot-bezier-points thumb-to-left-section-outer-floor-points (sphere 1)) 
+            ;;        (plot-bezier-points (:outer-floor-points thumb-single-row-wall-section) (sphere 1))
+            ;;        (plot-bezier-points  local-thumb-floor-points (sphere 1))
+            ;;        (plot-bezier-points (:outer-floor-points (:front-wall-wall-section (front-wall-nurbs wall-cross-section-steps wall-section-steps))) (sphere 1))
+            ;;        (plot-bezier-points fractyl-right-wall-bottom-outer (sphere 1))
+          (->> (extrude-linear
+                {:height 1.5 :center false :convexity 10} (polygon  (map drop-last (concat fractyl-back-wall-bottom-points
+                                                                                           left-sction-outer-floor
+                                                                                           thumb-to-left-section-outer-floor-points
+                                                                                           (reverse (:outer-floor-points thumb-single-row-wall-section))
+                                                                                           thumb-tr-rm-to-index-br-outer-bottom-points
+                                                                                           (reverse (:outer-floor-points (:front-wall-wall-section (front-wall-nurbs wall-cross-section-steps wall-section-steps))))
+                                                                                           fractyl-right-wall-bottom-outer))))
+               (translate [0 0 -1.5])))))
 (spit "things-low/fractyl-bottom-plate-test.scad"
       (write-scad
        (include include-bosl2)
@@ -25,7 +81,10 @@
               thumb-outer-points-fn :thumb-outer-points-fn
               thumb-inner-points-fn :thumb-inner-points-fn
               inner-index-to-index-connector-outer-curve-fn :inner-index-to-index-connector-outer-curve-fn
-              inner-index-to-index-connector-inner-curve-fn :inner-index-to-index-connector-inner-curve-fn} (left-section-data steps)
+              inner-index-to-index-connector-inner-curve-fn :inner-index-to-index-connector-inner-curve-fn} (left-section-data steps :screen-outer-curve-type :local)
+             {thumb-tr-rm-to-index-br-vnf-array :vnf-array
+              thumb-tr-rm-to-index-br-outer-bottom-points :outer-bottom-points
+              thumb-tr-rm-to-index-br-inner-bottom-points :inner-bottom-points} (thumb-tr-rm-to-index-br wall-cross-section-steps wall-section-steps)
              {left-section-vnf-array :vnf-array
               trackpad-to-main-body-data :trackpad-to-main-body-data
               left-sction-outer-floor :outer-floor-points
@@ -54,12 +113,14 @@
             ;;        (plot-bezier-points  local-thumb-floor-points (sphere 1))
             ;;        (plot-bezier-points (:outer-floor-points (:front-wall-wall-section (front-wall-nurbs wall-cross-section-steps wall-section-steps))) (sphere 1))
             ;;        (plot-bezier-points fractyl-right-wall-bottom-outer (sphere 1))
-             (extrude-linear
+             (-# (translate [-30 -20 0](cube 190 140 10)))
+             (->>(extrude-linear
               {:height 1.5 :center false :convexity 10} (polygon  (map drop-last (concat fractyl-back-wall-bottom-points
                                                                                          left-sction-outer-floor
                                                                                          thumb-to-left-section-outer-floor-points
                                                                                          (reverse (:outer-floor-points thumb-single-row-wall-section))
-                                                                                         local-thumb-floor-points
+                                                                                         thumb-tr-rm-to-index-br-outer-bottom-points
                                                                                          (reverse (:outer-floor-points (:front-wall-wall-section (front-wall-nurbs wall-cross-section-steps wall-section-steps))))
                                                                                          fractyl-right-wall-bottom-outer))))
+              (translate [0 0 -1.5]))
                    ))))

@@ -1,4 +1,8 @@
-(ns dactyl-keyboard.klor.klor-config)
+(ns dactyl-keyboard.klor.klor-config
+  (:refer-clojure :exclude [use import])
+  (:require 
+   [dactyl-keyboard.tps-43 :refer :all])
+  )
 
 (def nrows 3)
 (def ncols 6)
@@ -36,6 +40,27 @@
 (def thumb-origin [11 -1 0] )
 
 
+(def keycap-width 18)
+(def keycap-length 18)
+(def keycap-height 18)
+
+(def key-spacing-width 19.05)
+(def key-spacing-length 19.05)
+(def inner-spacing-width 16.5)
+(def inner-spacing-length 16.5)
+
+(def klor-case-walls-height 14.5)
+(def klor-thumb-walls-height 6.6)
+(def klor-switchplate-thickness 1.6)
+(def klor-switchplate-z-position (+ 4 (/ klor-switchplate-thickness 2)))
+(def klor-wall-thickness 2)
+(def klor-wall-z-offset -4)
+(def klor-thumbs-wall-z-offset -2)
+(def klor-wall-xy-offset 2)
+(def klor-case-offset 0.1)
+
+(def tps-43-mount-inner-width (+ tps-43-width 1))
+(def tps-43-mount-inner-length (+ tps-43-length 1))
 
 (defn column-offset [column]
   (cond

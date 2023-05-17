@@ -68,7 +68,7 @@
   (union
    (thumb-tr-place des-cornelus-c1r)
 (thumb-tl-place des-cornelus-c2r)
-(thumb-mr-place des-cornelus-c2r)
+;(thumb-mr-place des-cornelus-c2r)
 (thumb-bl-place des-cornelus-c3r)
-(thumb-br-place des-cornelus-c3r)
+;(thumb-br-place des-cornelus-c3r)
    ))

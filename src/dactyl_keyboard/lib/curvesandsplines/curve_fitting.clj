@@ -11,12 +11,13 @@
             calculate-averaged-knot-vector-from-u-k-with-end-derivs calculate-knot-span-index
             calculate-natural-knot-vector-from-u-k calculate-non-vanishing-basis-functions
             circular-arc-parameterisation curve-derivs-alg1 ders-basis-funs
-            farins-simple-derivative-magnitude-estimation get-function-for-u-k-values get-knot-vector-generation-fn
-            non-uniform-b-spline total-arc-length-derivative-magnitude-estimation
-            farins-sophisticated-derivative-magnitude-estimation
+            farins-simple-derivative-magnitude-estimation farins-sophisticated-derivative-magnitude-estimation
+            get-function-for-u-k-values get-knot-vector-generation-fn non-uniform-b-spline
+            total-arc-length-derivative-magnitude-estimation
             total-chord-length-derivative-magnitude-estimation u-k-centripetal u-k-chordal]]
             [dactyl-keyboard.lib.vectors :refer [angle-between-vectors
-                                                 three-d-intersection]]) 
+                                                 three-d-intersection
+                                                 two-d-colinearity]]) 
   )
 
 
@@ -225,10 +226,16 @@
     {:D-zero (mul tau-zero (normalise tangent-endpoint-zero-to-Q-zero))
      :D-n (mul tau-n (normalise Q-n-to-tangent-endpoint-n))}))
 
+(defn interactive-control-end-derivs [tangent-endpoint-zero-to-Q-zero Q-n-to-tangent-endpoint-n magnitude-estimation-method]
+  {:D-zero (mul magnitude-estimation-method (normalise tangent-endpoint-zero-to-Q-zero))
+   :D-n (mul magnitude-estimation-method (normalise Q-n-to-tangent-endpoint-n))}
+  )
+
 
 (defn end-direction-cosines [tangent-endpoint-zero Q tangent-endpoint-n]
   
   )
+
 
 (defn global-curve-interp-with-end-derivatives-calculated [Q p  tangent-endpoint-zero tangent-endpoint-n & {:keys [n point-paramater-calculation-method knot-vector-generation-method
                                                                                                                   magnitude-estimation-method tangent-endpoints t-zero-is-deriv
@@ -241,14 +248,17 @@
         Q-n-to-tangent-endpoint-n (mapv - tangent-endpoint-n (last Q))
         t-zero-to-pass (if tangent-endpoints tangent-endpoint-zero-to-Q-zero tangent-endpoint-zero) 
         t-n-to-pass (if tangent-endpoints Q-n-to-tangent-endpoint-n tangent-endpoint-n)
-        end-derivs (case magnitude-estimation-method
+        end-derivs (if (number? magnitude-estimation-method) 
+                     (interactive-control-end-derivs t-zero-to-pass t-n-to-pass magnitude-estimation-method)
+                     (case magnitude-estimation-method
                      :unit (end-unit-derivatives t-zero-to-pass t-n-to-pass)
                      :arc (arc-end-derivatives-for-global Q t-zero-to-pass t-n-to-pass)
                      :chord (chord-end-derivatives-for-global Q t-zero-to-pass t-n-to-pass)
                      :farin-simple (farins-simple-for-global Q t-zero-to-pass t-n-to-pass)
                      :farins-sophisticated (farins-sophisticated-for-global Q t-zero-to-pass t-n-to-pass)
                      :exact {:D-zero t-zero-to-pass 
-                             :D-n t-n-to-pass}) 
+                             :D-n t-n-to-pass}
+                     )) 
         {D-zero :D-zero
          D-n :D-n} end-derivs
         final-deriv-zero (if t-zero-is-deriv tangent-endpoint-zero D-zero )
@@ -427,9 +437,10 @@
                                                                     :or {point-paramater-calculation-method :chordal n (dec (count Q)) magnitude-estimation-method :arc}}]
   (let [
         tangent-directions (mapv normalise tangent-vectors)
-        magnitude-estimation-fn (case magnitude-estimation-method
-                                 :chord total-chord-length-derivative-magnitude-estimation
-                                 :arc total-arc-length-derivative-magnitude-estimation)
+        magnitude-estimation-fn (if (number? magnitude-estimation-method ) (fn [Q] magnitude-estimation-method) (case magnitude-estimation-method
+                                 :chord total-chord-length-derivative-magnitude-estimation 
+                                 :arc total-arc-length-derivative-magnitude-estimation 
+                                  :farin-simple (fn [Q] (:tau-zero (farins-simple-derivative-magnitude-estimation Q)))))
         D (magnitude-estimation-fn Q)] 
     (global-curve-interp-with-first-derivatives Q (mul D tangent-directions) p :point-paramater-calculation-method point-paramater-calculation-method :n n))
   )
@@ -656,8 +667,10 @@
 (comment (calculate-tangents-for-local-cubic-curve-interpolation-from-derivatives   [[0 0 0] [3 4 0] [-1 4 0] [-4 0 0] [-4 -3 0]])
   )
 
-(defn calculate-tangents-for-local-cubic-curve-interpolation-from-tangent [Qk & {:keys [point-paramater-calculation-method corner-perservation] :or {point-paramater-calculation-method :centripetal corner-perservation :smooth}}]
+(defn calculate-tangents-for-local-cubic-curve-interpolation-from-tangent [Qk & {:keys [point-paramater-calculation-method corner-perservation use-cross] :or {point-paramater-calculation-method :centripetal corner-perservation :smooth use-cross true}}]
   (let [n (dec (count Qk))
+        mul-fn (cond (or (= (count (nth Qk 0)) 2) (false? use-cross)) (fn [a b] (mapv * a))
+                     (= (count (nth Qk 0)) 3) cross)
         qk-values-initial (vec (for [index (range 1 (inc n))]
                                  (mapv - (nth Qk index) (nth Qk (dec index)))))
         q-one (nth qk-values-initial 0)
@@ -677,8 +690,8 @@
                                         qk (nth qk-values index)
                                         qk-plus-one (nth qk-values (inc index))
                                         qk-plus-two (nth qk-values (+ index 2))
-                                        magnitude-of-qk-minus-one-times-qk (length (cross qk-minus-one qk))
-                                        magnitude-of-qk-plus-one-times-qk-plus-two (length (cross qk-plus-one qk-plus-two))
+                                        magnitude-of-qk-minus-one-times-qk (length (mul-fn qk-minus-one qk))
+                                        magnitude-of-qk-plus-one-times-qk-plus-two (length (mul-fn qk-plus-one qk-plus-two))
                                         denominator (+ magnitude-of-qk-minus-one-times-qk magnitude-of-qk-plus-one-times-qk-plus-two)]]
                               (if (zero? denominator) alpha-k-fallback-value
                                   (/ magnitude-of-qk-minus-one-times-qk
@@ -744,38 +757,35 @@
                                             
                                             (if (= k (- n 1)) [pk-zero  pk-one pk-two pk-three] [pk-zero  pk-one pk-two]))))
         control-points-without-inner-Qs (remove-by-index control-points (mapv (partial * 3) (range 1 n))) 
-         point-paramater-calculation-fn (case point-paramater-calculation-method
-                     :default calculate-u-k-local-cubic-curve-interpolation 
-                     :chordal u-k-chordal
-                     :centripetal u-k-centripetal
-                     :circular circular-arc-parameterisation) 
+        point-paramater-calculation-fn (if (= point-paramater-calculation-method :default) calculate-u-k-local-cubic-curve-interpolation
+                                           (get-function-for-u-k-values point-paramater-calculation-method)) 
         u-k-values (point-paramater-calculation-fn n control-points)
         u-n (peek u-k-values)
-         U (if (= knot-vector-generation-method-keyword :default) (default-local-cubic-interpolotion-knot-vector-generation-method u-k-values n)
-                                            (let [inner-knots (subvec u-k-values 1 (dec (count u-k-values)))
-                                                  new-inner-knots (vec (apply concat (mapv #(vector % %) inner-knots)))
-                                                  new-u-k-values (into [(nth u-k-values 0)] (conj new-inner-knots (peek u-k-values)))
+        U (if (= knot-vector-generation-method-keyword :default) (default-local-cubic-interpolotion-knot-vector-generation-method u-k-values n)
+              (let [inner-knots (subvec u-k-values 1 (dec (count u-k-values)))
+                    new-inner-knots (vec (apply concat (mapv #(vector % %) inner-knots)))
+                    new-u-k-values (into [(nth u-k-values 0)] (conj new-inner-knots (peek u-k-values)))
                                                   ;; knot-vector (case knot-vector-generation-method-keyword
                                                   ;;               :natural (calculate-natural-knot-vector-from-u-k (mapv #(/ % u-n) new-u-k-values) (+ n 5) 3 :constrained true)
                                                   ;;                   :average (calculate-averaged-knot-vector-from-u-k-with-end-derivs (mapv #(/ % u-n) new-u-k-values) (+ n 3) 3))
-                                                  knot-vector (case knot-vector-generation-method-keyword
-                                                                :natural (calculate-natural-knot-vector-from-u-k (mapv #(/ % u-n) u-k-values) (+ n 2) 3 :constrained true)
-                                                                :average (calculate-averaged-knot-vector-from-u-k-with-end-derivs (mapv #(/ % u-n) u-k-values) n 3))
-                                                  knot-vector-size (count knot-vector)
-                                                  normalised-knot-vector (case knot-vector-generation-method-keyword 
-                                                                           :natural (assoc knot-vector (dec knot-vector-size) 1.0 (- knot-vector-size 2) 1.0 
-                                                                                (- knot-vector-size 3) 1.0 (- knot-vector-size 4) 1.0)
-                                                                           :average (mapv #(/ % (peek knot-vector)) knot-vector)) 
-                                                  U-inner (subvec normalised-knot-vector 4 (- (count  normalised-knot-vector) 4))
-                                                  new-U-inner (vec (apply concat (mapv #(vector % %) U-inner)))
-                                                  final-U (vec (flatten (for [index (range (count normalised-knot-vector))
-                                                                :let [knot (nth normalised-knot-vector index)]]
-                                                            (if (and (> index 3) (< index (- (count normalised-knot-vector) 4)))
-                                                              [knot knot]
-                                                              knot)
-                                                            )))
-                                                  ]
-                                              final-U))
+                    knot-vector (case knot-vector-generation-method-keyword
+                                  :natural (calculate-natural-knot-vector-from-u-k (mapv #(/ % u-n) u-k-values) (+ n 2) 3 :constrained true)
+                                  :average (calculate-averaged-knot-vector-from-u-k-with-end-derivs (mapv #(/ % u-n) u-k-values) n 3))
+                    knot-vector-size (count knot-vector)
+                    normalised-knot-vector (case knot-vector-generation-method-keyword 
+                                             :natural (assoc knot-vector (dec knot-vector-size) 1.0 (- knot-vector-size 2) 1.0 
+                                                             (- knot-vector-size 3) 1.0 (- knot-vector-size 4) 1.0)
+                                             :average (mapv #(/ % (peek knot-vector)) knot-vector)) 
+                    U-inner (subvec normalised-knot-vector 4 (- (count  normalised-knot-vector) 4))
+                    new-U-inner (vec (apply concat (mapv #(vector % %) U-inner)))
+                    final-U (vec (flatten (for [index (range (count normalised-knot-vector))
+                                                :let [knot (nth normalised-knot-vector index)]]
+                                            (if (and (> index 3) (< index (- (count normalised-knot-vector) 4)))
+                                              [knot knot]
+                                              knot)
+                                            )))
+                    ]
+                final-U))
         ;U (knot-vector-generation-method-fn u-k-values n)
         ;; (into [0.0 0.0 0.0 0.0] (conj (vec (apply concat (for [k (range 1 n)
         ;;                                                          :let [u-k (nth u-k-values k)
@@ -794,14 +804,14 @@
 
 (defn local-cubic-curve-interpolation-with-calculated-tangents [points & {:keys [corner-perservation point-paramater-calculation-method
                                                                                  knot-vector-generation-method-keyword
-                                                                                 magnitude-estimation-method] 
+                                                                                 magnitude-estimation-method use-cross] 
                                                                           :or {corner-perservation :smooth
                                                                                point-paramater-calculation-method :default
                                                                                knot-vector-generation-method-keyword :default
-                                                                               magnitude-estimation-method :default}}]
+                                                                               magnitude-estimation-method :default use-cross true}}]
   (let [tangent-calculation-method (case magnitude-estimation-method 
-                                     :default (fn [Qk] (calculate-tangents-for-local-cubic-curve-interpolation-from-tangent Qk :corner-perservation corner-perservation))
-                                     (fn [Qk] (calculate-tangents-for-local-cubic-curve-interpolation-from-derivatives Qk :magnitude-estimation-method magnitude-estimation-method)))
+                                     :default (fn [Qk] (calculate-tangents-for-local-cubic-curve-interpolation-from-tangent Qk :corner-perservation corner-perservation :use-cross use-cross))
+                                     (fn [Qk] (calculate-tangents-for-local-cubic-curve-interpolation-from-derivatives Qk :magnitude-estimation-method magnitude-estimation-method )))
         tangents (tangent-calculation-method points  )] 
     (local-cubic-curve-interpolation points tangents :point-paramater-calculation-method point-paramater-calculation-method
                                      :knot-vector-generation-method-keyword knot-vector-generation-method-keyword)))
@@ -812,16 +822,19 @@
 (defn local-cubic-curve-interpolation-with-calculated-tangents-curve [points steps &{:keys [corner-perservation point-paramater-calculation-method
                                                                                             knot-vector-generation-method-keyword
                                                                                             magnitude-estimation-method
-                                                                                            start-segment end-segment] 
+                                                                                            start-segment end-segment
+                                                                                            use-cross] 
                                                                                      :or {corner-perservation :smooth
                                                                                           point-paramater-calculation-method :default
                                                                                           knot-vector-generation-method-keyword :default
                                                                                           magnitude-estimation-method :default
-                                                                                          start-segment 0 end-segment nil}}]
+                                                                                          start-segment 0 end-segment nil
+                                                                                          use-cross true}}]
   (let [curve-parameters (local-cubic-curve-interpolation-with-calculated-tangents points :corner-perservation corner-perservation 
                                                                                    :point-paramater-calculation-method point-paramater-calculation-method
                                                                                    :knot-vector-generation-method-keyword knot-vector-generation-method-keyword
-                                                                                   :magnitude-estimation-method magnitude-estimation-method)
+                                                                                   :magnitude-estimation-method magnitude-estimation-method
+                                                                                   :use-cross use-cross)
         knot-vector (:U curve-parameters)
         get-U (fn [segment] (get-U-for-local-cubic-curve-interpolation-segment segment knot-vector))
         u-start (get-U start-segment)
@@ -867,33 +880,35 @@
   (let [Qk-minus-one-to-Rk (mapv - Rk Qk-minus-one)
         Rk-to-Qk (mapv - Qk Rk)
         points-are-collinear 
-        (< (abs (reduce + (cross Qk-minus-one-to-Rk Rk-to-Qk))) epsilon)
+        (< (abs (two-d-colinearity Qk-minus-one-to-Rk Rk-to-Qk)) epsilon)
         isosceles (< (abs (- (magnitude Qk-minus-one-to-Rk) (magnitude Rk-to-Qk))) epsilon)]
   (cond points-are-collinear 0
         isosceles 1
         :else (let [M (mapv (partial * 0.5) (mapv + Qk-minus-one Qk))
                     MR (mapv - M Rk)
-                    bisector-Rk-Qk-minus-one-Qk (bisector (mapv - Rk Qk-minus-one) (mapv - Qk Qk-minus-one))
-                    bisector-Qk-minus-one-Qk-Rk (bisector (mapv - Qk-minus-one Qk) (mapv - Rk Qk))
-                    S-one (three-d-intersection M Rk Qk-minus-one bisector-Rk-Qk-minus-one-Qk)
-                    S-two (three-d-intersection M Rk Qk bisector-Qk-minus-one-Qk-Rk)
-                    S (div (mapv + S-one S-two) 2)
+                    bisector-Rk-Qk-minus-one-Qk (bisector (mapv - Qk-minus-one Rk ) (mapv - Qk Qk-minus-one))
+                    bisector-Qk-minus-one-Qk-Rk (bisector (mapv -  Qk Qk-minus-one) (mapv - Rk Qk))
+                    S-one (three-d-intersection Rk M  Qk-minus-one (mapv + Qk-minus-one bisector-Rk-Qk-minus-one-Qk))
+                    S-two (three-d-intersection Rk M  Qk (mapv + Qk bisector-Qk-minus-one-Qk-Rk))
+                    S (do (div (mapv + S-one S-two) 2))
                     s (mapv / (mapv - S M) (mapv - Rk M))
-                    w1 (do (println "s" s)(mapv / s (mapv #(- 1 %) s)))]
+                    w1 (do (println "s" s) (mapv / s (mapv #(- 1 %) s)))]
                 w1))
   
     )
   )
 
-(defn calculate-R-k-values-for-local-parabolic-or-rational-parabolic-interpolation [Q T-k-values &{:keys [alpha] :or {alpha (/ 2 3)}}]
-  (let [n (dec (count Q))
+(cross [1 1 0] [1 1 0])
 
+(defn calculate-R-k-values-for-local-parabolic-or-rational-parabolic-interpolation [Q T-k-values &{:keys [alpha] :or {alpha (/ 2 3)}}]
+  (let [n (dec (count Q)) 
         zero-vec (vec (repeat (count (nth Q 0)) 0.0))
         upsilon-k-values-array (double-array (* 2 (inc n)) 0.0)
         upsilon-check (fn [Rk Qk Tk index] (let [u-vector (div (mapv - Rk Qk) Tk)
                                            upsilon (peek u-vector)]
                                        (if (apply = u-vector)
-                                         (do (aset upsilon-k-values-array index upsilon)(< upsilon 0))
+                                         (do (aset upsilon-k-values-array index upsilon) 
+                                             (< upsilon 0))
                                            false)))
         upsilon-k-minus-check (fn [Rk Qk-minus-one Tk-minus-one index]
                                 (let [u-k-minus-one-vector (div (mapv - Rk Qk-minus-one) Tk-minus-one)
@@ -987,20 +1002,22 @@
            (println "(normalise (mapv - Rk Qk))" (normalise (mapv - Rk Qk)))
            (println "div" (mapv / (mapv - Rk Qk) (normalise (mapv - Rk Qk))))
            (mapv + Qk (mul upsilon Tk))))
+(comment (mapv #(vec (drop-last %)) [[0 0 0] [2 3 0] [4 0 0] [8 9 0]]))
 
-(comment (let [Q [[0 0 0] [2 3 0] [4 0 0] [8 9 0]]
-               T (calculate-tangents-for-local-cubic-curve-interpolation-from-tangent Q)
-               {Rk :Rk
-                Qk :Qk} (calculate-R-k-values-for-local-parabolic-or-rational-parabolic-interpolation Q T)
-               ]
-           (println "T" T)
-           (for [k (range 1 (count Qk))]
-             (calculate-Rk-weight (nth Qk (dec k)) (nth Rk k) (nth Qk k)))
-           ))
 
+(comment (let [M [1 2] 
+               P-one [2 5]
+               s 0.8
+               S (mapv + (mul (- 1 s) M) (mul s P-one))
+               s2 (mapv / (mapv - S M) (mapv - P-one M))]
+           s2))
 (comment [2 3 4] [5 6 7])
 
 (comment (= 1 1 1))
+
+(comment (mapv *  [2 2 0] [1 2 1]))
+
+(comment (cross [2 2 0] [1 2 1]))
 
 (comment (magnitude (div [10 10 10] [2 2 2] )))
 
@@ -1023,6 +1040,16 @@
            )
     (vec uk-values)) 
   )
+
+(comment (let [Q [[0 0 ] [2 3 ] [4 0 ] [8 9 ]]
+               T  (calculate-tangents-for-local-cubic-curve-interpolation-from-tangent Q :use-cross false)
+               {Rk :Rk
+                Qk :Qk} (calculate-R-k-values-for-local-parabolic-or-rational-parabolic-interpolation Q T)
+               Rk-weights (vec (for [k (range 1 (count Qk))]
+                                 (calculate-Rk-weight (nth Qk (dec k)) (nth Rk k) (nth Qk k))))
+               ]
+           Rk-weights))
+
 
 ;esitmate tangents
 ;use tangent intersectons to calculate Rk values

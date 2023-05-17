@@ -1,6 +1,6 @@
 (ns dactyl-keyboard.RP2040-Plus
   (:refer-clojure :exclude [use import])
-  (:require [dactyl-keyboard.lib.transformations :refer [rdy]]
+  (:require [dactyl-keyboard.lib.transformations :refer [rdx rdy]]
             [dactyl-keyboard.low.case-low :refer :all]
             [dactyl-keyboard.low.placement-functions-low :refer :all]
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
@@ -60,12 +60,19 @@
 
 (def rp2040-plus-usb-c-connecter
   (->>
-   ;(import "USB_Type_C_Female_Connector.stl")
-   ;(rdz 180)
-   (cube rp2040-plus-usb-connecter-width rp2040-plus-usb-connecter-length rp2040-plus-usb-connecter-height)
+  (import "../parts/usb connector type c female 6pin.stl")
+   (rdx -90)
+   (rdy 180)
+   ;(cube rp2040-plus-usb-connecter-width rp2040-plus-usb-connecter-length rp2040-plus-usb-connecter-height)
    (translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter)
-               (+ (/ rp2040-plus-length 2) (/ rp2040-plus-usb-connecter-length -2) rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge)
-               (+ (/ rp2040-plus-usb-connecter-height 2) rp2040-plus-thickness)]) 
+               (+ (/ rp2040-plus-length 2)  rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge )
+               (- (+ (/ (+ rp2040-plus-mount-height  ) 2) 0.4) (/ rp2040-plus-usb-connecter-height 2) (/ rp2040-plus-thickness 2) 
+                  )])
+  ;;  (translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter)
+  ;;              (+ (/ rp2040-plus-length 2) (/ rp2040-plus-usb-connecter-length -2) rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge)
+  ;;              (- (+ rp2040-plus-usb-connecter-height ;rp2040-plus-thickness
+  ;;                    ) 
+  ;;                 (/ rp2040-plus-mount-height 2)) ]) 
    ;(translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter) (- (/ rp2040-plus-length 2) 4) -1] )
    ))
 ;(- (/ rp2040-plus-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter)
@@ -107,6 +114,10 @@
   (->>
    (cube rp2040-plus-mount-width rp2040-plus-mount-length rp2040-plus-mount-height)
    (translate [0 0 (/ rp2040-plus-mount-height 2)])))
+(def rp2040-plus-mount-body-clearance
+  (->>
+   (cube 4 (+ rp2040-plus-mount-length 0.5) (+ rp2040-plus-mount-height 0.5))
+   (translate [(+  (/ rp2040-plus-mount-width -2) 1.5) 0 (/ (+ rp2040-plus-mount-height 0.5) 2)])))
 
 (def rp2040-plus-connecter-cutout
   (->> 
@@ -143,7 +154,7 @@
 
 (def rp2040-plus-mount
   (difference
-    rp2040-plus-mount-body
+    (translate [0 0 0] rp2040-plus-mount-body)
    (translate [(+ (/ rp2040-plus-width -2) (/ rp2040-plus-dupont-cutout-width 2)) 0 0] rp2040-plus-dupont-cutout)
 (translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-dupont-cutout-width 2)) 0 0] rp2040-plus-dupont-cutout)       
    (translate [0 0 (/ (- rp2040-plus-mount-depth rp2040-plus-mount-thickness) 2)] (cube (- rp2040-plus-width (* rp2040-plus-dupont-cutout-width 2.25)) rp2040-plus-length (- rp2040-plus-mount-depth rp2040-plus-mount-thickness)))
@@ -157,10 +168,10 @@
    )
   )
 
-(defn rp2040-plus-place [shape]
+(defn rp2040-plus-place [shape &{:keys [place-fn] :or {place-fn usb-jack-place}}]
   (->> shape
-       (translate [0 (- (+  (/ rp2040-plus-length 2) rp2040-plus-mount-thickness rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge )) -6.5])
-   (usb-jack-place )
+       (translate [-0.35 (- (+  (/ rp2040-plus-length 2) rp2040-plus-mount-thickness rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge ))  (+ -6.5 )])
+   (place-fn )
        
    
        ;(translate (rotate-around-z far-index-splay [-0.5 (first far-index-post-splay-translation) 0]))

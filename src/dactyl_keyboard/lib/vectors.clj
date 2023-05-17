@@ -32,6 +32,12 @@
   (mapv (partial * (/ (dot vector-a vector-b) (magnitude-squared vector-b) )) vector-b)
   )
 
+(defn two-d-colinearity [vector-a vector-b]
+  (- (* (nth vector-a 0) (nth vector-b 1)) (* (nth vector-a 1) (nth vector-b 0))))
+
+(defn are-two-d-points-colinear [vector-a vector-b] 
+  (two-d-colinearity vector-a vector-b) )
+
 (defn x [vector]
   (nth vector 0))
 
@@ -44,6 +50,10 @@
 (defn angle-between-vectors [a b]
   (acos (/ (dot a b) (* (magnitude a) (magnitude b))))
   )
+
+;; (defn two-d-intersection [v1-start v1-end v2-start v2-end]
+;;   (let [x ])
+;;   )
 
 (defn three-d-intersection [v1-start v1-end v2-start v2-end]
   (let [t (/ (- (nth v1-start 1) (nth v2-start 1) (* (nth v2-end 1) (/ (- (nth v1-start 0) (nth v2-start 0)) (nth v2-end 0))))

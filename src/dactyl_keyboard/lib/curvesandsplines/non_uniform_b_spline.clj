@@ -1394,6 +1394,7 @@
         tau-n (/ (* 1.2 c-n)
                  (- (nth uk-values n) (nth uk-values (dec n))))
         ]
+    (println :tau-zero tau-zero :tau-n tau-n)
     {:tau-zero tau-zero :tau-n tau-n}
     )
   )

@@ -1094,7 +1094,7 @@ thumb-corners
 (def usb-holder-space  (translate (map + usb-holder-position [0 (* -1 wall-thickness) 1]) usb-holder-cube))
 (def usb-holder-holder (translate usb-holder-position (cube 19 12 4)))
 (def usb-jack-height 4)
-(def usb-jack-width 9.5)
+(def usb-jack-width 10.5)
 (def usb-jack-cylinder 
   (->>
    (binding [*fn* 36](cylinder (/ usb-jack-height 2) (+ plate-thickness 1) :center true))

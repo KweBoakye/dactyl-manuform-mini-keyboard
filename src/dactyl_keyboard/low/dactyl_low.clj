@@ -13,36 +13,31 @@
             [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-z-in-degrees]] ;
             [dactyl-keyboard.lib.algebra :refer [find-point-on-line-using-x
                                                  find-point-on-line-using-z]]
-            [dactyl-keyboard.lib.constants :refer [epsilon]]
             [dactyl-keyboard.lib.curvesandsplines.b-spline-surface :refer [b-spline-surface]]
             [dactyl-keyboard.lib.curvesandsplines.beziers :refer [bezier-cubic
                                                                   bezier-linear bezier-quintic bezier-sextic n-degree-bezier-curve n-degree-bezier-point]]
             [dactyl-keyboard.lib.curvesandsplines.coons-surface :refer [bicubic-coons-surface linear-coons-surface tangent-matching-coons-surface
                                                                         triangular-coons-surface]]
             [dactyl-keyboard.lib.curvesandsplines.curve-fitting :refer [bisector
-                                                                        calculate-tangents-for-local-cubic-curve-interpolation-from-tangent
                                                                         global-c2-cubic-spline-curve-interpolation-with-tangent-vectors
                                                                         global-c2-cubic-spline-curve-interpolation-with-tangent-vectors-curve global-curve-interp
                                                                         global-curve-interp-curve global-curve-interp-with-calculated-first-derivatives
-                                                                        global-curve-interp-with-calculated-first-derivatives-curve global-curve-interp-with-end-derivatives
-                                                                        global-curve-interp-with-end-derivatives-calculated
-                                                                        global-curve-interp-with-end-unit-derivatives-curve global-orthogonal-construction-cubic-interpolation
-                                                                        local-cubic-curve-interpolation
-                                                                        local-cubic-curve-interpolation-with-calculated-tangents local-cubic-curve-interpolation-with-calculated-tangents-curve
-                                                                        local-cubic-curve-interpolation-with-tangents-curve]]
+                                                                        global-curve-interp-with-calculated-first-derivatives-curve
+                                                                        global-curve-interp-with-end-derivatives global-curve-interp-with-end-derivatives-calculated
+                                                                        global-curve-interp-with-end-unit-derivatives-curve
+                                                                        global-orthogonal-construction-cubic-interpolation local-cubic-curve-interpolation
+                                                                        local-cubic-curve-interpolation-with-calculated-tangents local-cubic-curve-interpolation-with-calculated-tangents-curve]]
             [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [homogenize-cooridinates]] ;[dactyl-keyboard.lib.curvesandsplines.linear-surface :refer [bilinear-surface]]
             [dactyl-keyboard.lib.curvesandsplines.linear-surface :refer [lofted-surface]]
             [dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline :refer :all]
             [dactyl-keyboard.lib.curvesandsplines.splines :refer [catmull-rom-matrix-curve catmull-rom-spline-as-bezier-cubic catmull-rom-spline-curve
                                                                   catmull-rom-spline-deriv catmull-rom-spline-deriv catmull-rom-spline-derivative-curve
                                                                   cubic-hermite-tension-spline-curve kochanek-bartels-spline-curve]]
-            
             [dactyl-keyboard.lib.curvesandsplines.uniform-b-splines :refer [cubic-uniform-b-spline-through-terminal-endpoints]]
-            [dactyl-keyboard.lib.geometry :refer [two-d-intersection-for-3d]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer :all]
+            [dactyl-keyboard.lib.openscad.bosl2-wrappers.mask-3d :refer [teardrop-edge-mask]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.vnf :refer :all]
-            [dactyl-keyboard.lib.openscad.hull :refer [chained-hull chained-hull-to-points]]
-            [dactyl-keyboard.lib.openscad.polyhedrons :refer [generate-bezier-to-point-polyhedron]]
+            [dactyl-keyboard.lib.openscad.hull :refer [chained-hull]]
             [dactyl-keyboard.lib.transformations :refer [rdx rdy rdz]]
             [dactyl-keyboard.lib.vectors :refer [calculate-point-between-points]]
             [dactyl-keyboard.low.aviator-low :refer :all]
@@ -2263,11 +2258,11 @@
                                                                              3 default-weights-for-vertical-nurbs steps)
 
 
-        left-section-top-right-north-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-right-control-points inner-wall-curve-bezier-cubic-nurbs-keywords) steps)
-        left-section-top-left-north-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-north-control-points inner-wall-curve-bezier-cubic-nurbs-keywords) steps)
-        left-section-top-left-north-west-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-north-west-control-points inner-wall-curve-bezier-cubic-nurbs-keywords) steps)
-        left-section-top-left-west-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-west-control-points inner-wall-curve-bezier-cubic-nurbs-keywords) steps)
-        left-section-top-left-mid-west-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-mid-control-points inner-wall-curve-bezier-cubic-nurbs-keywords) steps)
+        left-section-top-right-north-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-right-control-points inner-wall-curve-bezier-cubic-keywords) steps)
+        left-section-top-left-north-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-north-control-points inner-wall-curve-bezier-cubic-keywords) steps)
+        left-section-top-left-north-west-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-north-west-control-points inner-wall-curve-bezier-cubic-keywords) steps)
+        left-section-top-left-west-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-west-control-points inner-wall-curve-bezier-cubic-keywords) steps)
+        left-section-top-left-mid-west-inner  (n-degree-bezier-curve (get-curve-control-points-by-key-words left-section-top-left-mid-control-points inner-wall-curve-bezier-cubic-keywords) steps)
         left-section-left-mid-outer (apply tps-to-screen-side-catmull (conj (vec (get-curve-control-points-by-key-words  left-section-left-mid-control-points outer-wall-catmull-rom-spline-parameters)) steps))
         left-section-left-mid-inner (apply tps-to-screen-side-catmull (conj (vec (get-curve-control-points-by-key-words  left-section-left-mid-control-points inner-wall-catmull-rom-spline-keywords)) steps))
         left-section-bottom-left-west-outer (catmull-rom-spline-curve (get-curve-control-points-by-key-words  left-section-bottom-left-west-control-points tps-65-to-screen-outer-wall-catmull-rom-spline-keywords ) steps)
@@ -2278,7 +2273,7 @@
         left-section-bottom-left-south-inner (apply tps-to-screen-side-catmull (conj (vec (get-curve-control-points-by-key-words  left-section-bottom-left-south-control-points inner-wall-catmull-rom-spline-keywords)) steps))
         thumb-bl-tl-points-outer  (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-points wall-vertical-outer-nurbs-control-points-keywords)
                                                                      3 default-weights-for-vertical-nurbs steps)
-        thumb-bl-tl-points-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-points inner-wall-curve-bezier-cubic-nurbs-keywords) steps)
+        thumb-bl-tl-points-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-points inner-wall-curve-bezier-cubic-keywords) steps)
         left-section-above-screen-left-mid-outer (catmull-rom-spline-curve (get-curve-control-points-by-key-words left-section-left-mid-control-points above-screen-outer-keywords) steps)
         left-section-above-screen-left-mid-inner (catmull-rom-spline-curve (get-curve-control-points-by-key-words left-section-left-mid-control-points above-screen-inner-keywords) steps)
         left-section-above-screen-bottom-left-west-outer (catmull-rom-spline-curve (get-curve-control-points-by-key-words left-section-bottom-left-west-control-points above-screen-outer-keywords) steps)
@@ -3616,7 +3611,7 @@
 
           bottom-section-thumb-side-outer  (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-points wall-vertical-outer-nurbs-control-points-keywords)
                                                                               3 default-weights-for-vertical-nurbs steps)
-          bottom-section-thumb-side-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-points inner-wall-curve-bezier-cubic-nurbs-keywords) steps)
+          bottom-section-thumb-side-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-points inner-wall-curve-bezier-cubic-keywords) steps)
           bottom-section-thumb-side-outer-control (bezier-linear (web-post-point-top  thumb-bl-place :tr :degrees) (web-post-point-top  thumb-bl-place :br :degrees) steps)
           ;; (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tr-points wall-vertical-outer-nurbs-control-points-keywords)
           ;;                                                                             3 default-weights-for-vertical-nurbs steps)
@@ -4540,6 +4535,12 @@
           (color [0 1 0 1](plot-bezier-points rogers (sphere 2)))
           ))))
 
+(spit "things-low/teardrop-edge-mask.scad"
+      (write-scad
+       (include include-bosl2)
+       (union
+        (teardrop-edge-mask 1 1 :angle 40)
+        )))
 (comment (local-cubic-curve-interpolation-with-calculated-tangents
 [[0 0 0] [2 3 8] [4 3 9]]))
 (defn -main [dum] 1)  ; dummy to make it easier to batch

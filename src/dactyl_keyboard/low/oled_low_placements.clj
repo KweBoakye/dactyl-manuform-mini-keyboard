@@ -15,7 +15,9 @@
 
 
 (when (= oled-type "ST7789-240x240-154")
-  (def screen-holder-cut (rotate (deg2rad 0) [1 0 0] (rotate (deg2rad 90) [0 0 1] ST7789-240x240-154-holder-cut)))
+  (def screen-holder-cut (rotate (deg2rad 0) [1 0 0] (rotate (deg2rad 90) [0 0 1] ST7789-240x240-154-holder-cut))) 
+  (def screen-holder-cut-screen-cut  (rotate (deg2rad 0) [1 0 0] (rotate (deg2rad 90) [0 0 1] ST7789-240x240-154-screen-cut)))
+  (def screen-holder-cut-viewport-cut  (rotate (deg2rad 0) [1 0 0] (rotate (deg2rad 90) [0 0 1] ST7789-240x240-154-viewport-cut)))
   (def screen-holder (rotate (deg2rad 0) [1 0 0] (rotate (deg2rad 90) [0 0 1] ST7789-240x240-154-holder)))
   (def screen-holder-width ST7789-240x240-154-holder-width)
   (def screen-holder-height ST7789-240x240-154-holder-height)

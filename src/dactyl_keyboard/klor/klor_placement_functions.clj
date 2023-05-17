@@ -1,11 +1,19 @@
 (ns dactyl-keyboard.klor.klor-placement-functions
   (:refer-clojure :exclude [use import])
-  (:require [dactyl-keyboard.klor.klor-config :refer :all]
-            [dactyl-keyboard.klor.klor-points :refer :all]
+  (:require [clojure.math :refer [sqrt]]
+            [dactyl-keyboard.des-caps :refer :all] 
+            [dactyl-keyboard.klor.klor-config :refer :all]
             [dactyl-keyboard.klor.klor-constants :refer :all]
+            [dactyl-keyboard.klor.klor-points :refer :all]
             [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-x-in-degrees
                                                                 rotate-around-z-in-degrees]]
+            [dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline :refer [nurbs nurbs-with-calculated-knot-vector]]
+            [dactyl-keyboard.lib.openscad.bosl2-wrappers.vnf :refer [vnf-polyhedron
+                                                                     vnf-vertex-array]]
+            [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer [include-bosl2]]
             [dactyl-keyboard.lib.transformations :refer [rdz]]
+            [dactyl-keyboard.oled :refer [oled-holder-height oled-holder-width]]
+            [dactyl-keyboard.utils :refer [plot-bezier-points select-values]]
             [scad-clj.model :refer :all]
             [scad-clj.scad :refer :all])
   )
@@ -33,8 +41,9 @@
   (klor-apply-key-geometry (partial mapv +) rotate-around-z-in-degrees rotate-around-z-in-degrees column row vector))
 
 
-(defn klor-key-place-with-offset [column row offset shape]
-  (translate (klor-key-position column row offset ) (rdz anchor-rotation shape)))
+(defn klor-key-place-with-offset [column row offset shape &{:keys [translate-fn rotate-z-fn vector-rotate-fn]
+                                                            :or {translate-fn translate rotate-z-fn rdz vector-rotate-fn rotate-around-z-in-degrees}}]
+  (translate-fn (klor-key-position column row offset ) (rotate-z-fn anchor-rotation shape)))
 (defn klor-apply-key-geometry-thumb [translate-fn rotate-z-fn vector-rotate-fn column shape]
   (->> shape
        (klor-apply-key-geometry translate-fn rotate-z-fn vector-rotate-fn 0 0)
@@ -46,13 +55,13 @@
        (translate-fn (vector-rotate-fn (+ anchor-rotation ) [(* column thumb-spread) 0 0]))
        (rotate-z-fn (* column  thumb-splay))
        (translate-fn (case column 
-                       0 [0 0 0]
+                       0 [-0.035 -0.075 0]
                        1 (vector-rotate-fn (+ anchor-rotation thumb-splay )
-                                         [-4.75 -2.5 0])
+                                         [-4.6 -2.55 0])
                        2 (vector-rotate-fn (+ anchor-rotation (* column thumb-splay))
-                                           [-9 1.75 0])
+                                           [-8.865 1.78 0])
                        3 (vector-rotate-fn (+ anchor-rotation (* column thumb-splay))
-                                           [-11.25 12.5 0])))
+                                           [-11.18 12.52 0])))
        ;(translate-fn  thumb-anchor)
        ;(rotate-z-fn anchor-rotation)
        
@@ -87,42 +96,16 @@
 (mapv + [-138.5 87 0]))
   )
 
-(spit "things-low/klor.scad"
-      (write-scad 
-       (let [key-shape (difference (square (dec key-spacing-horizontal) (dec key-spacing-vertical)) 
-                         (square 14 14))]
-         
-       (union
-        (translate (klor-thumb-position 3 [-12.5 -12.5 0]) (cylinder 0.5 20))
-        (translate (klor-point-place (mapv + bottom-left-thumb-key-bottom-right-corner [2 2 0])) (cylinder 0.5 20))
-        (translate  (klor-point-place [170.303964 118.080182 0] ) (cylinder 3.2 20))
-        (color [1 0 0 1](klor-key-place-with-offset 0 1 [-32.5 -10 12] (cube 40 43 2)))
-        (color [0 1 0 1](klor-key-place-with-offset 0 2 [-30 7 11] (import "../parts/oled.stl")))
-        (->> (import "../parts/klor-ks27-polydactyl-body-right.stl")
-             (rdz 10)
-             (translate [715.75 85 0]))
-        ;; (->> (import "../parts/klor1_3-klor1_3.stl")
-        ;;      (rdz 10)
-        ;;      (translate [-31 -4.5 0])
-        ;;      )
-        ;; (->> (polygon pcb-points-list)
-        ;;      (rdx 180)
-        ;;      (rdz 10)
-        ;;      (translate [-138.5 87 0 ]))
-        (apply union
-              (for [column columns
-                    row rows
-                    :when (false? (and (= row 2) (= column 5)))] 
-                (klor-key-place column row key-shape) 
-                ))
-        (apply union
-               (for [thumb-key thumb-keys]
-                 (klor-thumb-place thumb-key key-shape)))
-        (-# (->>
-             (import "../parts/KLOR_polydactyl_3DP_switchplate.stl")
-             
-             (translate [-50.25 -53.7 0])
-             (rdz anchor-rotation)))
-        )
-       )
-       ))
+
+(defn klor-oled-place [shape &{:keys [ offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height 11 translate-fn translate rotate-z-fn rdz}}]
+  (klor-key-place-with-offset 0 2 (mapv + [-30 7 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn))
+
+(defn klor-oled-position [offset &{:keys [height] :or { height 0 }}]
+  (klor-oled-place [0 0 0] :offset offset :height height :translate-fn (partial mapv +) :rotate-z-fn rotate-around-z-in-degrees))
+
+(defn klor-tps-43-place [shape & {:keys [offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height (- klor-case-walls-height 1) translate-fn translate rotate-z-fn rdz}}] 
+  (klor-key-place-with-offset 0 1 (mapv + [-32.5 -10 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn))
+(defn klor-tps-43-position [offset & {:keys [height] :or {height 0}}]
+  (klor-tps-43-place [0 0 0] :offset offset :height height :translate-fn (partial mapv +) :rotate-z-fn rotate-around-z-in-degrees))
+
+

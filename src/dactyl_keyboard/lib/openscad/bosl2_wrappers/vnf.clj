@@ -167,3 +167,6 @@
                              [[6 0 0] [6 4 -3] [6 8 0] [6 10 0]]
                              [[8 0 0] [8 4 -3] [8 8 0] [8 10 0]]]
                             :caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default)))
+
+(defn vnf-from-region [region]
+  (call :vnf_from_region region))

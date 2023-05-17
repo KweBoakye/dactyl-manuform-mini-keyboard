@@ -134,6 +134,17 @@
                countersink-chamfer))
   )
 
+(def ST7789-240x240-154-viewport-cut
+  (->> (translate ST7789-240x240-154-viewport-offset (apply cube ST7789-240x240-154-viewport-size))
+       (rdy 180)
+       (translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)]))
+  )
+
+(def ST7789-240x240-154-screen-cut
+  (->> (translate ST7789-240x240-154-screen-offset (apply cube ST7789-240x240-154-screen-size))
+       (rdy 180)
+       (translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)])))
+
 (def ST7789-240x240-154-holder-cut
   (->>
    (union
