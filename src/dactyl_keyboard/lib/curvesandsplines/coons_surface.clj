@@ -300,12 +300,13 @@
   (vec 
    (for [w-index  (range (inc w-steps))
          :let [w (/ w-index w-steps)
-               u-steps-to-use (if triangular? (- u-steps w-index) u-steps)]]
-     (vec (for [u-index (range (inc u-steps-to-use))
+               u-steps-to-use (let [triang-u-steps (if triangular? (- u-steps w-index) u-steps)]
+                                (if (zero? triang-u-steps) 1  triang-u-steps))]]
+     (do (println "u-steps-to-use" u-steps-to-use "w-index" w-index)(vec (for [u-index (range (inc u-steps-to-use))
                 :let [u (/ u-index u-steps-to-use)]]
             (if boundary-curves-generated (triangular-coons-surface-point P-zero-zero P-one-zero P-one-one (nth P-u-zero u-index) (nth P-zero-w w-index) (nth P-one-w w-index) u w :blending-fn blending-fn)
                 (triangular-coons-surface-point P-zero-zero P-one-zero P-one-one (P-u-zero u) (P-zero-w w) (P-one-w w) u w :blending-fn blending-fn))
-            ))))
+            )))))
   ;; (vec
   ;;  (for  [u-index (range (inc u-steps))
   ;;         :let [u (/ u-index u-steps)]]

@@ -49,10 +49,18 @@
 (def inner-spacing-width 16.5)
 (def inner-spacing-length 16.5)
 
-(def klor-case-walls-height 14.5)
-(def klor-thumb-walls-height 6.6)
-(def klor-switchplate-thickness 1.6)
-(def klor-switchplate-z-position (+ 4 (/ klor-switchplate-thickness 2)))
+(def klor-dev-board-z-offset 3.5)
+(def klor-case-walls-height (+ 14.5 ))
+
+(def kailh-choc-hotswap-thickness 1.9)
+(def pcb-thickness 1.6)
+(def pcb-to-plate-distance 2.2)
+
+(def klor-switchplate-thickness 1.2)
+(def klor-bottom-plate-thickness 1.5)
+(def klor-switchplate-z-position (+ 4.4 (/ klor-switchplate-thickness 2) ))
+(def klor-thumb-walls-height (+ klor-switchplate-z-position  klor-switchplate-thickness) ;(+ 6.6)
+  )
 (def klor-wall-thickness 2)
 (def klor-wall-z-offset -4)
 (def klor-thumbs-wall-z-offset -2)
@@ -91,3 +99,8 @@
          (= column 5) extra-pinky-rotation
          :else 0)
    )
+
+(def trrs-jack-hole-radius 3.14)
+(def reset-button-inner-radius 1)
+(def reset-button-outer-radius 2.5)
+

@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [div mul]]
             [clojure.math :refer [sqrt]]
-            [dactyl-keyboard.des-caps :refer [des-cornelius-thumbs des-r2 des-caps]] 
+            [dactyl-keyboard.des-caps :refer [des-r1 des-r2 des-r5]]
+            [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-z-in-degrees]]
             [dactyl-keyboard.lib.algebra :refer [find-point-on-line-using-x]]
             [dactyl-keyboard.lib.constants :refer [epsilon]]
             [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-curve]]
@@ -23,12 +24,13 @@
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.joiners :refer [dovetail]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.vnf :refer :all]
             [dactyl-keyboard.lib.openscad.hull :refer [chained-hull-to-points]]
-            [dactyl-keyboard.lib.transformations :refer [rdz]]
+            [dactyl-keyboard.lib.transformations :refer [rdx rdz]]
             [dactyl-keyboard.low.case-low :refer [usb-jack-height
                                                   usb-jack-width]]
             [dactyl-keyboard.low.case-low-polyhedron-functions :refer :all]
             [dactyl-keyboard.low.fractyl.fractyl-key-plate-connectors :refer :all]
             [dactyl-keyboard.low.fractyl.fractyl-screw-inserts :refer :all]
+            [dactyl-keyboard.low.fractyl.svg.svg-point :refer [svg-import]]
             [dactyl-keyboard.low.oled-low-placements :refer [screen-holder]]
             [dactyl-keyboard.low.placement-functions-low :refer :all]
             [dactyl-keyboard.low.screen-holder-placement-functions :refer [screen-holder-place-side]]
@@ -40,7 +42,7 @@
             [dactyl-keyboard.low.web-connecters-low :refer :all]
             [dactyl-keyboard.MxLEDBitPCB-holder :refer [MxLEDBitPCB
                                                         MxLEDBitPCB-clearance-smaller
-                                                        single-key-pcb-holder single-key-pcb-holder-north-leg]]
+                                                        single-key-pcb-holder]]
             [dactyl-keyboard.RP2040-Plus :refer [rp2040-plus rp2040-plus-mount
                                                  rp2040-plus-mount-body-clearance rp2040-plus-place]]
             [dactyl-keyboard.switch-hole :refer [plate-thickness]]
@@ -401,17 +403,17 @@
                                                       ;(wall-cross-section-parameter (key-wall-position 3 2 -1 0 :bl))
                                         ]
                                        curve-paramater)
-               wall-section (wall-section wall-section-parameter wall-cross-section-steps wall-section-steps)
-               wall-positions (mapv #(:wall-position %) wall-section)
-               wall-cross-section-control-points (mapv #(:all-control-points %) (:wall-cross-sections wall-section))
+               front-wall-nurbs-wall-section (wall-section wall-section-parameter wall-cross-section-steps wall-section-steps)
+               wall-positions (mapv #(:wall-position %) front-wall-nurbs-wall-section)
+               wall-cross-section-control-points (mapv #(:all-control-points %) (:wall-cross-sections front-wall-nurbs-wall-section))
                upper-points (mapv #(:web-post-position-top %) wall-cross-section-control-points)
-               total-steps (dec (count (:outer-wall wall-section)))
+               total-steps (dec (count (:outer-wall front-wall-nurbs-wall-section)))
                nurbs-curve (nurbs (reverse upper-points) 2 knot-vector
                                   weights (* wall-section-steps 9))
                c1 (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves 2 (mapv double knot-vector-2) upper-points weights   0 8 (* wall-section-steps 10) :reverse-curve true)
                wall-cross-section-parameters (:wall-cross-section-parameters wall-section-parameter)
-               wall-top (mapv #(nth % 0) (:outer-wall wall-section))
-               inner-wall-top (mapv #(peek %) (:inner-wall wall-section))
+               wall-top (mapv #(nth % 0) (:outer-wall front-wall-nurbs-wall-section))
+               inner-wall-top (mapv #(peek %) (:inner-wall front-wall-nurbs-wall-section))
                steps-distrubution (:steps-distrubution wall-section-parameter)
                curve-parameters (:curve-parameters wall-section-parameter)
                pinky-bl-to-fourth-bl-outer-curve (subvec wall-top (* (nth knot-vector 4) wall-section-steps) (* (nth knot-vector 8) wall-section-steps))
@@ -445,7 +447,7 @@
                                            pinky-bl-to-fourth-bl-outer-steps pinky-bl-to-fourth-bl-outer-steps :boundary-curves-generated true)]
 
            
-           {:front-wall-wall-section wall-section
+           {:front-wall-wall-section front-wall-nurbs-wall-section
             :chained-hull-shapes [(chained-hull-to-points (plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 3 cornerrow :br) (sphere epsilon))
                                                           (plot-bezier-points pinky-bl-to-fourth-bl-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 3 cornerrow :br) (sphere epsilon))
                                                           pinky-bl-to-fourth-bl-outer-steps)
@@ -504,11 +506,7 @@
           (plot-bezier-points left-section-bottom-left-south-outer (sphere 1))
           (plot-bezier-points left-section-bottom-left-mid-south-west-outer (sphere 1))))))
 
-(comment (spit "things-low/horizontal-first-test.scad"
-      (write-scad
-       (include "../BOSL2/std.scad")
-       (union key-holes
-              (front-wall-nurbs 30 30)))))
+
 
 (defrecord LeftSectionData [vnf-array outer-wall inner-wall outer-floor-points  inner-floor-points trackpad-to-main-body-data
                             thumb-bl-to-tl-outer-curve-fn thumb-tl-to-tr-outer-curve-fn
@@ -957,7 +955,7 @@
         vnf-array (wall-vnf-array outer-wall inner-wall
                                   {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})
          ] 
-    {:left-section-data (LeftSectionData. vnf-array outer-wall inner-wall  (filter #(zero? (nth % 2))(peek outer-wall)) (peek inner-wall)  trackpad-to-main-body-data
+    {:left-section-data (LeftSectionData. vnf-array outer-wall inner-wall  (filter #(zero? (nth % 2))(peek outer-wall)) (filter #(zero? (nth % 2)) (peek inner-wall))   trackpad-to-main-body-data
                                           outer-wall-trackpad-to-keys-gap-border-tangent-outer-fn thumb-tl-to-tr-outer-curve-fn
                                           inner-wall-trackpad-to-keys-gap-border-tangent-outer-fn thumb-tl-to-tr-inner-curve-fn)
      :thumb-outer-points-fn thumb-outer-points-fn
@@ -1071,6 +1069,134 @@
                }
     ))
 
+(defn thumb-to-left-section-2 [wall-cross-section-steps wall-section-steps  left-section-to-thumb-outer-points-fn left-section-to-thumb-inner-points-fn] 
+  (let [thumb-outer-points (left-section-to-thumb-outer-points-fn wall-cross-section-steps)
+        thumb-inner-points (vec (reverse (left-section-to-thumb-inner-points-fn wall-cross-section-steps)))
+        thumb-bl-tm-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tm :xy 5 :slant :parallel-by-d-opposite))
+        thumb-bl-tm-north-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tm-north-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                         3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+        thumb-bl-tm-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 1 :tm :xy 4 :slant :no-slant))
+        thumb-bl-tr-north-offset-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0.5 1 :tr :xy 5 :slant :no-slant :offset [0.5 0 0]))
+        left-section-bottom-mid-south-wall-position (tps-65-wall-position :bm :south)
+        left-section-bottom-mid-south-control-points (calculate-control-points left-section-bottom-mid-south-wall-position)
+        thumb-bl-tr-tm-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tr-tm :xy 4 :slant :no-slant))
+        thumb-bl-tr-tm-north-west-offest-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0.25 1 :tr-tm :xy 4 :slant :no-slant :offset [1 0 0]))
+        thumb-tl-tl-north-control-points (calculate-control-points (thumb-wall-position thumb-tl-place 0 1 :tl :xy 4))
+        thumb-bl-tr-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tr :xy 4 :offset [0.00000001 0.0 0.0]  :slant :no-slant))
+        thumb-bl-bl-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :bl :xy 4 :slant :no-slant :offset [-0.000001 0.0 0.0]))
+        thumb-bl-lm-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :lm :xy 4 :slant :no-slant))
+        thumb-bl-tl-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :tl :xy 4 :offset [(- epsilon) 0 0] :slant :no-slant))
+        thumb-bl-tl-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 1 :tl :xy 4 :slant :no-slant))
+        thumb-bl-tl-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tl :xy 4 :offset [0 epsilon 0] :slant :no-slant))
+        thumb-bl-tr-north-offset-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0.5 1 :tr :xy 5 :slant :no-slant :offset [0.5 0 0]))
+        left-section-bottom-mid-south-wall-position (tps-65-wall-position :bm :south)
+        left-section-bottom-mid-south-control-points (calculate-control-points left-section-bottom-mid-south-wall-position)
+        thumb-bl-tr-tm-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tr-tm :xy 4 :slant :no-slant))
+        thumb-bl-tr-tm-north-west-offest-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0.25 1 :tr-tm :xy 4 :slant :no-slant :offset [1 0 0]))
+        thumb-tl-tl-north-control-points (calculate-control-points (thumb-wall-position thumb-tl-place 0 1 :tl :xy 4))
+        thumb-bl-tr-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tr :xy 4 :offset [0.00000001 0.0 0.0]  :slant :no-slant))
+        thumb-bl-bl-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :bl :xy 4 :slant :no-slant :offset [-0.000001 0.0 0.0]))
+        thumb-bl-lm-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :lm :xy 4 :slant :no-slant))
+        thumb-bl-tl-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :tl :xy 4 :offset [(- epsilon) 0 0] :slant :no-slant))
+        thumb-bl-tl-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 1 :tl :xy 4 :slant :no-slant))
+        thumb-bl-tl-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tl :xy 4 :offset [0 epsilon 0] :slant :no-slant))
+        thumb-bl-bl-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-bl-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                        3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+        thumb-bl-lm-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-lm-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                   3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+        thumb-bl-tl-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                        3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+        thumb-bl-tl-north-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-north-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                              3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+        thumb-bl-tl-north-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-north-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                         3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+        thumb-bl-tr-north-offset-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tr-north-offset-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                                3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+        thumb-bl-tr-tm-north-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tr-tm-north-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
+                                                                                 3 default-weights-for-vertical-nurbs wall-cross-section-steps)
+
+        {thumb-bl-tr-tm-north-west-offset-web-post-position-bottom :web-post-position-bottom
+         thumb-bl-tr-tm-north-west-offset-wall-locate-2-top :wall-locate-2-top
+         thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom :wall-locate-2-bottom
+         thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom-floor :wall-locate-2-bottom-floor} thumb-bl-tr-tm-north-west-offest-control-points
+        thumb-bl-tr-tm-north-west-offest-inner-curve (n-degree-bezier-curve [thumb-bl-tr-tm-north-west-offset-web-post-position-bottom
+                                                                             (mapv + [0 0 -4] thumb-bl-tr-tm-north-west-offset-wall-locate-2-top)
+                                                                             (mapv + [0.5 0.5 -6] thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom)
+                                                                             (mapv + [-5 4 0] thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom-floor)] wall-cross-section-steps)
+        thumb-bl-tr-north-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tr-north-control-points inner-wall-curve-bezier-cubic-keywords) wall-cross-section-steps)
+        thumb-bl-bl-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-bl-west-control-points inner-wall-curve-bezier-cubic-keywords) wall-cross-section-steps)
+        thumb-bl-lm-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-lm-control-points inner-wall-curve-bezier-cubic-keywords) wall-cross-section-steps)
+        thumb-bl-tl-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-west-control-points inner-wall-curve-bezier-cubic-keywords) wall-cross-section-steps)
+        thumb-bl-tl-north-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-north-west-control-points inner-wall-curve-bezier-cubic-keywords) wall-cross-section-steps)
+        thumb-bl-tl-north-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-north-control-points inner-wall-curve-bezier-cubic-keywords) wall-cross-section-steps)
+        thumb-bl-tm-north-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tm-north-west-control-points inner-wall-curve-bezier-cubic-keywords) wall-cross-section-steps)
+        total-wall-section-steps (* wall-section-steps  4)
+        global-outer-thumb-wall-params (vec (for [index (range (inc wall-cross-section-steps))]
+                                         (global-curve-interp-with-calculated-first-derivatives
+                                          [;(nth thumb-bl-tr-tm-north-west-inner-curve index)
+                                           (nth thumb-inner-points index)
+                                           (nth thumb-outer-points  index)
+                                           (nth thumb-bl-tm-north-outer-curve  index)
+                                           (nth  thumb-bl-tl-north-outer-curve index)
+                                           (nth  thumb-bl-tl-west-outer-curve index)
+                                           (nth  thumb-bl-lm-outer-curve index)]
+                                          [(mapv - (nth thumb-inner-points index) (nth thumb-bl-tr-tm-north-west-offest-inner-curve index))
+                                           (mapv - (nth  thumb-bl-tm-north-outer-curve index) (nth thumb-outer-points  index))
+                                           (mapv - (nth  thumb-bl-tl-north-outer-curve index) (nth thumb-bl-tm-north-outer-curve  index))
+                                           (mapv - (nth  thumb-bl-tl-north-west-outer-curve index) (nth  thumb-bl-tm-north-outer-curve index))
+                                           (mapv - (nth  thumb-bl-lm-outer-curve index) (nth  thumb-bl-tl-west-outer-curve index))
+                                           (mapv - (nth thumb-bl-bl-west-outer-curve index) (nth  thumb-bl-lm-outer-curve index))]
+                                          2))) 
+        global-outer-thumb-wall (vec (for [index (range (inc wall-cross-section-steps))
+                                           :let [param (nth global-outer-thumb-wall-params index)]]
+                                       (non-uniform-b-spline (:P param) 2 (:U param) total-wall-section-steps) 
+                                       ))
+      ;;   (vec (for [index (range (inc wall-cross-section-steps))]
+      ;;          (global-curve-interp-with-calculated-first-derivatives-curve
+      ;;           [;(nth thumb-bl-tr-tm-north-west-inner-curve index)
+      ;;            (nth thumb-inner-points index)
+      ;;            (nth thumb-outer-points  index)
+      ;;            (nth thumb-bl-tm-north-outer-curve  index)
+      ;;            (nth  thumb-bl-tl-north-outer-curve index)
+      ;;            (nth  thumb-bl-tl-west-outer-curve index)
+      ;;            (nth  thumb-bl-lm-outer-curve index)]
+      ;;           [(mapv - (nth thumb-inner-points index) (nth thumb-bl-tr-tm-north-west-offest-inner-curve index))
+      ;;            (mapv - (nth  thumb-bl-tm-north-outer-curve index) (nth thumb-outer-points  index))
+      ;;            (mapv - (nth  thumb-bl-tl-north-outer-curve index) (nth thumb-bl-tm-north-outer-curve  index))
+      ;;            (mapv - (nth  thumb-bl-tl-north-west-outer-curve index) (nth  thumb-bl-tm-north-outer-curve index))
+      ;;            (mapv - (nth  thumb-bl-lm-outer-curve index) (nth  thumb-bl-tl-west-outer-curve index))
+      ;;            (mapv - (nth thumb-bl-bl-west-outer-curve index) (nth  thumb-bl-lm-outer-curve index))]
+      ;;           2
+      ;;           total-wall-section-steps)))
+        inner-thumb-wall (vec (for [index (range (inc wall-cross-section-steps))]
+                                (global-curve-interp-with-calculated-first-derivatives-curve
+                                 [(nth thumb-bl-lm-inner-curve index)
+                                  (nth thumb-bl-tl-west-inner-curve index)
+                                  (nth thumb-bl-tl-north-inner-curve index)
+                                  (nth thumb-bl-tm-north-west-inner-curve index)
+                                       ;(nth thumb-bl-tr-tm-north-west-inner-curve index)
+                                  (nth thumb-bl-tr-tm-north-west-offest-inner-curve index)
+                                  (nth thumb-inner-points index)
+                                       ;(nth thumb-inner-points index)
+                                  ]
+                                 [(mapv - (nth thumb-bl-lm-inner-curve index) (nth thumb-bl-bl-west-inner-curve index))
+                                  (mapv - (nth thumb-bl-tl-west-inner-curve index) (nth thumb-bl-lm-inner-curve index))
+                                  (mapv - (nth thumb-bl-tm-north-west-inner-curve index) (nth thumb-bl-tl-north-west-inner-curve index))
+                                       ;(mapv - (nth thumb-bl-tr-tm-north-west-inner-curve index) (nth thumb-bl-tm-north-west-inner-curve index))
+                                  (mapv - (nth thumb-bl-tr-tm-north-west-offest-inner-curve index) (nth thumb-bl-tm-north-west-inner-curve index))
+                                  (mapv - (nth thumb-inner-points index) (nth thumb-bl-tr-tm-north-west-offest-inner-curve index))
+                                  (mapv - (nth thumb-outer-points index) (nth thumb-inner-points index))]
+                                 2
+                                 total-wall-section-steps
+                                 :point-paramater-calculation-method :dynamic-centripetal
+                                 :magnitude-estimation-method :chord)))
+                                 outer-floor-points-params (nth global-outer-thumb-wall-params  wall-section-steps)] 
+                                 {:wall-vnf (wall-vnf-array global-outer-thumb-wall inner-thumb-wall :args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})
+                                  :outer-floor-points (decompose-b-spline-curve-and-calculate-bezier-curves 2 (:U outer-floor-points-params) (:P outer-floor-points-params) 2 9 total-wall-section-steps) :inner-floor-points (peek inner-thumb-wall)}
+                                 )
+  
+  )
+
 (comment (spit "things-low/left-test.scad"
       (write-scad
        (include "../BOSL2/std.scad")
@@ -1119,145 +1245,40 @@
               thumb-tl-to-tr-inner-curve-fn :thumb-tl-to-tr-inner-curve-fn} left-section-data
              thumb-outer-points (thumb-outer-points-fn steps)
              thumb-inner-points (vec (reverse (thumb-inner-points-fn steps)))
-             thumb-bl-tm-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tm :xy 5 :slant :parallel-by-d-opposite))
-             thumb-bl-tm-north-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tm-north-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                              3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-tm-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 1 :tm :xy 4 :slant :no-slant))
-             thumb-bl-tm-north-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tm-north-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                                   3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-tm-north-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tm-north-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-tr-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tr :xy 3 :slant :no-slant))
-             thumb-bl-tr-north-offset-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0.5 1 :tr :xy 5 :slant :no-slant :offset [0.5 0 0]))
+             thumb-bl-tr-north-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tr-north-control-points inner-wall-curve-bezier-cubic-keywords) steps)
              left-section-bottom-mid-south-wall-position (tps-65-wall-position :bm :south)
              left-section-bottom-mid-south-control-points (calculate-control-points left-section-bottom-mid-south-wall-position)
-             thumb-bl-tr-tm-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tr-tm :xy 4 :slant :no-slant))
-             thumb-bl-tr-tm-north-west-offest-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0.25 1 :tr-tm :xy 4 :slant :no-slant :offset [1 0 0]))
-             thumb-tl-tl-north-control-points (calculate-control-points (thumb-wall-position thumb-tl-place 0 1 :tl :xy 4))
-             thumb-bl-tr-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tr :xy 4 :offset [0.00000001 0.0 0.0]  :slant :no-slant))
-             thumb-bl-bl-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :bl :xy 4 :slant :no-slant :offset [-0.000001 0.0 0.0]))
-             thumb-bl-lm-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :lm :xy 4 :slant :no-slant))
-             thumb-bl-tl-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :tl :xy 4 :offset [(- epsilon) 0 0] :slant :no-slant))
-             thumb-bl-tl-north-west-control-points (calculate-control-points (thumb-wall-position thumb-bl-place -1 1 :tl :xy 4 :slant :no-slant))
-             thumb-bl-tl-north-control-points (calculate-control-points (thumb-wall-position thumb-bl-place 0 1 :tl :xy 4 :offset [0 epsilon 0] :slant :no-slant))
-             thumb-bl-bl-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-bl-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                             3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-lm-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-lm-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                        3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-tl-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                             3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-tl-north-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-north-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                                   3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-tl-north-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tl-north-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                              3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-tr-north-offset-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tr-north-offset-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                                     3 default-weights-for-vertical-nurbs steps)
-             thumb-bl-tr-tm-north-west-outer-curve (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-bl-tr-tm-north-west-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                                                                                      3 default-weights-for-vertical-nurbs steps)
-             
-             {thumb-bl-tr-tm-north-west-offset-web-post-position-bottom :web-post-position-bottom
-              thumb-bl-tr-tm-north-west-offset-wall-locate-2-top :wall-locate-2-top
-              thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom :wall-locate-2-bottom
-              thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom-floor :wall-locate-2-bottom-floor} thumb-bl-tr-tm-north-west-offest-control-points
-             thumb-tl-tl-north-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-tl-tl-north-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-tr-tm-north-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tr-tm-north-west-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-tr-tm-north-west-offest-inner-curve (n-degree-bezier-curve [thumb-bl-tr-tm-north-west-offset-web-post-position-bottom
-                                                                                 (mapv + [0 0 -4]thumb-bl-tr-tm-north-west-offset-wall-locate-2-top)
-                                                                                 (mapv + [0.5 0.5 -6]thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom)
-                                                                                 (mapv + [-5 4 0]thumb-bl-tr-tm-north-west-offset-wall-locate-2-bottom-floor) ] steps)
-             thumb-bl-tr-north-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tr-north-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-bl-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-bl-west-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-lm-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-lm-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-tl-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-west-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-tl-north-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-north-west-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-tl-north-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tl-north-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             thumb-bl-tm-north-west-inner-curve (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-bl-tm-north-west-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-             cross-section-steps (* steps 6)
-            ;;  local-outer-thumb-wall (vec (for [index (range (inc steps))]
-            ;;                                (local-cubic-curve-interpolation-with-tangents-curve
-            ;;                                 [;(nth thumb-bl-tr-tm-north-west-inner-curve index)
-            ;;                                  (nth thumb-bl-tr-north-inner-curve index)
-            ;;                                  (nth thumb-outer-points  index)
-            ;;                                  (nth thumb-bl-tm-north-west-outer-curve  index)
-            ;;                                  (nth  thumb-bl-tl-north-outer-curve index)
-            ;;                                  (nth  thumb-bl-tl-north-outer-curve index)
-            ;;                                  (nth  thumb-bl-tl-west-outer-curve index)
-            ;;                                  (nth  thumb-bl-lm-outer-curve index)]
-            ;;                                 [(mapv - (nth thumb-bl-tr-north-inner-curve index) (nth thumb-bl-tr-tm-north-west-inner-curve index))
-            ;;                                  (mapv - (nth thumb-bl-tm-north-west-outer-curve  index) (nth thumb-bl-tr-north-inner-curve index))
-            ;;                                  (mapv - (nth  thumb-bl-tl-north-outer-curve index) (nth thumb-bl-tm-north-west-outer-curve  index))
-            ;;                                  (mapv - (nth  thumb-bl-tl-north-west-outer-curve index) (nth thumb-bl-tm-north-west-outer-curve  index))
-            ;;                                  (mapv - (nth  thumb-bl-tl-west-outer-curve index) (nth  thumb-bl-tm-north-west-outer-curve index))
-            ;;                                  (mapv - (nth  thumb-bl-lm-outer-curve index) (nth  thumb-bl-tl-north-west-outer-curve index))
-            ;;                                  (mapv - (nth thumb-bl-bl-west-outer-curve index) (nth  thumb-bl-lm-outer-curve index))]
-            ;;                                 (* cross-section-steps 2))))
-             global-outer-thumb-wall (vec (for [index (range (inc steps))]
-                                           (global-curve-interp-with-calculated-first-derivatives-curve
-                                            [;(nth thumb-bl-tr-tm-north-west-inner-curve index)
-                                             (nth thumb-inner-points index)
-                                             (nth thumb-outer-points  index)
-                                             (nth thumb-bl-tm-north-outer-curve  index) 
-                                             (nth  thumb-bl-tl-north-outer-curve index)
-                                             (nth  thumb-bl-tl-west-outer-curve index)
-                                             (nth  thumb-bl-lm-outer-curve index)]
-                                            [(mapv - (nth thumb-inner-points index) (nth thumb-bl-tr-tm-north-west-offest-inner-curve index)) 
-                                             (mapv - (nth  thumb-bl-tm-north-outer-curve index) (nth thumb-outer-points  index))
-                                             (mapv - (nth  thumb-bl-tl-north-outer-curve index) (nth thumb-bl-tm-north-outer-curve  index))
-                                             (mapv - (nth  thumb-bl-tl-north-west-outer-curve index) (nth  thumb-bl-tm-north-outer-curve index))
-                                             (mapv - (nth  thumb-bl-lm-outer-curve index) (nth  thumb-bl-tl-west-outer-curve index))
-                                             (mapv - (nth thumb-bl-bl-west-outer-curve index) (nth  thumb-bl-lm-outer-curve index))]
-                                            2
-                                            (* cross-section-steps 2))))
-             inner-thumb-wall (vec (for [index (range (inc steps))]
-                                     (global-curve-interp-with-calculated-first-derivatives-curve
-                                      [(nth thumb-bl-lm-inner-curve index)
-                                       (nth thumb-bl-tl-west-inner-curve index)
-                                       (nth thumb-bl-tl-north-inner-curve index)
-                                       (nth thumb-bl-tm-north-west-inner-curve index)
-                                       ;(nth thumb-bl-tr-tm-north-west-inner-curve index)
-                                       (nth thumb-bl-tr-tm-north-west-offest-inner-curve index)
-                                       (nth thumb-inner-points index)
-                                       ;(nth thumb-inner-points index)
-                                       ]
-                                      [(mapv - (nth thumb-bl-lm-inner-curve index) (nth thumb-bl-bl-west-inner-curve index))
-                                       (mapv - (nth thumb-bl-tl-west-inner-curve index) (nth thumb-bl-lm-inner-curve index))
-                                       (mapv - (nth thumb-bl-tm-north-west-inner-curve index) (nth thumb-bl-tl-north-west-inner-curve index))
-                                       ;(mapv - (nth thumb-bl-tr-tm-north-west-inner-curve index) (nth thumb-bl-tm-north-west-inner-curve index))
-                                       (mapv - (nth thumb-bl-tr-tm-north-west-offest-inner-curve index) (nth thumb-bl-tm-north-west-inner-curve index))
-                                       (mapv - (nth thumb-inner-points index) (nth thumb-bl-tr-tm-north-west-offest-inner-curve index)) 
-                                       (mapv - (nth thumb-outer-points index) (nth thumb-inner-points index))]
-                                      2 
-                                      cross-section-steps
-                                      :point-paramater-calculation-method :dynamic-centripetal
-                                      :magnitude-estimation-method :chord)))
-             thumb-to-l (triangular-coons-surface (:wall-locate3-point-floor left-section-bottom-mid-south-control-points)  (thumb-web-post-point-top thumb-bl-place :tm) (thumb-web-post-point-top thumb-bl-place :tr)
-                                                  (reverse outer-curve)
-                                                  (reverse (thumb-outer-points-fn steps))
-                                                  (n-degree-bezier-curve [(thumb-web-post-point-top thumb-bl-place :tm) (thumb-web-post-point-top thumb-bl-place :tr)] steps)
-
-                                                  ;(n-degree-bezier-curve [ (thumb-web-post-point-top thumb-bl-place :tr) (thumb-web-post-point-top thumb-bl-place :tm)] steps)
-                                                  steps steps :triangular? false)
-             thumb-to-l-inner (triangular-coons-surface (:wall-locate-2-bottom-floor left-section-bottom-mid-south-control-points)  (thumb-web-post-point-bottom thumb-bl-place :tm) (thumb-web-post-point-bottom thumb-bl-place :tr)
-                                                        (reverse inner-curve)
-                                                        (thumb-inner-points-fn steps)
-                                                        (n-degree-bezier-curve [(thumb-web-post-point-bottom thumb-bl-place :tm) (thumb-web-post-point-bottom thumb-bl-place :tr)] steps)
-
-                                                  ;(n-degree-bezier-curve [ (thumb-web-post-point-top thumb-bl-place :tr) (thumb-web-post-point-top thumb-bl-place :tm)] steps)
-                                                        steps steps :triangular? false)
-             thumb-to-l-inner-2 (triangular-coons-surface (:wall-locate-2-bottom-floor left-section-bottom-mid-south-control-points) (:wall-locate-2-bottom-floor thumb-bl-tr-north-control-points) (:web-post-position-bottom thumb-bl-tr-north-control-points)
-                                                          (n-degree-bezier-curve [(:wall-locate-2-bottom-floor left-section-bottom-mid-south-control-points) (:wall-locate-2-bottom-floor thumb-bl-tr-north-control-points)] steps)
-                                                          (thumb-inner-points-fn steps) (reverse thumb-bl-tr-north-inner-curve)
-                                                          steps steps)
-                                                                        ;;     i-wall (vec (for [index (range (inc steps))]
-                                                                        ;;                   (n-degree-bezier-curve
-                                                                        ;;                   (nth thumb-bl-tr-north-inner-curve) 
-                                                                        ;;                    )
-                                                                        ;;                   ))
+             left-section-bottom-left-south-wall-position (tps-65-to-screen-wall-position :bl :south :offset [0 -0.0001 0])
+             left-section-bottom-left-south-control-points (calculate-control-points left-section-bottom-left-south-wall-position)
              {thumb-bl-to-tl-vnf :thumb-bl-to-tl-vnf
               thumb-tl-to-tr-vnf :thumb-tl-to-tr-vnf} (thumb-connecter-1-row steps :thumb-bl-to-tl-P-u-zero-outer (vec (reverse (thumb-bl-to-tl-outer-curve-fn steps)))
                                                                              :thumb-tl-to-tr-P-u-zero-outer (vec (reverse (thumb-tl-to-tr-outer-curve-fn steps)))
                                                                              :thumb-bl-to-tl-P-u-one-inner (thumb-bl-to-tl-inner-curve-fn steps) :thumb-tl-to-tr-P-u-one-inner (thumb-tl-to-tr-inner-curve-fn steps))]
          (union
           thumb-type
+      ;;     (translate (mapv + (div (mapv + (:wall-locate3-point left-section-bottom-mid-south-control-points)(:wall-locate3-point left-section-bottom-left-south-control-points)) 2) [0 -0.5 0]) 
+      ;;                (rdz 20 (rdx 90 (extrude-svg ananse 2 :scale-data [0.8 0.8] :top-face-scale 0.9))))
+          
+          
+          (->> (svg-import "../svg/Ananse-Ntontan.svg") 
+           
+               ;(translate [(* (/ -3 2) 25 ) (* (/ -3 2) 23.3 )])
+               (scale [0.3 0.3 1])
+               (extrude-linear {:height 2 :scale 0.8})
+               (rdx 90)
+               (rdz 14)
+                (translate (mapv + (div (mapv + (:wall-locate3-point left-section-bottom-mid-south-control-points) (:wall-locate3-point left-section-bottom-left-south-control-points)) 2) [0 0.2 0]))
+               )
+          (->> (svg-import "../svg/Odenkyem.svg")
+
+               ;(translate [(* (/ -3 2) 25 ) (* (/ -3 2) 23.3 )])
+               (scale [0.1 0.1 1])
+               (extrude-linear {:height 2 :scale 0.8})
+               (rdx 80)
+               (rdz -80)
+               (translate (mapv + (div (mapv + (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl-lm :west)) )
+                                        (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl :west :offset [-0.00000001 0.0 0.0])))) 2) [0 0.0 -8])))
+          
           ;(plot-bezier-points thumb-inner-points (sphere 0.5))
          ; (plot-bezier-points thumb-bl-tr-tm-north-west-offest-inner-curve (sphere 0.5))
       
@@ -1270,22 +1291,23 @@
           ;(plot-bezier-points (nth (rotate-matrix thumb-to-l :reverse-new-row true) 0) (cube 0.5 0.5 0.5))
           ;(color [1 0 1 1](plot-bezier-points (peek (reverse thumb-to-l-inner-2) ) (cube 0.5 0.5 0.5)))
           ;(thumb-tr-place MxLEDBitPCB)
-          (key-place 1 2 des-r2)
+          ;(key-place 1 2 des-r2)
           ;(thumb-tr-place single-key-pcb-holder)
-          (vnf-polyhedron (wall-vnf-array global-outer-thumb-wall inner-thumb-wall :args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default}))
+      ;;     (vnf-polyhedron (wall-vnf-array global-outer-thumb-wall inner-thumb-wall :args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default}))
+          ;(vnf-polyhedron (:wall-vnf(thumb-to-left-section-2 steps steps thumb-outer-points-fn thumb-inner-points-fn)))
           ;(vnf-polyhedron (vnf-vertex-array global-outer-thumb-wall :caps false :col-wrap false))
           ;(translate (nth (thumb-outer-points-fn steps) 0) (sphere 2))
-          key-holes
+          ;key-holes
       ;;     (plot-bezier-points (thumb-inner-points-fn steps) (sphere 0.5) )
       ;;     (plot-bezier-points outer-curve (sphere 0.5))
       ;;     (plot-bezier-points thumb-bl-tm-north-inner-curve (sphere 0.5))
       ;;     (plot-bezier-points thumb-bl-tr-north-inner-curve (sphere 0.5))
           ;(color [1 0 0 1] (plot-bezier-points thumb-bl-tm-north-outer-curve (sphere 0.5)))
           ;(translate (nth (thumb-inner-points-fn steps) 0) (sphere 2))
-          (tps-65-place (difference  tps-65-mount-new
-                                     tps-65
-                                     tps-65-mount-cutout
-                                     (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout)))
+      ;;     (tps-65-place (difference  tps-65-mount-new
+      ;;                                tps-65
+      ;;                                tps-65-mount-cutout
+      ;;                                (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout)))
          ;(vybronics-vl91022-place vybronics-vl91022-mount)
           ;(vnf-polyhedron  (thumb-to-left-section steps thumb-outer-points-fn thumb-inner-points-fn)) 
           ;(vnf-polyhedron thumb-bl-to-tl-vnf)
@@ -1293,12 +1315,12 @@
           ;(vnf-polyhedron (:trackpad-to-main-body-vnf trackpad-to-main-body-data))
           ;(screen-holder-place-side ST7789-240x240)
           ;(difference 
-           (thumb-tr-place (intersection MxLEDBitPCB-clearance-smaller
-                                         single-key-pcb-holder-north-leg))
+      ;;      (thumb-tr-place (intersection MxLEDBitPCB-clearance-smaller
+      ;;                                    single-key-pcb-holder-north-leg))
           ;(thumb-tr-place single-plate)
            (difference 
             (union 
-            (vnf-polyhedron left-section-vnf-array)
+            (-# (vnf-polyhedron left-section-vnf-array))
       
                         ;(screen-holder-place-side screen-holder)
            ;                  aviator-assembly-polyhedron
@@ -1490,6 +1512,19 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
         key-holes
         )))))
 
+(comment (spit "things-low/horizontal-first-test.scad"
+               (write-scad
+                (include "../BOSL2/std.scad")
+                (union key-holes
+                       (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
+                            (scale [0.08 0.08])
+                            (extrude-linear {:height 2 :scale 0.8})
+                            (rdx 80)
+                            (rdz -5)
+                            (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 2 0 -1 :bm :slant :no-slant)))
+                                             [0 0.5 -7.1])))
+                       (-# (vnf-polyhedron (wall-vnf (:front-wall-wall-section (front-wall-nurbs 10 10)) default-vnf-vertex-array-args)))
+                       (-# (vnf-polyhedron (:fractyl-right-wall-vnf (fractyl-right-wall 10 10))))))))
 (defn thumb-tr-rm-to-index-br [wall-cross-section-steps wall-section-steps]
   (let [middle-bl-control-points  (calculate-control-points (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant))
         index-br-control-points  (calculate-control-points (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant))
@@ -1553,135 +1588,12 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                (write-scad
                 (include include-bosl2)
                 (let [steps 10
-                  ;;     curve (global-orthogonal-construction-cubic-interpolation-curve
-                  ;;            [(thumb-web-post-point-top thumb-tr-place :rm)
-                  ;;             (thumb-web-post-point-top thumb-tr-place :tr)
-                  ;;             (main-body-web-post-point-top 1 2 :br)]
-                  ;;            [(mapv - (thumb-web-post-point-top thumb-tr-place :rm) (thumb-web-post-point-top thumb-tr-place :br))
-                  ;;             (mapv - (thumb-web-post-point-top thumb-tr-place :tr) (thumb-web-post-point-top thumb-tr-place :br))
-                  ;;             (mapv - (main-body-web-post-point-top 2 2 :bl) (main-body-web-post-point-top 1 2 :br))]
-                  ;;            30
-                  ;;            :constrained true)
-                  ;;     middle-bl-control-points  (calculate-control-points (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant))
-                  ;;     index-br-control-points  (calculate-control-points (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant))
-                  ;;     thumb-tr-tr-control-points  (calculate-control-points (thumb-wall-position thumb-tr-place 1 -1 :tr :xy 4 :slant :parallel-by-d-opposite))
-                  ;;     thumb-tr-rm-control-points  (calculate-control-points (thumb-wall-position thumb-tr-place 1 0 :rm :xy 4  :slant :no-slant))
-                  ;;     thumb-tr-br-control-points (calculate-control-points (thumb-wall-position thumb-tr-place 1 0 :br :xy 4  :slant :no-slant))
-                  ;;     thumb-tr-br-south-east-control-points (calculate-control-points (thumb-wall-position thumb-tr-place 1 -1 :br :xy 4  :slant :no-slant :offset [0.0 -0.000001 0.0]))
-                  ;;     middle-bl-outer (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words middle-bl-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                  ;;                                                        3 default-weights-for-vertical-nurbs steps)
-                  ;;     thumb-tr-tr-outer (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-tr-tr-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                  ;;                                                          3 default-weights-for-vertical-nurbs steps)
-                  ;;     thumb-tr-rm-outer (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-tr-rm-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                  ;;                                                          3 default-weights-for-vertical-nurbs steps)
-                  ;;     thumb-tr-br-outer (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-tr-br-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                  ;;                                                          3 default-weights-for-vertical-nurbs steps)
-                  ;;     thumb-tr-br-south-east-outer (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words thumb-tr-br-south-east-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                  ;;                                                                      3 default-weights-for-vertical-nurbs steps)
-                  ;;     index-br-outer (nurbs-with-calculated-knot-vector (get-curve-control-points-by-key-words index-br-control-points wall-vertical-outer-nurbs-control-points-keywords)
-                  ;;                                                       3 default-weights-for-vertical-nurbs steps)
-                  ;;     middle-bl-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words middle-bl-control-points inner-wall-curve-bezier-cubic-keywords)
-                  ;;                                                          steps)
-                  ;;     thumb-tr-tr-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-tr-tr-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-                  ;;     thumb-tr-rm-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-tr-rm-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-                  ;;     thumb-tr-br-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words thumb-tr-br-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-                  ;;     thumb-tr-br-south-east-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words  thumb-tr-br-south-east-control-points inner-wall-curve-bezier-cubic-keywords) steps)
-                  ;;     index-br-inner (n-degree-bezier-curve (get-curve-control-points-by-key-words index-br-control-points inner-wall-curve-bezier-cubic-keywords) steps)
 
-                  ;;     outer-wall (vec (for [index (range (inc steps))]
-                  ;;                       (global-curve-interp-with-calculated-first-derivatives-curve
-                  ;;                        [
-                  ;;                         (nth thumb-tr-rm-outer index)
-                  ;;                         (nth thumb-tr-tr-outer index)
-                  ;;                         (nth index-br-outer index)]
-                  ;;                        [
-                  ;;                         (mapv - (nth thumb-tr-rm-outer index) (nth thumb-tr-br-outer index))
-                  ;;                         (mapv - (nth thumb-tr-tr-outer index) (nth thumb-tr-rm-outer index))
-                  ;;                         (mapv -  (nth middle-bl-outer index) (nth index-br-outer index))]
-                  ;;                        2
-                  ;;                        (* steps 3)
-                  ;;                        :point-paramater-calculation-method :dynamic-centripetal
-                  ;;       ;:knot-vector-calculation-method :equal
-                  ;;                        :magnitude-estimation-method 22)))
-                  ;;     outer-wall-2 (vec (for [index (range (inc steps))]
-                  ;;            (local-cubic-curve-interpolation-with-tangents-curve
-                  ;;             [(nth thumb-tr-br-outer index)
-                  ;;              (nth thumb-tr-rm-outer index)
-                  ;;              (nth thumb-tr-tr-outer index)
-                  ;;              (nth index-br-outer index)]
-                  ;;             [(mapv - (nth thumb-tr-br-outer index) (nth thumb-tr-br-south-east-outer index))
-                  ;;              (mapv - (nth thumb-tr-rm-outer index) (nth thumb-tr-br-outer index))
-                  ;;              (mapv - (nth thumb-tr-tr-outer index) (nth thumb-tr-rm-outer index))
-                  ;;              (mapv -  (nth middle-bl-outer index) (nth index-br-outer index))]
-                  ;;             2
-                  ;;             (* steps 3)
-                  ;;             ;:point-paramater-calculation-method :dynamic-centripetal
-                  ;;       ;:knot-vector-calculation-method :equal
-                  ;;             ;:magnitude-estimation-method :farin-simple
-                  ;;             )))
-                  ;;     inner-wall (vec (for [index (range (inc steps))]
-                  ;;                       (global-curve-interp-with-calculated-first-derivatives-curve
-                  ;;                        [(nth thumb-tr-rm-inner index)
-                  ;;                         (nth thumb-tr-tr-inner index)
-                  ;;                         (nth index-br-inner index)]
-                  ;;                        [(mapv - (nth thumb-tr-rm-inner index) (nth thumb-tr-br-inner index))
-                  ;;                         (mapv -  (nth thumb-tr-tr-inner index) (nth thumb-tr-rm-inner index) )
-                  ;;                         (mapv -   (nth index-br-inner index) (nth thumb-tr-tr-inner index))]
-                  ;;                        2
-                  ;;                        (* steps 3)
-                  ;;                        :point-paramater-calculation-method :equal
-                  ;;       ;:knot-vector-calculation-method :equal
-                  ;;                        :magnitude-estimation-method :chord)))
-                  ;;     inner-wall-2 (vec (for [index (range (inc steps))]
-                  ;;                       (global-curve-interp-with-calculated-first-derivatives-curve
-                  ;;                        [(nth index-br-inner index)
-                  ;;                         (nth thumb-tr-tr-inner index) 
-                  ;;                         (nth thumb-tr-rm-inner index)
-                  ;;                         ]
-                  ;;                        [(mapv -   (nth index-br-inner index) (nth middle-bl-inner index) )
-                  ;;                         (mapv -  (nth thumb-tr-rm-inner index) (nth thumb-tr-tr-inner index) )
-                  ;;                         (mapv -  (nth thumb-tr-br-inner index) (nth thumb-tr-rm-inner index))
-                                          
-                  ;;                         ]
-                  ;;                        2
-                  ;;                        (* steps 3)
-                  ;;                        :point-paramater-calculation-method :equal
-                  ;;       ;:knot-vector-calculation-method :equal
-                  ;;                        :magnitude-estimation-method 1)))
-                  ;;     inner-wall-3 (vec (for [index (range (inc steps))]
-                  ;;                         (global-curve-interp-with-end-unit-derivatives-curve
-                  ;;                          [(nth index-br-inner index)
-                  ;;                           (nth thumb-tr-tr-inner index)
-                  ;;                           (nth thumb-tr-rm-inner index)]
-                  ;;                          2
-                  ;;                          (mapv -   (nth index-br-inner index) (nth middle-bl-inner index))
-                  ;;                         (mapv -  (nth thumb-tr-br-inner index) (nth thumb-tr-rm-inner index))
-                  ;;                          ;;  [(mapv -   (nth index-br-inner index) (nth middle-bl-inner index))
-                  ;;                         ;;   (mapv -   (nth thumb-tr-tr-inner index) (nth index-br-inner index))
-                  ;;                         ;;   (mapv -  (nth thumb-tr-br-inner index) (nth thumb-tr-rm-inner index))] 
-                  ;;                          (* steps 3)
-                  ;;                          :tangent-endpoints false
-                  ;;                          :point-paramater-calculation-method :centripetal 
-                  ;;                          ;:knot-vector-calculation-method :equal
-                  ;;                          :magnitude-estimation-method 3
-                  ;;                          )))
-
-
-                      ;;     curve-2 (global-c2-cubic-spline-curve-interpolation-with-tangent-vectors-curve
-                  ;;              [(thumb-web-post-point-top thumb-tr-place :rm)
-                  ;;               (thumb-web-post-point-top thumb-tr-place :tr)
-                  ;;               (main-body-web-post-point-top 1 2 :br)]
-                  ;;              (mapv - (thumb-web-post-point-top thumb-tr-place :rm) (thumb-web-post-point-top thumb-tr-place :br))
-                  ;;              (mapv - (main-body-web-post-point-top 2 2 :bl) (main-body-web-post-point-top 1 2 :br))
-                  ;;              30
-                  ;;              :point-paramater-calculation-method :
-                  ;;              :magnitude-estimation-method :arc
-                  ;;              :knot-vector-calculation-method :average
-
-                  ;;              )
-                      {vnf-array :vnf-array 
-                      outer-bottom-points :outer-bottom-points 
-                       inner-bottom-points :inner-bottom-points }(thumb-tr-rm-to-index-br steps steps)
+                      wall-cross-section-steps 10
+                      wall-section-steps  10
+                      {vnf-array :vnf-array
+                       outer-bottom-points :outer-bottom-points
+                       inner-bottom-points :inner-bottom-points} (thumb-tr-rm-to-index-br steps steps)
                       middle-bl (wall-cross-section-parameter (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant))
                       index-br (wall-cross-section-parameter (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant))
                       thumb-tr-tr (wall-cross-section-parameter (thumb-wall-position thumb-tr-place 1 -0.8 :tr :xy 4 :slant :parallel-by-d-opposite))
@@ -1699,7 +1611,21 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                                                      :magnitude-estimation-method :farin-simple)]
                                          (decompose-b-spline-curve-and-calculate-bezier-curves 2 (:U params) (:P params)
                                                                                                2 3 (* steps 2)
-                                                                                               :reverse-curve true))]
+                                                                                               :reverse-curve true))
+                      {thumb-single-row-wall-section :wall-section
+                       outer-key-gap-fn-coll :outer-key-gap-fn-coll
+                       inner-key-gap-fn-coll :inner-key-gap-fn-coll} (thumb-wall-section-for-single-thumb-row-fn wall-cross-section-steps wall-section-steps)
+                      {left-section-data :left-section-data
+                       thumb-outer-points-fn :thumb-outer-points-fn
+                       thumb-inner-points-fn :thumb-inner-points-fn
+                       inner-index-to-index-connector-outer-curve-fn :inner-index-to-index-connector-outer-curve-fn
+                       inner-index-to-index-connector-inner-curve-fn :inner-index-to-index-connector-inner-curve-fn} (left-section-data steps :screen-outer-curve-type :local)
+                      {left-section-vnf-array :vnf-array
+                       trackpad-to-main-body-data :trackpad-to-main-body-data
+                       thumb-bl-to-tl-outer-curve-fn :thumb-bl-to-tl-outer-curve-fn
+                       thumb-tl-to-tr-outer-curve-fn :thumb-tl-to-tr-outer-curve-fn
+                       thumb-bl-to-tl-inner-curve-fn :thumb-bl-to-tl-inner-curve-fn
+                       thumb-tl-to-tr-inner-curve-fn :thumb-tl-to-tr-inner-curve-fn} left-section-data]
                   (union
                    ;(plot-bezier-points curve (sphere 0.5))
                    ;(color [1 0 0 1](plot-bezier-points end-curve-outer (sphere 0.5)))
@@ -1707,12 +1633,33 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                    pcb-place-thumbs
                    thumb-type
                    key-holes
+                   (-# (vnf-polyhedron (wall-vnf thumb-single-row-wall-section {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse true :style :default})))
                    (key-place 1 2 des-r2)
                    (vnf-polyhedron vnf-array)
                    ;(plot-bezier-points outer-bottom-points (sphere 0.5))
                    (translate (nth outer-bottom-points 0) (sphere 0.5))
                    (plot-bezier-points inner-bottom-points (sphere 0.5))
                    single-key-pcb-holder-on-thumbs
+                   (-# (vnf-polyhedron  (:wall-vnf (thumb-to-left-section-2 wall-cross-section-steps wall-section-steps thumb-outer-points-fn thumb-inner-points-fn))))
+                   
+                   (->> (svg-import "../svg/Gye_Nyame.svg")
+                        (scale [0.115 0.115])
+                        (extrude-linear {:height 2 :scale 0.8})
+                        (rdx 88)
+                        (rdz 10) 
+                        (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant))))
+                        (translate (rotate-around-z-in-degrees 10 [-1 0 0]))
+                        (translate [0 0 -8])
+                        )
+                   (->> (svg-import "../svg/dwenninem.svg")
+                        (scale [0.15 0.15])
+                        (extrude-linear {:height 2 :scale 0.8})
+                        (rdx 84)
+                        (rdz -41)
+                        (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :lm :xy 4 :slant :no-slant))))
+                        (translate [0 0 -5])
+                        )
+                   
                    ;(vnf-polyhedron (wall-vnf-array outer-wall inner-wall-2 ))
                    ;(vnf-polyhedron (vnf-vertex-array outer-wall :caps false :col-wrap false))
                    ;(vnf-polyhedron (vnf-vertex-array inner-wall-2 :caps false :col-wrap false))
@@ -1738,6 +1685,49 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                   ;;    default-vnf-vertex-array-args))
                    )))))
 
+
+(def case-symbols 
+  (union
+   (->> (svg-import "../svg/Gye_Nyame.svg")
+        (scale [0.115 0.115])
+        (extrude-linear {:height 2 :scale 0.8})
+        (rdx 88)
+        (rdz 10)
+        (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant))))
+        (translate (rotate-around-z-in-degrees 10 [-1 0 0]))
+        (translate [0 0 -8]))
+   (->> (svg-import "../svg/dwenninem.svg")
+        (scale [0.15 0.15])
+        (extrude-linear {:height 2 :scale 0.8})
+        (rdx 84)
+        (rdz -41)
+        (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :lm :xy 4 :slant :no-slant))))
+        (translate [0 0 -5]))
+   (->> (svg-import "../svg/Ananse-Ntontan.svg")
+
+               ;(translate [(* (/ -3 2) 25 ) (* (/ -3 2) 23.3 )])
+        (scale [0.3 0.3 1])
+        (extrude-linear {:height 2 :scale 0.8})
+        (rdx 90)
+        (rdz 14)
+        (translate (mapv + (div (mapv + (:wall-locate3-point (calculate-control-points (tps-65-wall-position :bm :south)))
+                                      (:wall-locate3-point (calculate-control-points (tps-65-to-screen-wall-position :bl :south :offset [0 -0.0001 0]))))
+                                2) [0 0.2 0])))
+   (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
+        (scale [0.08 0.08])
+        (extrude-linear {:height 2 :scale 0.8})
+        (rdx 80)
+        (rdz -5)
+        (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 2 0 -1 :bm :slant :no-slant)))
+                         [0 0.5 -7.1])))
+   (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
+        (scale [0.07 0.07])
+        (extrude-linear {:height 2 :scale 0.8})
+        (rdz 180)
+        (rdx -85)
+        (rdz -5)
+        (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 0 0 1 :tm )))
+                         [0 -0.5 -7.1])))))
 
 
 (comment (spit "things-low/fractyl-case-walls-test.scad"
@@ -1786,9 +1776,10 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                                                                              )] 
          (union
           fractyl-screw-insert-outers
+          case-symbols
           ;(des-caps {:style :des-scooped})
           ;des-cornelius-thumbs
-          ;(-# (translate [-30 -20 30] (cube 190 140 60)))
+          ;(let [height 55](-# (translate [-30 -20 (/ height 2)] (cube 190 140 height))))
           chained-hull-shapes
           (fractyl-col-to-col-connecter 0 0 steps :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
                                         :lower-outer-point-paramater-calculation-method :dynamic-centripetal)
@@ -1902,17 +1893,23 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
           (fractyl-column-row-connecters-for-pinky-column key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll steps)
           thumb-type
           (key-place 1 2 des-r2)
+          
+          (key-place 0 0 (rdz 180 des-r1))
+          (key-place 1 0 (rdz 180 des-r1))
+          (key-place 0 1 des-r5)
+          (key-place 1 1 des-r5)
+          (key-place 0 2 des-r2)
           key-holes
           (vnf-polyhedron thumb-tr-rm-to-index-br-vnf-array)
           (vnf-polyhedron trackpad-to-main-body-vnf)
-          (vnf-polyhedron fractyl-right-wall-vnf)
+          (-# (vnf-polyhedron fractyl-right-wall-vnf))
           (vnf-polyhedron (wall-vnf thumb-single-row-wall-section {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse true :style :default}))
-          (vnf-polyhedron  (:wall-vnf (thumb-to-left-section steps thumb-outer-points-fn thumb-inner-points-fn)))
+          (vnf-polyhedron  (:wall-vnf (thumb-to-left-section-2 wall-cross-section-steps wall-section-steps thumb-outer-points-fn thumb-inner-points-fn)))
           (vnf-polyhedron left-section-vnf-array)
           (vnf-polyhedron thumb-bl-to-tl-vnf)
           (vnf-polyhedron thumb-tl-to-tr-vnf)
 
-          (vnf-polyhedron (wall-vnf fractyl-back-wall-wall-secton default-vnf-vertex-array-args))
+          (-# (vnf-polyhedron (wall-vnf fractyl-back-wall-wall-secton default-vnf-vertex-array-args)))
           (vnf-polyhedron (wall-vnf front-wall-wall-section default-vnf-vertex-array-args))))
        )))
 

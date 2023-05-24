@@ -97,7 +97,7 @@
   )
 
 
-(defn klor-oled-place [shape &{:keys [ offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height 11 translate-fn translate rotate-z-fn rdz}}]
+(defn klor-oled-place [shape &{:keys [ offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height  11  translate-fn translate rotate-z-fn rdz}}]
   (klor-key-place-with-offset 0 2 (mapv + [-30 7 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn))
 
 (defn klor-oled-position [offset &{:keys [height] :or { height 0 }}]

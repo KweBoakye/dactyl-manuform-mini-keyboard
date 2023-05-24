@@ -1342,7 +1342,7 @@ top-to-tps-steps (floor (* steps-increment top-to-tps-65-length))]
         inner-wall-horizontal-curves (inner-wall-curves-fn inner-wall-horizontal-curves-control-points)
         outer-wall (wall-from-horizontal-control-curves outer-wall-horizontal-curves outer-wall-parameters  wall-cross-section-steps wall-section-steps total-wall-section-steps) 
         inner-wall (wall-from-horizontal-control-curves inner-wall-horizontal-curves inner-wall-parameters wall-cross-section-steps wall-section-steps total-wall-section-steps)]
-    {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (mapv #(peek %) outer-wall) :inner-floor-points (mapv #(peek %) inner-wall)}))
+    {:outer-wall outer-wall :inner-wall inner-wall :outer-floor-points (mapv #(peek %) outer-wall) :inner-floor-points (mapv #(nth % 0) inner-wall)}))
 
 (defn horizontal-first-outer-and-inner-walls-for-global [wall-cross-section-parameters tangent-endpoint-zero-wall-cross-section-parameter tangent-endpoint-n-wall-cross-section-parameter
                                                          outer-wall-curves-fn inner-wall-curves-fn  

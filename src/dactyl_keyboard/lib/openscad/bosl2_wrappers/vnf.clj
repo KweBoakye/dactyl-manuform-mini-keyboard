@@ -25,6 +25,15 @@
   )
 (def default-vnf-vertex-array-args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})
 
+(defn get-vnf-vertex-array-style-from-keyword [style-keyword]
+   (case style-keyword
+                 :default "default"
+                 :alt "alt"
+                 :min-edge "min_edge"
+                 :quincunx "quincunx"
+                 :convex "convex"
+                 :concave "concave"))
+
 (defn vnf-vertex-array [points  &{:keys [^Boolean caps ^Boolean cap1 ^Boolean cap2 ^Boolean col-wrap ^Boolean row-wrap ^Boolean reverse ^Boolean style]
                                    :or {caps true cap1 false cap2 false col-wrap true row-wrap false reverse false style :default}}]
   ;; (assert (and (false? (or caps cap1 cap2)) (false? col-wrap)) "col_wrap must be true if caps are requested")
@@ -33,13 +42,7 @@
   ;; ;(assert (matrix? ))
 
   (let [points-for-scad (matrix-to-scad points)
-        style-string (case style
-                       :default "default"
-                       :alt "alt"
-                       :min-edge "min_edge"
-                       :quincunx "quincunx"
-                       :convex "convex"
-                       :concave "concave")]
+        style-string (get-vnf-vertex-array-style-from-keyword style)]
     (map-indexed (fn [index element] (if (= index 2)
                                        (keep #(if (not= % nil) %) element)
                                        element)) 
@@ -48,7 +51,7 @@
           (format "col_wrap =  %b" col-wrap) (format "row_wrap =  %b" row-wrap) (format "reverse =  %b" reverse) 
           (format "style =\"%s\"" style-string)))))
 
-(defn vnf_tri_array [points &{:keys [row-wrap reverse] :or {row-wrap false  reverse false}}]
+(defn vnf-tri-array [points &{:keys [row-wrap reverse] :or {row-wrap false  reverse false}}]
   (let [points-for-scad (matrix-to-scad points)]
     (call :vnf_tri_array (cl-format nil "points = ~A" points-for-scad) (format "row_wrap =  %b" row-wrap) (format "reverse =  %b" reverse)) 
     ) 
@@ -170,3 +173,9 @@
 
 (defn vnf-from-region [region]
   (call :vnf_from_region region))
+
+(defn vnf-bend [vnf &{:keys [r d axis] :or {axis "Z"}
+                      }]
+  (call :vnf_bend (format-vnf-as-argument vnf) (cond r (format "r = %f" (double r)))
+        (cond d (format "d = %f" (double d))) (format "axis = \"%s\"" axis))
+  )

@@ -71,9 +71,29 @@
 (def top-left-mounting-hole [83.673965 52.090182 0])
 (def top-middle-mounting-hole [145.753965 52.090181 0])
 (def bottom-right-mounting-hole [181.913965 118.840181 0])
-(def middl-hole [167.653965 84.420181 0])
-(def pinky-mounting-hole-2.2 [193.603965 71.42018])
+(def middle-hole [167.653965 84.420181 0])
+(def pinky-mounting-hole [193.603965 71.42018 0])
 (def above-thumb-mounting-hole [83.673965 131.52018 0])
+ 
+
+
+ (def tall-mounting-holes 
+   [top-right-mounting-hole
+    top-right-inner-mounting-hole
+    top-left-mounting-hole
+    top-middle-mounting-hole
+    bottom-left-inner-mounting-hole
+    bottom-right-mounting-hole
+    above-thumb-mounting-hole] 
+   )
+ 
+ (def shorter-mounting-holes
+   [middle-hole])
+(def bottom-plate-mounting-holes
+  (conj tall-mounting-holes (vec (apply concat shorter-mounting-holes))))
+
+(def pcb-only-mounting-holes
+  [pinky-mounting-hole])
 
 (def pcb-points-list
   [pcb-top-left-corner

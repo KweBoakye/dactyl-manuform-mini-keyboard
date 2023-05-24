@@ -1527,7 +1527,10 @@
         Pw (homogenize-cooridinates P W)
         {nb :nb
          Qw :Qw} (decompose-curve n p U Pw)
-        Q (mapv #(mapv project-coordinate-and-drop-weight %) Qw)] 
+        Q (do (println "nb" nb) 
+            (println "Qw" Qw) 
+           ;(mapv #(mapv project-coordinate-and-drop-weight %) Qw)
+            Qw  )] 
     {:nb nb :Q Q})
   )
 
@@ -1543,6 +1546,9 @@
   )
 (comment (vec [1 0 0]))
 
+(comment (let [p 3]
+           (vec (concat (repeat (inc p) 0) (repeat (inc p) 1)))))
+
 (defn decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves [p U P W start-index end-index-inclusive steps & {:keys [reverse-curve] :or {reverse-curve false}}] 
   (let [params (decompose-non-homogoneus-nurbs-curve p U P W)
         reverse-fn (fn [element] (vec (reverse (mapv #(vec (reverse %)) element))))
@@ -1553,12 +1559,34 @@
         increment (/ number-of-segments (long steps))] 
     (vec (for [index (range 0 (+ increment number-of-segments) increment)
                :let [i (dec (if (< index number-of-segments) (inc (floor index)) number-of-segments))
-                     t (if (< index number-of-segments) (- index (floor index)) 1.0)]]
+                     t (if (< index number-of-segments) (- index (floor index)) 1.0)
+                     points (nth param-points i)
+                     n (dec (count points))
+                     knot-vector (vec (concat (repeat (inc p) 0) (repeat (inc p) 1)))]]
 
 
-           (n-degree-bezier-point (nth param-points i) t ;:basis-functions (nth basis-functions-coll i)
+           (calculate-nurbs-curve-point n p knot-vector points t ;:basis-functions (nth basis-functions-coll i)
                                   ))))
   )
+
+(defn decompose-b-spline-curve-and-return-bezier-composite-bezier-curve-fn [p U P start-index end-index-inclusive & {:keys [reverse-curve extra-fn] :or {reverse-curve false}}]
+  (let [params (decompose-b-spline-curve p U P)
+        reverse-fn (fn [element] (vec (reverse (mapv #(vec (reverse %)) element))))
+        param-points  (cond->> (subvec (:Q params) start-index (inc end-index-inclusive))
+                        reverse-curve reverse-fn)
+        number-of-segments (do
+                             (count param-points))]
+    (fn [step]
+      (let [index (* step number-of-segments)
+            i (dec (if (< index number-of-segments) (inc (floor index)) number-of-segments))
+            t (if (< index number-of-segments) (- index (floor index)) 1.0)
+            point (n-degree-bezier-point (nth param-points i) t ;:basis-functions (nth basis-functions-coll i)
+                                         )]
+        (if extra-fn (extra-fn point) point)
+        )
+      )
+    ))
+
 (defn decompose-b-spline-curve-and-calculate-bezier-curves [p U P start-index end-index-inclusive steps &{:keys [reverse-curve] :or {reverse-curve false}}] 
   (let [params (decompose-b-spline-curve p U P)
         reverse-fn (fn [element](vec (reverse (mapv #(vec (reverse %)) element))))
@@ -1578,6 +1606,8 @@
            )))
   )
 
+
+
 (comment (decompose-curve 5 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0 1] [1 1 0 1] [3 2 1 1] 
                                                      [8 2 2 1] [10 3 1 1] [13 2 1 1]]))
 
@@ -1589,11 +1619,29 @@
                                                             [8 2 2] [10 3 1] [13 2 1]]))
 (comment (decompose-non-homogoneus-nurbs-curve 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
                                                             [8 2 2] [10 3 1] [13 2 1]]
-                                               [1 1 1 1 1 1]))
+                                               [1 1 1 0.8 1 1]))
+
+(comment (decompose-non-homogoneus-nurbs-curve 2 [0 0 0 1  2 3 4 4 4] [[0 0 0] [1 1 0] [3 2 1]
+                                                                        [8 2 2] [10 3 1] [13 2 1]]
+                                               [1 1 1 0.8 1 1]))
+
+(comment (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
+                                                                                                    [8 2 2] [10 3 1] [13 2 1]]
+[1 1 1 1 1 1] 0 2 30))
 
 (comment (decompose-b-spline-curve-and-calculate-bezier-curves 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
                                                                                         [8 2 2] [10 3 1] [13 2 1]]
                                                                0 1 30))
+
+(comment (let [params (decompose-b-spline-curve-and-return-bezier-composite-bezier-curve-fn 3 [0 0 0 0 1 2 3 3 3 3] [[0 0 0] [1 1 0] [3 2 1]
+                                                                                                     [8 2 2] [10 3 1] [13 2 1]]
+                                                                            0 1)
+               steps 30
+               increment (/ 1 steps)
+               ] 
+           (vec (for [index (range 0 (+ 1 increment) increment)]
+                  (params index)))
+           ))
 (defn natural-end-conditions [Q u-k-values]
   
   )

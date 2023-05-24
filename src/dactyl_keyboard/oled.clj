@@ -51,7 +51,8 @@
          (translate oled-screen-offset)
          (translate [0 (- (+ (/ (nth oled-screen-size 1) 2) 1)) (+ plate-thickness 1.0)]))
     (for [x [-2 2] y [-2 2]]
-      (translate (div-vec oled-mount-size [x y 1]) (binding [*fn* 36] (cylinder (/ 2.5 2) 10)))))
+      (translate (div-vec oled-mount-size [x y 1]) (binding [*fn* 36] (cylinder (/ 2.5 2) 20))))
+    )
    (rdy 180)
    (translate [0 0 (/ oled-holder-thickness 2)])))
 
