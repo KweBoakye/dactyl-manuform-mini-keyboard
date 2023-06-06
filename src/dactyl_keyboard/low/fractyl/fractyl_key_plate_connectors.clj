@@ -1203,3 +1203,114 @@ web-post-position-fn (get-web-post-position-fn top-or-bottom)
                                      tps-65
                                      tps-65-mount-cutout
                                      (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout)))))))
+
+(defn fractyl-switch-plate [steps
+                            inner-index-to-index-connector-outer-curve-fn inner-index-to-index-connector-inner-curve-fn
+                            left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll
+                            key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll]
+  (union
+   (fractyl-col-to-col-connecter 0 0 steps :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
+                                 :lower-outer-point-paramater-calculation-method :dynamic-centripetal)
+   (fractyl-col-to-col-connecter 1 0 steps :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
+                                 :lower-outer-point-paramater-calculation-method :dynamic-centripetal)
+   (fractyl-col-to-col-connecter 2 0 steps :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
+                                 :lower-horizontal-outer-curve-type :global-end
+                                 :lower-horizontal-inner-curve-type :global-end)
+   (fractyl-col-to-col-connecter 3 0 steps :upper-horizontal-outer-curve-type :catmull
+                                 :upper-horizontal-inner-curve-type :catmull
+                                 :lower-outer-point-paramater-calculation-method :dynamic-centripetal)
+   (fractyl-crossroads-connecters 0 0 steps
+                                  :upper-outer-point-paramater-calculation-method :dynamic-centripetal)
+   (fractyl-crossroads-connecters 1 0 steps
+                                  :row-above-inner-curve-type :catmull
+                                  :row-below-outer-curve-type :catmull
+                                  :row-below-inner-curve-type :catmull
+                                  :upper-outer-point-paramater-calculation-method :dynamic-centripetal
+                                  :upper-inner-point-paramater-calculation-method :farin-simple
+                                  :upper-inner-catmull-rom-alpha :uniform
+                                  :lower-inner-catmull-rom-alpha :chordal
+                                  :lower-outer-catmull-rom-alpha :chordal)
+   (fractyl-crossroads-connecters 2 0 steps
+                                  :row-above-inner-curve-type :global-end
+                                  :row-above-outer-curve-type :global-end
+                                         ;:upper-outer-point-paramater-calculation-method :equal
+                                         ;:upper-inner-point-paramater-calculation-method :centripetal
+                                  :row-below-outer-curve-type :catmull
+                                  :row-below-inner-curve-type :catmull
+                                  :upper-inner-catmull-rom-alpha :chordal
+                                         ;:lower-inner-catmull-rom-alpha :chordal
+                                  :lower-outer-catmull-rom-alpha :chordal)
+   (fractyl-crossroads-connecters 3 0 steps
+                                  :upper-outer-point-paramater-calculation-method :dynamic-centripetal
+                                  :lower-outer-point-paramater-calculation-method :dynamic-centripetal
+                                  :lower-inner-point-paramater-calculation-method :dynamic-centripetal
+                                         ;:row-below-inner-curve-type :global-end
+                                         ;:lower-inner-catmull-rom-alpha :uniform
+                                  )
+
+   (fractyl-col-to-col-connecter 0 1 steps)
+   (fractyl-col-to-col-connecter 1 1 steps :upper-horizontal-outer-curve-type :catmull
+                                 :upper-horizontal-inner-curve-type :catmull
+                                 :upper-outer-catmull-rom-alpha :chordal
+                                 :upper-inner-catmull-rom-alpha :chordal
+                                 :lower-horizontal-outer-curve-type :global-end
+                                 :lower-horizontal-inner-curve-type :global-end)
+
+   (fractyl-col-to-col-connecter 2 1 steps
+                                 :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
+                                 :lower-horizontal-outer-curve-type :catmull :lower-horizontal-inner-curve-type :catmull
+                                 :upper-outer-catmull-rom-alpha :chordal
+                                 :upper-inner-catmull-rom-alpha :chordal
+                                 :lower-inner-catmull-rom-alpha :chordal
+                                 :lower-outer-catmull-rom-alpha :chordal)
+   (fractyl-col-to-col-connecter 3 1 steps
+                                 :upper-outer-point-paramater-calculation-method :dynamic-centripetal
+                                 :upper-inner-point-paramater-calculation-method :dynamic-centripetal
+                                 :lower-horizontal-outer-curve-type :catmull
+                                 :lower-horizontal-inner-curve-type :catmull
+                                        ;:lower-outer-point-paramater-calculation-method :dynamic-centripetal
+                                        ;:lower-inner-point-paramater-calculation-method :dynamic-centripetal
+
+                                        ;:lower-inner-catmull-rom-alpha :chordal 
+                                        ;:upper-inner-catmull-rom-alpha :chordal
+                                        ;:lower-outer-catmull-rom-alpha :chordal
+                                 )
+   (fractyl-crossroads-connecters 0 1 steps)
+   (fractyl-crossroads-connecters 1 1 steps :row-above-outer-curve-type :global-end
+                                  :row-above-inner-curve-type :global-end
+                                  :row-below-outer-curve-type :global-end
+                                  :row-below-inner-curve-type :global-end)
+   (fractyl-crossroads-connecters 2 1 steps
+                                  :row-above-outer-curve-type :catmull
+                                  :row-above-inner-curve-type :catmull
+                                  :upper-outer-catmull-rom-alpha :chordal
+                                  :upper-inner-catmull-rom-alpha :chordal
+                                  :row-below-outer-curve-type :global-end
+                                  :row-below-inner-curve-type :global-end)
+   (fractyl-crossroads-connecters 3 1 steps :row-above-outer-curve-type :catmull
+                                  :row-above-inner-curve-type :catmull
+                                  :row-below-outer-curve-type :global-end
+                                  :row-below-inner-curve-type :global-end)
+   (fractyl-col-to-col-connecter 0 2 steps
+                                 :lower-horizontal-outer-curve-type inner-index-to-index-connector-outer-curve-fn
+                                 :lower-horizontal-inner-curve-type inner-index-to-index-connector-inner-curve-fn
+                                        ;:row-above-inner-curve-type :global-end
+                                 )
+   (fractyl-col-to-col-connecter 1 2 steps :upper-horizontal-outer-curve-type :global-end
+                                 :upper-horizontal-inner-curve-type :global-end
+                                 :lower-horizontal-outer-curve-type :global-end
+                                 :lower-horizontal-inner-curve-type :global-end
+                                 :render-method :chained-hull)
+   (fractyl-col-to-col-connecter 2 2 steps :upper-horizontal-outer-curve-type :global-end
+                                 :upper-horizontal-inner-curve-type :global-end
+                                 :lower-horizontal-outer-curve-type :global-end
+                                 :lower-horizontal-inner-curve-type :global-end)
+   (fractyl-col-to-col-connecter 3 2 steps :upper-horizontal-outer-curve-type :global-end
+                                 :upper-horizontal-inner-curve-type :global-end
+                                 :lower-horizontal-outer-curve-type :global-end
+                                 :lower-horizontal-inner-curve-type :global-end
+                                 :render-method :chained-hull)
+   (fractyl-column-row-connecters steps)
+   (fractyl-column-row-connecters-for-inner-index-column
+    left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll steps)
+   (fractyl-column-row-connecters-for-pinky-column key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll steps)))

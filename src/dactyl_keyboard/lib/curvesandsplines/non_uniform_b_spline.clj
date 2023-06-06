@@ -1526,12 +1526,8 @@
   (let [n (dec (count P))
         Pw (homogenize-cooridinates P W)
         {nb :nb
-         Qw :Qw} (decompose-curve n p U Pw)
-        Q (do (println "nb" nb) 
-            (println "Qw" Qw) 
-           ;(mapv #(mapv project-coordinate-and-drop-weight %) Qw)
-            Qw  )] 
-    {:nb nb :Q Q})
+         Qw :Qw} (decompose-curve n p U Pw)] 
+    {:nb nb :Q Qw})
   )
 
 (defn decompose-b-spline-curve [p U P]
@@ -1557,7 +1553,7 @@
         number-of-segments (do
                              (count param-points))
         increment (/ number-of-segments (long steps))] 
-    (vec (for [index (range 0 (+ increment number-of-segments) increment)
+    (vec (for [index (range 0 (+ (* 2 increment) number-of-segments) increment)
                :let [i (dec (if (< index number-of-segments) (inc (floor index)) number-of-segments))
                      t (if (< index number-of-segments) (- index (floor index)) 1.0)
                      points (nth param-points i)

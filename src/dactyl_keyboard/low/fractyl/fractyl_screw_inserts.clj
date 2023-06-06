@@ -46,8 +46,9 @@
         ;thumb-bottom-left  (fractyl-screw-insert (tps-65-wall-position :tl :north-east) bottom-radius top-radius height)
         ;thumb-bottom-right  (fractyl-screw-insert (tps-65-wall-position :tl :north-east) bottom-radius top-radius height)
         top-mid  (fractyl-screw-insert (key-wall-position 2 0 0 1 :tm ) bottom-radius top-radius height )
-        top-right  (fractyl-screw-insert (key-wall-position lastcol 0 1 1 :tr) bottom-radius top-radius height :offset [(/ bottom-radius -1.5) (/ bottom-radius -1.5) 0])
-        bottom-right  (fractyl-screw-insert (key-wall-position lastcol cornerrow 1 -1 :br :slant :no-slant) bottom-radius top-radius height :offset [(/ bottom-radius -2) (/ bottom-radius 2) 0]) ]
+        top-right  (fractyl-screw-insert (key-wall-position lastcol 0 1 1 :tr) bottom-radius top-radius height
+                                         :offset [(+ (/ bottom-radius -1.5) -1) (+ (/ bottom-radius -1.5) -1) 0])
+        bottom-right  (fractyl-screw-insert (key-wall-position lastcol cornerrow 1 -1 :br :slant :no-slant) bottom-radius top-radius height :offset [(/ bottom-radius -2) (+ (/ bottom-radius 2) 0.5) 0]) ]
     (union
      left-section-bm
      left-section-top-left

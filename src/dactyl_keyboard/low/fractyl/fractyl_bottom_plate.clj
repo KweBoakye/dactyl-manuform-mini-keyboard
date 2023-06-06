@@ -99,4 +99,4 @@
              ;(rp2040-plus-place rp2040-plus-mount)
              (rp2040-plus-place rp2040-plus-mount :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
              (difference (fractyl-bottom-plate wall-cross-section-steps wall-section-steps :show-inner-points true)
-                         fractyl-screw-insert-screw-holes)))))
+                         (translate [0 0 -1.5] fractyl-screw-insert-screw-holes))))))

@@ -2,11 +2,13 @@
   (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [div mul]]
             [clojure.math :refer [sqrt]]
-            [dactyl-keyboard.des-caps :refer [des-r1 des-r2 des-r5]]
+            [dactyl-keyboard.des-caps :refer [des-r1 des-r2 des-r5 des-scooped]]
             [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-z-in-degrees]]
             [dactyl-keyboard.lib.algebra :refer [find-point-on-line-using-x]]
             [dactyl-keyboard.lib.constants :refer [epsilon]]
-            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-curve]]
+            [dactyl-keyboard.low.aviator-low :refer [aviator-assembly aviator-assembly-diffs 
+                                                     aviator-assembly-polyhedron]]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-curve bezier-linear-spline]]
             [dactyl-keyboard.lib.curvesandsplines.coons-surface :refer [bicubic-coons-surface triangular-coons-surface]]
             [dactyl-keyboard.lib.curvesandsplines.curve-fitting :refer [calculate-tangents-for-local-cubic-curve-interpolation-from-tangent
                                                                         global-curve-interp-with-calculated-first-derivatives
@@ -23,16 +25,18 @@
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer [include-bosl2]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.joiners :refer [dovetail]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.vnf :refer :all]
-            [dactyl-keyboard.lib.openscad.hull :refer [chained-hull-to-points]]
-            [dactyl-keyboard.lib.transformations :refer [rdx rdz]]
+            [dactyl-keyboard.lib.openscad.hull :refer [chained-hull-to-points chained-hull-for-four-lists chained-hull-for-two-lists]]
+            [dactyl-keyboard.lib.transformations :refer [rdx rdz ry]]
             [dactyl-keyboard.low.case-low :refer [usb-jack-height
                                                   usb-jack-width]]
             [dactyl-keyboard.low.case-low-polyhedron-functions :refer :all]
             [dactyl-keyboard.low.fractyl.fractyl-key-plate-connectors :refer :all]
             [dactyl-keyboard.low.fractyl.fractyl-screw-inserts :refer :all]
             [dactyl-keyboard.low.fractyl.svg.svg-point :refer [svg-import]]
-            [dactyl-keyboard.low.oled-low-placements :refer [screen-holder]]
-            [dactyl-keyboard.low.placement-functions-low :refer :all]
+            [dactyl-keyboard.low.oled-low-placements :refer [screen-holder screen-holder-cut
+                                                             screen-holder-cut-viewport-cut
+                                                             screen-holder-depth]]
+            [dactyl-keyboard.low.placement-functions-low :refer :all] 
             [dactyl-keyboard.low.screen-holder-placement-functions :refer [screen-holder-place-side]]
             [dactyl-keyboard.low.screen-holder-placement-points :refer :all]
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
@@ -42,11 +46,18 @@
             [dactyl-keyboard.low.web-connecters-low :refer :all]
             [dactyl-keyboard.MxLEDBitPCB-holder :refer [MxLEDBitPCB
                                                         MxLEDBitPCB-clearance-smaller
-                                                        single-key-pcb-holder]]
+                                                        single-key-pcb-holder
+                                                        single-key-pcb-holder-north-leg
+                                                        single-key-pcb-holder-south-leg]]
             [dactyl-keyboard.RP2040-Plus :refer [rp2040-plus rp2040-plus-mount
                                                  rp2040-plus-mount-body-clearance rp2040-plus-place]]
-            [dactyl-keyboard.switch-hole :refer [plate-thickness]]
+            [dactyl-keyboard.switch-hole :refer [plate-thickness
+                                                 single-plate]]
+            [dactyl-keyboard.vybronics-vl91022 :refer [vybronics-vl91022-mount]]
+            [dactyl-keyboard.low.vvybronics-vl91022-placement-functions :refer [vybronics-vl91022-place]]
             [dactyl-keyboard.tps-65 :refer :all]
+            [dactyl-keyboard.sk8707-51 :refer :all]
+            [dactyl-keyboard.sk8707-06 :refer :all]
             [dactyl-keyboard.utils :refer [plot-bezier-points]]
             [scad-clj.model :refer :all]
             [scad-clj.scad :refer :all]))
@@ -59,18 +70,22 @@
          (dovetail "female" 15 8 :slide 30)
          ))
   )
+(def kailh-hotswap-mx
+  (translate [0.75 -4.75 (- plate-thickness)] (import "../parts/Kailh Hotswap MX v22.stl")))
 
 (def single-key-pcb-holder-on-main-body
   (apply union
          (for [column columns
                row rows
-               :when (check-last-row-middle-and-fourth-keys-only column row)]
+               :when (and (check-last-row-middle-and-fourth-keys-only column row)
+                         (false? (and (= column 0) (= row 2))))]
            (key-place column row single-key-pcb-holder))))
 
 (def single-key-pcb-holder-on-thumbs
   (union
    (thumb-1x-layout single-key-pcb-holder)
-   (thumb-15x-layout single-key-pcb-holder)))
+   ;(thumb-15x-layout single-key-pcb-holder)
+   ))
 
 (def pcb-place
   (apply union
@@ -211,21 +226,47 @@
              position-1 (:wall-locate-2-bottom-floor (calculate-control-points (tps-65-wall-position :tr :north-west)))
              position-2 (:wall-locate-2-bottom-floor (calculate-control-points (key-wall-position 0 0 0 1 :tl  :slant :no-slant)))]
          (union
-          
+          (->>
+           sk8707-06
+           (translate [0 0 -2]) 
+           (rdz 0)
+           (translate (mapv + web-post-tl-translation-vector [-1.5 0 0]
+                            [0 0 (- (+ sk8707-06-stem-holder-height sk8707-06-pcb-height))]))
+           (key-place 2 1))
+          ;; (->>
+          ;;  sk8707-51
+          ;;  (translate [0 0 -2])
+          ;;  (rdz 90)
+          ;;  (translate (mapv + web-post-tl-translation-vector [-1.5 0 0]
+          ;;                   [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
+          ;;  (key-place 2 1))
+          (key-place 1 0 (des-scooped 0))
+          (key-place 1 1 (des-scooped 1))
+          (key-place 2 0 (des-scooped 0))
+          (key-place 2 1 (des-scooped 1))
+          (let [items (union
+                       (-# MxLEDBitPCB)
+                       kailh-hotswap-mx)]
+            (union (key-place 1 0 items)
+          (key-place 1 1 items)
+          (key-place 2 0 items)
+          (key-place 2 1 items)))
+          (key-place 3 0 (des-scooped 0))
+          (key-place 3 1 (des-scooped 1))
+
+          key-holes
           ;(translate  (cylinder 0.1 4))
-          (difference (vnf-polyhedron (wall-vnf (fractyl-back-wall 30 30) {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :alt}))
-                      (usb-jack-place-new (fractyl-usb-c-port 60) :extra-z-rot -1.5)
-                      (rp2040-plus-place rp2040-plus-mount-body-clearance :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
-                       )
-          (tps-65-place tps-65-mount-new) 
+          ;; (difference (vnf-polyhedron (wall-vnf (fractyl-back-wall 30 30) {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :alt}))
+          ;;             (usb-jack-place-new (fractyl-usb-c-port 60) :extra-z-rot -1.5)
+          ;;             (rp2040-plus-place rp2040-plus-mount-body-clearance :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5))))
+          (tps-65-place tps-65-mount-new)
           (rp2040-plus-place rp2040-plus-mount :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
-          
+
           (rp2040-plus-place rp2040-plus :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
       ;;     (rp2040-plus-place (->> (import "../parts/pico-r3.stl")
       ;;                             (rdx -90)
       ;;                             (rdz 180)
       ;;                             (translate [(/ rp2040-plus-width 2) (/ rp2040-plus-length -2)  (- rp2040-plus-mount-height rp2040-plus-thickness)])) :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
-           
           ))
        )))
 
@@ -360,124 +401,71 @@
            (false? hi)))
 (defn front-wall-nurbs [wall-cross-section-steps wall-section-steps]
   (let [weights [1 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 1];(vec (reverse [1 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 (/ (sqrt 2) 2) 1 1]))
-               knot-vector (let [denom 10]
-                             (mapv (partial * (dec denom)) [0 0 0 (/ 1 denom) (/ 2 denom) (/ 3 denom) (/ 5 denom) (/ 6 denom) (/ 7 denom) (/ 7.5 denom) (/ 9.0 denom)  1 1 1]))
-               knot-vector-2 (let [denom 10]
-                               (mapv (partial * (dec denom)) [0 0 0 (/ 1 denom) (/ 2.5 denom) (/ 3 denom) (/ 4 denom) (/ 5 denom) (/ 7 denom) (/ 8 denom) (/ 9.0 denom)  1 1 1]))
-               curve-paramater (nurbs-parameters 2 weights
-                                                 :knot-vector knot-vector
-                                                 :linear-outer-top false
-                                                 :linear-inner-top false)
-            ;;    wall-positions [
-            ;;                   (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant)
-               
-            ;;                   (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant)
-            ;;                   (key-wall-position 2 2 -1 -1 :br :slant :no-slant :xy 4)
-            ;;                   (key-wall-position 3 2 -1 0 :bl :offset [0.000001 0 0] :slant :no-slant :xy 4)
-            ;;                   (key-wall-position 3 2 -1 -1 :bl :slant :no-slant :xy 4.5)
-            ;;                   (key-wall-position 3 2 0 -1 :bl :offset [0 0.000001 0])
-            ;;                   (key-wall-position 3 2 -1 -1 :br :slant :no-slant)
-            ;;                   (key-wall-position lastcol 2 -1 0 :bl :slant :no-slant :offset [0.000001 0 0])
-            ;;                   (key-wall-position lastcol 2 -1 -1 :bl :slant :no-slant)
-            ;;                   (key-wall-position lastcol 2 0 -1 :bl :slant :no-slant :offset [0 0.000001 0])
-            ;;                   (key-wall-position lastcol 2 0 -1 :br)
-               
-            ;;                    ]
-               wall-section-parameter (wall-section-parameter
-                                       [;(wall-cross-section-parameter (thumb-wall-position thumb-tr-place 1 0 :tr :xy 3 :slant :parallel-by-d-opposite))
-                                             ;(wall-cross-section-parameter (thumb-wall-position thumb-tr-place 1 0 :tr :xy 3 :slant :parallel-by-d-opposite :offset [0 3 -3]))
-                                             ;(wall-cross-section-parameter (key-wall-position 1 2 1 -1 :br :xy 3 :offset [-1 -1 10]))
-                                        (wall-cross-section-parameter (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant))
-                                             ;(wall-cross-section-parameter (key-wall-position 2 2 -1 -1 :bl  :xy 3 :slant :no-slant))
-                                        (wall-cross-section-parameter (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant))
-                                        (wall-cross-section-parameter (key-wall-position 2 2 -1 -1 :br :slant :no-slant :xy 4))
-                                        (wall-cross-section-parameter (key-wall-position 3 2 -1 0 :bl :offset [0.000001 0 0] :slant :no-slant :xy 4))
-                                        (wall-cross-section-parameter (key-wall-position 3 2 -1 -1 :bl :slant :no-slant :xy 4.5))
-                                        (wall-cross-section-parameter (key-wall-position 3 2 0 -1 :bl :offset [0 0.000001 0]))
-                                        (wall-cross-section-parameter (key-wall-position 3 2 -1 -1 :br :slant :no-slant))
-                                        (wall-cross-section-parameter (key-wall-position lastcol 2 -1 0 :bl :slant :no-slant :offset [0.000001 0 0]))
-                                        (wall-cross-section-parameter (key-wall-position lastcol 2 -1 -1 :bl :slant :no-slant))
-                                        (wall-cross-section-parameter (key-wall-position lastcol 2 0 -1 :bl :slant :no-slant :offset [0 0.000001 0]))
-                                        (wall-cross-section-parameter (key-wall-position lastcol 2 0 -1 :bm :slant :no-slant))
-                                        ;(wall-cross-section-parameter (key-wall-position lastcol 2 0 -1 :br ))
-                                                      ;(wall-cross-section-parameter (key-wall-position 3 2 -1 0 :bl))
-                                        ]
-                                       curve-paramater)
-               front-wall-nurbs-wall-section (wall-section wall-section-parameter wall-cross-section-steps wall-section-steps)
-               wall-positions (mapv #(:wall-position %) front-wall-nurbs-wall-section)
-               wall-cross-section-control-points (mapv #(:all-control-points %) (:wall-cross-sections front-wall-nurbs-wall-section))
-               upper-points (mapv #(:web-post-position-top %) wall-cross-section-control-points)
-               total-steps (dec (count (:outer-wall front-wall-nurbs-wall-section)))
-               nurbs-curve (nurbs (reverse upper-points) 2 knot-vector
-                                  weights (* wall-section-steps 9))
-               c1 (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves 2 (mapv double knot-vector-2) upper-points weights   0 8 (* wall-section-steps 10) :reverse-curve true)
-               wall-cross-section-parameters (:wall-cross-section-parameters wall-section-parameter)
-               wall-top (mapv #(nth % 0) (:outer-wall front-wall-nurbs-wall-section))
-               inner-wall-top (mapv #(peek %) (:inner-wall front-wall-nurbs-wall-section))
-               steps-distrubution (:steps-distrubution wall-section-parameter)
-               curve-parameters (:curve-parameters wall-section-parameter)
-               pinky-bl-to-fourth-bl-outer-curve (subvec wall-top (* (nth knot-vector 4) wall-section-steps) (* (nth knot-vector 8) wall-section-steps))
-               pinky-bl-to-fourth-bl-inner-curve (subvec inner-wall-top (* (nth knot-vector 4) wall-section-steps) (* (nth knot-vector 8) wall-section-steps))
-               fourth-bl-to-middle-outer-curve (subvec wall-top (* (nth knot-vector 8) wall-section-steps) (+ (* (nth knot-vector 10) wall-section-steps) 3))
-               fourth-bl-to-middle-inner-curve (subvec inner-wall-top (* (nth knot-vector 8) wall-section-steps) (+ (* (nth knot-vector 10) wall-section-steps) 3))
-               fourth-bl-to-middle-outer-steps (dec (count fourth-bl-to-middle-outer-curve))
-               middle-to-index-outer-curve (subvec wall-top (* (nth knot-vector 10) wall-section-steps) (inc (* (nth knot-vector 13) wall-section-steps)))
-               middle-to-index-inner-curve (subvec inner-wall-top (* (nth knot-vector 10) wall-section-steps) (inc (* (nth knot-vector 13) wall-section-steps)))
-               middle-to-index-outer-steps (dec (count middle-to-index-outer-curve))
-               pinky-bl-to-fourth-bl-outer-steps (dec (count pinky-bl-to-fourth-bl-outer-curve))
-               pinky-bl-to-fourth-bl-P-zero-w-outer (n-degree-bezier-curve [(main-body-web-post-point-top lastcol cornerrow :bl) (main-body-web-post-point-top 3 cornerrow :br)]
-                                                                           pinky-bl-to-fourth-bl-outer-steps)
-               pinky-bl-to-fourth-bl-P-one-w-outer (n-degree-bezier-curve [(peek fourth-bl-to-middle-outer-curve) (main-body-web-post-point-top 3 cornerrow :br)]
-                                                                          pinky-bl-to-fourth-bl-outer-steps)
-               pinky-bl-to-fourth-bl-P-w-one-outer-surface (triangular-coons-surface (main-body-web-post-point-top lastcol cornerrow :bl) (peek fourth-bl-to-middle-outer-curve) (main-body-web-post-point-top 3 cornerrow :br)
-                                                                                     (reverse pinky-bl-to-fourth-bl-outer-curve)
-                                                                                     pinky-bl-to-fourth-bl-P-zero-w-outer
-                                                                                     pinky-bl-to-fourth-bl-P-one-w-outer
-                                                                                     pinky-bl-to-fourth-bl-outer-steps pinky-bl-to-fourth-bl-outer-steps
-                                                                                     :blending-fn :H-five)
-               ;pinky-bl-to-fourth-bl-inner-curve (subvec wall-top (* (nth knot-vector 4) wall-section-steps) (* (nth knot-vector 8) wall-section-steps))
-               intersec (two-d-intersection-for-3d (main-body-web-post-point-top lastcol cornerrow :bl) (main-body-web-post-point-top lastcol cornerrow :tl)
-                                                   (main-body-web-post-point-top 3 cornerrow :bl) (main-body-web-post-point-top 3 cornerrow :br))
-               intersec-web-poit (find-point-on-line-using-x (main-body-web-post-point-top lastcol cornerrow :bl) (main-body-web-post-point-top lastcol cornerrow :tl) (nth intersec 0))
-               surf (bicubic-coons-surface (main-body-web-post-point-top lastcol cornerrow :bl) intersec-web-poit (main-body-web-post-point-top 3 cornerrow :bl) (main-body-web-post-point-top 3 cornerrow :br)
-                                           (n-degree-bezier-curve [(main-body-web-post-point-top lastcol cornerrow :bl) intersec-web-poit] pinky-bl-to-fourth-bl-outer-steps)
-                                           pinky-bl-to-fourth-bl-P-one-w-outer
-                                           pinky-bl-to-fourth-bl-outer-curve
-                                           (n-degree-bezier-curve [(main-body-web-post-point-top 3 cornerrow :br) intersec-web-poit] pinky-bl-to-fourth-bl-outer-steps)
-                                           pinky-bl-to-fourth-bl-outer-steps pinky-bl-to-fourth-bl-outer-steps :boundary-curves-generated true)]
+        knot-vector (let [denom 10]
+                      (mapv (partial * (dec denom)) [0 0 0 (/ 1 denom) (/ 2 denom) (/ 3 denom) (/ 5 denom) (/ 6 denom) (/ 7 denom) (/ 7.5 denom) (/ 9.0 denom)  1 1 1]))
+        
+        curve-paramater (nurbs-parameters 2 weights
+                                          :knot-vector knot-vector
+                                          :linear-outer-top false
+                                          :linear-inner-top false) 
+        wall-section-parameter (wall-section-parameter
+                                [
+                                 (wall-cross-section-parameter (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant))
+                                 
+                                 (wall-cross-section-parameter (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant))
+                                 (wall-cross-section-parameter (key-wall-position 2 2 -1 -1 :br :slant :no-slant :xy 4))
+                                 (wall-cross-section-parameter (key-wall-position 3 2 -1 0 :bl :offset [0.000001 0 0] :slant :no-slant :xy 4))
+                                 (wall-cross-section-parameter (key-wall-position 3 2 -1 -1 :bl :slant :no-slant :xy 4.5))
+                                 (wall-cross-section-parameter (key-wall-position 3 2 0 -1 :bl :offset [0 0.000001 0]))
+                                 (wall-cross-section-parameter (key-wall-position 3 2 -1 -1 :br :slant :no-slant))
+                                 (wall-cross-section-parameter (key-wall-position lastcol 2 -1 0 :bl :slant :no-slant :offset [0.000001 0 0]))
+                                 (wall-cross-section-parameter (key-wall-position lastcol 2 -1 -1 :bl :slant :no-slant))
+                                 (wall-cross-section-parameter (key-wall-position lastcol 2 0 -1 :bl :slant :no-slant :offset [0 0.000001 0]))
+                                 (wall-cross-section-parameter (key-wall-position lastcol 2 0 -1 :bm :slant :no-slant)) 
+                                 ]
+                                curve-paramater)
+        front-wall-nurbs-wall-section (wall-section wall-section-parameter wall-cross-section-steps wall-section-steps)
+        wall-positions (mapv #(:wall-position %) front-wall-nurbs-wall-section)
+        wall-cross-section-control-points (mapv #(:all-control-points %) (:wall-cross-sections front-wall-nurbs-wall-section))
+        upper-points (mapv #(:web-post-position-top %) wall-cross-section-control-points)
+        lower-points (vec (reverse (mapv #(:web-post-position-bottom %) wall-cross-section-control-points))) 
+        wall-cross-section-parameters (:wall-cross-section-parameters wall-section-parameter)
+        wall-top (mapv #(nth % 0) (:outer-wall front-wall-nurbs-wall-section))
+        inner-wall-top (mapv #(peek %) (:inner-wall front-wall-nurbs-wall-section))
+        steps-distrubution (:steps-distrubution wall-section-parameter)
+        curve-parameters (:curve-parameters wall-section-parameter)
+        pinky-bl-to-fourth-bl-outer-steps (* wall-section-steps 5)
+        pinky-bl-to-fourth-bl-outer-curve-decomp (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves
+                                                  2 knot-vector (vec (reverse upper-points)) weights 1 4 pinky-bl-to-fourth-bl-outer-steps)
+        pinky-bl-to-fourth-bl-inner-curve-decomp (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves
+                                                  2 knot-vector lower-points weights 1 4 (* wall-section-steps 5)) 
+        fourth-bl-to-middle-outer-curve (subvec wall-top (* (nth knot-vector 8) wall-section-steps) (+ (* (nth knot-vector 10) wall-section-steps) 3))
+        fourth-bl-to-middle-inner-curve (subvec inner-wall-top (* (nth knot-vector 8) wall-section-steps) (+ (* (nth knot-vector 10) wall-section-steps) 3))
+        fourth-bl-to-middle-outer-steps (dec (count fourth-bl-to-middle-outer-curve))
+        fourth-bl-to-middle-to-index-steps (* wall-section-steps 5)
+        fourth-bl-to-middle-to-index-outer-curve-decomp (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves
+                                                         2 knot-vector (vec (reverse upper-points)) weights 5 7 fourth-bl-to-middle-to-index-steps)
+        fourth-bl-to-middle-to-index-inner-curve-decomp (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves
+                                                         2 knot-vector lower-points weights 5 7 fourth-bl-to-middle-to-index-steps) 
+        middle-to-index-outer-steps (* wall-section-steps 3)
+        middle-to-index-outer-curve-decomp (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves
+                                            2 knot-vector (vec (reverse upper-points)) weights 8 8 middle-to-index-outer-steps)
+        middle-to-index-inner-curve-decomp (decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves
+                                            2 knot-vector lower-points weights 8 8 middle-to-index-outer-steps) 
+       ]
 
            
            {:front-wall-wall-section front-wall-nurbs-wall-section
-            :chained-hull-shapes [(chained-hull-to-points (plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 3 cornerrow :br) (sphere epsilon))
-                                                          (plot-bezier-points pinky-bl-to-fourth-bl-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 3 cornerrow :br) (sphere epsilon))
+            :chained-hull-shapes [(chained-hull-to-points (plot-bezier-points pinky-bl-to-fourth-bl-outer-curve-decomp (sphere epsilon)) (translate (main-body-web-post-point-top 3 cornerrow :br) (sphere epsilon))
+                                                          (plot-bezier-points pinky-bl-to-fourth-bl-inner-curve-decomp (sphere epsilon)) (translate (main-body-web-post-point-bottom 3 cornerrow :br) (sphere epsilon))
                                                           pinky-bl-to-fourth-bl-outer-steps)
-                                  (chained-hull-to-points (plot-bezier-points fourth-bl-to-middle-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :br) (sphere epsilon))
-                                                          (plot-bezier-points fourth-bl-to-middle-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :br) (sphere epsilon))
-                                                          fourth-bl-to-middle-outer-steps)
-                                  (chained-hull-to-points (plot-bezier-points middle-to-index-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :bl) (sphere epsilon))
-                                                          (plot-bezier-points middle-to-index-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :bl) (sphere epsilon))
-                                                          middle-to-index-outer-steps)]
-            }
-      ;;      (union
-      ;;       (vnf-polyhedron (wall-vnf wall-section
-      ;;                                 {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default}))
-      ;;       ;(plot-bezier-points c1 (sphere 0.2))
-      ;;       ;(color [1 0 0 1](plot-bezier-points nurbs-curve (sphere 0.1)))
-      ;;       ;(plot-bezier-points wall-top (sphere 0.2))
-      ;;      ;(plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere 0.2))
-            
-      ;;       ;(translate (nth wall-top (* (nth knot-vector 8) wall-section-steps)) (sphere 0.1))
-      ;;       ;(color [1 0 0 1](plot-bezier-points pinky-bl-to-fourth-bl-outer-curve (sphere 0.1)))
-      ;;       ;(plot-bezier-points pinky-bl-to-fourth-bl-inner-curve (sphere 0.2))
-      ;;       ;; (translate (find-point-on-line-using-x (main-body-web-post-point-top lastcol cornerrow :bl) (main-body-web-post-point-top lastcol cornerrow :tl) (nth intersec 0))
-      ;;       ;;            (sphere 1))
-      ;;       ;(vnf-polyhedron (vnf_tri_array pinky-bl-to-fourth-bl-P-w-one-outer-surface :reverse true))
-            
-            
-            
-      ;;       ;(vnf-polyhedron (vnf-vertex-array pinky-bl-to-fourth-bl-P-w-one-outer-surface :caps false :col-wrap false :reverse true :style :default))
-      ;;       )
-           
+                                   (chained-hull-to-points (plot-bezier-points fourth-bl-to-middle-outer-curve (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :br) (sphere epsilon))
+                                                           (plot-bezier-points fourth-bl-to-middle-inner-curve (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :br) (sphere epsilon))
+                                                           fourth-bl-to-middle-outer-steps)
+                                  (chained-hull-to-points (plot-bezier-points middle-to-index-outer-curve-decomp (sphere epsilon)) (translate (main-body-web-post-point-top 2 cornerrow :bl) (sphere epsilon))
+                                                          (plot-bezier-points middle-to-index-inner-curve-decomp (sphere epsilon)) (translate (main-body-web-post-point-bottom 2 cornerrow :bl) (sphere epsilon))
+                                                           middle-to-index-outer-steps) ]
+            } 
          ))
 
 
@@ -1314,10 +1302,10 @@
           ;(vnf-polyhedron thumb-tl-to-tr-vnf)
           ;(vnf-polyhedron (:trackpad-to-main-body-vnf trackpad-to-main-body-data))
           ;(screen-holder-place-side ST7789-240x240)
-          ;(difference 
-      ;;      (thumb-tr-place (intersection MxLEDBitPCB-clearance-smaller
-      ;;                                    single-key-pcb-holder-north-leg))
-          ;(thumb-tr-place single-plate)
+          (difference 
+            (thumb-tr-place (intersection MxLEDBitPCB-clearance-smaller
+                                          single-key-pcb-holder-north-leg))
+          (thumb-tr-place single-plate))
            (difference 
             (union 
             (-# (vnf-polyhedron left-section-vnf-array))
@@ -1515,16 +1503,31 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
 (comment (spit "things-low/horizontal-first-test.scad"
                (write-scad
                 (include "../BOSL2/std.scad")
-                (union key-holes
-                       (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
-                            (scale [0.08 0.08])
-                            (extrude-linear {:height 2 :scale 0.8})
-                            (rdx 80)
-                            (rdz -5)
-                            (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 2 0 -1 :bm :slant :no-slant)))
-                                             [0 0.5 -7.1])))
-                       (-# (vnf-polyhedron (wall-vnf (:front-wall-wall-section (front-wall-nurbs 10 10)) default-vnf-vertex-array-args)))
-                       (-# (vnf-polyhedron (:fractyl-right-wall-vnf (fractyl-right-wall 10 10))))))))
+                (let [{front-wall-wall-section :front-wall-wall-section 
+                       chained-hull-shapes :chained-hull-shapes} (front-wall-nurbs 10 10)
+                      points [[15.43255710595963 -32.58500738133914 16.491736329784636 0.9023689270621825] [12.607902973218858 -35.90827997504199 19.396617814784115 1] [10.761518350412612 -30.64963444868728 16.556049038228004 0.8535533905932737]]] 
+                  (println "bm"(main-body-web-post-point-top 2 2 :bm))
+                  (union key-holes
+                         ;(mapv #(plot-bezier-points % (sphere 1)) points)
+                         
+                         chained-hull-shapes
+                        ;;  (color [1 0 0 1] (plot-bezier-points (nth upper-points 0) (sphere 0.5)))
+                        ;;  (color [0 1 0 1] (plot-bezier-points (nth upper-points 1) (sphere 0.5)))
+                        ;;  (color [0 0 1 1] (plot-bezier-points (nth upper-points 2) (sphere 0.5)))
+                        ;;  (color [1 0 0 1] (plot-bezier-points (nth lower-points 0) (sphere 0.5)))
+                        ;;  (color [0 1 0 1] (plot-bezier-points (nth lower-points 1) (sphere 0.5)))
+                        ;;  (color [0 0 1 1] (plot-bezier-points (nth lower-points 2) (sphere 0.5)))
+
+                         (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
+                              (scale [0.08 0.08])
+                              (extrude-linear {:height 2 :scale 0.8})
+                              (rdx 80)
+                              (rdz -5)
+                              (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 2 0 -1 :bm :slant :no-slant)))
+                                               [0 0.5 -7.1])))
+                         (-# (vnf-polyhedron (wall-vnf front-wall-wall-section default-vnf-vertex-array-args)))
+                       ;(-# (vnf-polyhedron (:fractyl-right-wall-vnf (fractyl-right-wall 10 10))))
+                         )))))
 (defn thumb-tr-rm-to-index-br [wall-cross-section-steps wall-section-steps]
   (let [middle-bl-control-points  (calculate-control-points (key-wall-position 2 2 1 -1 :bl  :xy 3 :slant :no-slant))
         index-br-control-points  (calculate-control-points (key-wall-position 1 2 1 0 :br :xy 3 :slant :no-slant))
@@ -1686,11 +1689,14 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                    )))))
 
 
-(def case-symbols 
-  (union
+(defn case-symbols [&{:keys [side] :or {side :right}}] 
+  (let [mirror-fn (fn [shape] (if (= side :left) (mirror [1 0 0] shape)
+                                  shape))]
+    (union
    (->> (svg-import "../svg/Gye_Nyame.svg")
         (scale [0.115 0.115])
         (extrude-linear {:height 2 :scale 0.8})
+        (mirror-fn)
         (rdx 88)
         (rdz 10)
         (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant))))
@@ -1699,6 +1705,7 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
    (->> (svg-import "../svg/dwenninem.svg")
         (scale [0.15 0.15])
         (extrude-linear {:height 2 :scale 0.8})
+        (mirror-fn)
         (rdx 84)
         (rdz -41)
         (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :lm :xy 4 :slant :no-slant))))
@@ -1708,6 +1715,7 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                ;(translate [(* (/ -3 2) 25 ) (* (/ -3 2) 23.3 )])
         (scale [0.3 0.3 1])
         (extrude-linear {:height 2 :scale 0.8})
+        (mirror-fn)
         (rdx 90)
         (rdz 14)
         (translate (mapv + (div (mapv + (:wall-locate3-point (calculate-control-points (tps-65-wall-position :bm :south)))
@@ -1716,6 +1724,7 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
    (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
         (scale [0.08 0.08])
         (extrude-linear {:height 2 :scale 0.8})
+        (mirror-fn)
         (rdx 80)
         (rdz -5)
         (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 2 0 -1 :bm :slant :no-slant)))
@@ -1723,11 +1732,13 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
    (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
         (scale [0.07 0.07])
         (extrude-linear {:height 2 :scale 0.8})
+        (mirror-fn)
         (rdz 180)
         (rdx -85)
         (rdz -5)
         (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 0 0 1 :tm )))
-                         [0 -0.5 -7.1])))))
+                         [0 -0.5 -7.1]))))))
+
 
 
 (comment (spit "things-low/fractyl-case-walls-test.scad"
@@ -1776,129 +1787,17 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                                                                              )] 
          (union
           fractyl-screw-insert-outers
-          case-symbols
-          ;(des-caps {:style :des-scooped})
-          ;des-cornelius-thumbs
+          (case-symbols)
           ;(let [height 55](-# (translate [-30 -20 (/ height 2)] (cube 190 140 height))))
-          chained-hull-shapes
-          (fractyl-col-to-col-connecter 0 0 steps :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
-                                        :lower-outer-point-paramater-calculation-method :dynamic-centripetal)
-          (fractyl-col-to-col-connecter 1 0 steps :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
-                                        :lower-outer-point-paramater-calculation-method :dynamic-centripetal)
-          (fractyl-col-to-col-connecter 2 0 steps :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
-                                        :lower-horizontal-outer-curve-type :global-end
-                                        :lower-horizontal-inner-curve-type :global-end)
-          (fractyl-col-to-col-connecter 3 0 steps :upper-horizontal-outer-curve-type :catmull
-                                        :upper-horizontal-inner-curve-type :catmull
-                                        :lower-outer-point-paramater-calculation-method :dynamic-centripetal)
-          (fractyl-crossroads-connecters 0 0 steps
-                                         :upper-outer-point-paramater-calculation-method :dynamic-centripetal)
-          (fractyl-crossroads-connecters 1 0 steps
-                                         :row-above-inner-curve-type :catmull
-                                         :row-below-outer-curve-type :catmull
-                                         :row-below-inner-curve-type :catmull
-                                         :upper-outer-point-paramater-calculation-method :dynamic-centripetal
-                                         :upper-inner-point-paramater-calculation-method :farin-simple
-                                         :upper-inner-catmull-rom-alpha :uniform
-                                         :lower-inner-catmull-rom-alpha :chordal
-                                         :lower-outer-catmull-rom-alpha :chordal)
-          (fractyl-crossroads-connecters 2 0 steps
-                                         :row-above-inner-curve-type :global-end
-                                         :row-above-outer-curve-type :global-end
-                                         ;:upper-outer-point-paramater-calculation-method :equal
-                                         ;:upper-inner-point-paramater-calculation-method :centripetal
-                                         :row-below-outer-curve-type :catmull
-                                         :row-below-inner-curve-type :catmull
-                                         :upper-inner-catmull-rom-alpha :chordal
-                                         ;:lower-inner-catmull-rom-alpha :chordal
-                                         :lower-outer-catmull-rom-alpha :chordal)
-          (fractyl-crossroads-connecters 3 0 steps
-                                         :upper-outer-point-paramater-calculation-method :dynamic-centripetal
-                                         :lower-outer-point-paramater-calculation-method :dynamic-centripetal
-                                         :lower-inner-point-paramater-calculation-method :dynamic-centripetal
-                                         ;:row-below-inner-curve-type :global-end
-                                         ;:lower-inner-catmull-rom-alpha :uniform
-                                         )
-
-          (fractyl-col-to-col-connecter 0 1 steps)
-          (fractyl-col-to-col-connecter 1 1 steps :upper-horizontal-outer-curve-type :catmull
-                                        :upper-horizontal-inner-curve-type :catmull
-                                        :upper-outer-catmull-rom-alpha :chordal
-                                        :upper-inner-catmull-rom-alpha :chordal
-                                        :lower-horizontal-outer-curve-type :global-end
-                                        :lower-horizontal-inner-curve-type :global-end)
-
-          (fractyl-col-to-col-connecter 2 1 steps
-                                        :upper-horizontal-outer-curve-type :catmull :upper-horizontal-inner-curve-type :catmull
-                                        :lower-horizontal-outer-curve-type :catmull :lower-horizontal-inner-curve-type :catmull
-                                        :upper-outer-catmull-rom-alpha :chordal
-                                        :upper-inner-catmull-rom-alpha :chordal
-                                        :lower-inner-catmull-rom-alpha :chordal
-                                        :lower-outer-catmull-rom-alpha :chordal)
-          (fractyl-col-to-col-connecter 3 1 steps
-                                        :upper-outer-point-paramater-calculation-method :dynamic-centripetal
-                                        :upper-inner-point-paramater-calculation-method :dynamic-centripetal
-                                        :lower-horizontal-outer-curve-type :catmull
-                                        :lower-horizontal-inner-curve-type :catmull
-                                        ;:lower-outer-point-paramater-calculation-method :dynamic-centripetal
-                                        ;:lower-inner-point-paramater-calculation-method :dynamic-centripetal
-
-                                        ;:lower-inner-catmull-rom-alpha :chordal 
-                                        ;:upper-inner-catmull-rom-alpha :chordal
-                                        ;:lower-outer-catmull-rom-alpha :chordal
-                                        )
-          (fractyl-crossroads-connecters 0 1 steps)
-          (fractyl-crossroads-connecters 1 1 steps :row-above-outer-curve-type :global-end
-                                         :row-above-inner-curve-type :global-end
-                                         :row-below-outer-curve-type :global-end
-                                         :row-below-inner-curve-type :global-end)
-          (fractyl-crossroads-connecters 2 1 steps
-                                         :row-above-outer-curve-type :catmull
-                                         :row-above-inner-curve-type :catmull
-                                         :upper-outer-catmull-rom-alpha :chordal
-                                         :upper-inner-catmull-rom-alpha :chordal
-                                         :row-below-outer-curve-type :global-end
-                                         :row-below-inner-curve-type :global-end)
-          (fractyl-crossroads-connecters 3 1 steps :row-above-outer-curve-type :catmull
-                                         :row-above-inner-curve-type :catmull
-                                         :row-below-outer-curve-type :global-end
-                                         :row-below-inner-curve-type :global-end)
-          (fractyl-col-to-col-connecter 0 2 steps
-                                        :lower-horizontal-outer-curve-type inner-index-to-index-connector-outer-curve-fn
-                                        :lower-horizontal-inner-curve-type inner-index-to-index-connector-inner-curve-fn
-                                        ;:row-above-inner-curve-type :global-end
-                                        )
-          (fractyl-col-to-col-connecter 1 2 steps :upper-horizontal-outer-curve-type :global-end
-                                        :upper-horizontal-inner-curve-type :global-end
-                                        :lower-horizontal-outer-curve-type :global-end
-                                        :lower-horizontal-inner-curve-type :global-end
-                                        :render-method :chained-hull)
-          (fractyl-col-to-col-connecter 2 2 steps :upper-horizontal-outer-curve-type :global-end
-                                        :upper-horizontal-inner-curve-type :global-end
-                                        :lower-horizontal-outer-curve-type :global-end
-                                        :lower-horizontal-inner-curve-type :global-end)
-          (fractyl-col-to-col-connecter 3 2 steps :upper-horizontal-outer-curve-type :global-end
-                                        :upper-horizontal-inner-curve-type :global-end
-                                        :lower-horizontal-outer-curve-type :global-end
-                                        :lower-horizontal-inner-curve-type :global-end
-                                        :render-method :chained-hull)
-          ;pcb-place
-          ;pcb-place-thumbs
-          ;single-key-pcb-holder-on-main-body
-          ;single-key-pcb-holder-on-thumbs
-          (screen-holder-place-side screen-holder)
-          (fractyl-column-row-connecters steps)
-          (fractyl-column-row-connecters-for-inner-index-column
-           left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll steps)
-          (fractyl-column-row-connecters-for-pinky-column key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll steps)
+          chained-hull-shapes 
+          (screen-holder-place-side screen-holder) 
+          (fractyl-switch-plate steps
+                                 inner-index-to-index-connector-outer-curve-fn inner-index-to-index-connector-inner-curve-fn
+                                 left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll
+                                 key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll)
           thumb-type
-          (key-place 1 2 des-r2)
+       
           
-          (key-place 0 0 (rdz 180 des-r1))
-          (key-place 1 0 (rdz 180 des-r1))
-          (key-place 0 1 des-r5)
-          (key-place 1 1 des-r5)
-          (key-place 0 2 des-r2)
           key-holes
           (vnf-polyhedron thumb-tr-rm-to-index-br-vnf-array)
           (vnf-polyhedron trackpad-to-main-body-vnf)
@@ -1981,3 +1880,129 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
           )
          )
        )))
+
+
+(defn fractyl-body [wall-cross-section-steps
+                   wall-section-steps &{:keys [steps side] 
+                                        :or {steps wall-section-steps
+                                             side :right}}]
+  (let [{thumb-single-row-wall-section :wall-section
+         outer-key-gap-fn-coll :outer-key-gap-fn-coll
+         inner-key-gap-fn-coll :inner-key-gap-fn-coll} (thumb-wall-section-for-single-thumb-row-fn wall-cross-section-steps wall-section-steps)
+        fractyl-back-wall-wall-section (fractyl-back-wall wall-cross-section-steps wall-section-steps)
+
+        {front-wall-wall-section :front-wall-wall-section
+         chained-hull-shapes :chained-hull-shapes} (front-wall-nurbs wall-cross-section-steps wall-section-steps)
+        {left-section-data :left-section-data
+         thumb-outer-points-fn :thumb-outer-points-fn
+         thumb-inner-points-fn :thumb-inner-points-fn
+         inner-index-to-index-connector-outer-curve-fn :inner-index-to-index-connector-outer-curve-fn
+         inner-index-to-index-connector-inner-curve-fn :inner-index-to-index-connector-inner-curve-fn} (left-section-data steps :screen-outer-curve-type :local)
+        {left-section-vnf-array :vnf-array
+         trackpad-to-main-body-data :trackpad-to-main-body-data
+         thumb-bl-to-tl-outer-curve-fn :thumb-bl-to-tl-outer-curve-fn
+         thumb-tl-to-tr-outer-curve-fn :thumb-tl-to-tr-outer-curve-fn
+         thumb-bl-to-tl-inner-curve-fn :thumb-bl-to-tl-inner-curve-fn
+         thumb-tl-to-tr-inner-curve-fn :thumb-tl-to-tr-inner-curve-fn} left-section-data
+        {fractyl-right-wall-vnf :fractyl-right-wall-vnf
+         key-gap-outer-curve-fn-coll :key-gap-outer-curve-fn-coll
+         key-gap-inner-curve-fn-coll :key-gap-inner-curve-fn-coll} (fractyl-right-wall wall-cross-section-steps (/ wall-section-steps 2))
+        {trackpad-to-main-body-vnf :trackpad-to-main-body-vnf
+         left-side-key-gap-outer-curve-fn-coll :left-side-key-gap-outer-curve-fn-coll
+         left-side-key-gap-inner-curve-fn-coll :left-side-key-gap-inner-curve-fn-coll} trackpad-to-main-body-data
+        {thumb-tr-rm-to-index-br-vnf-array :vnf-array
+         thumb-tr-rm-to-index-br-outer-bottom-points :outer-bottom-points
+         thumb-tr-rm-to-index-br-inner-bottom-points :inner-bottom-points} (thumb-tr-rm-to-index-br wall-cross-section-steps wall-section-steps)
+        {thumb-bl-to-tl-vnf :thumb-bl-to-tl-vnf
+         thumb-tl-to-tr-vnf :thumb-tl-to-tr-vnf} (thumb-connecter-1-row steps :thumb-bl-to-tl-P-u-zero-outer (vec (reverse (thumb-bl-to-tl-outer-curve-fn steps)))
+                                                                        :thumb-tl-to-tr-P-u-zero-outer (vec (reverse (thumb-tl-to-tr-outer-curve-fn steps)))
+                                                                        :thumb-bl-to-tl-P-u-one-inner (thumb-bl-to-tl-inner-curve-fn steps)
+                                                                        :thumb-tl-to-tr-P-u-one-inner (thumb-tl-to-tr-inner-curve-fn steps)
+                                                                        :thumb-bl-to-tl-P-u-one-outer ((nth outer-key-gap-fn-coll 1) steps)
+                                                                        :thumb-tl-to-tr-P-u-one-outer ((nth outer-key-gap-fn-coll 0) steps)
+                                                                             ;:thumb-bl-to-tl-P-u-zero-inner ((nth inner-key-gap-fn-coll 1) steps)
+                                                                             ;:thumb-tl-to-tr-P-u-zero-inner ((nth inner-key-gap-fn-coll 0) steps)
+                                                                        )]
+   (cond->> (union
+             fractyl-screw-insert-outers
+             (case-symbols :side side)
+          ;(let [height 55](-# (translate [-30 -20 (/ height 2)] (cube 190 140 height))))
+             chained-hull-shapes
+                    (tps-65-place (difference  tps-65-mount-new
+                                      tps-65
+                                      tps-65-mount-cutout
+                                      (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout)))
+             
+             (fractyl-switch-plate steps
+                                   inner-index-to-index-connector-outer-curve-fn inner-index-to-index-connector-inner-curve-fn
+                                   left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll
+                                   key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll)
+             thumb-type
+             (vybronics-vl91022-place vybronics-vl91022-mount) 
+             key-holes
+             (difference 
+              (vnf-polyhedron thumb-tr-rm-to-index-br-vnf-array)
+              (thumb-tr-place MxLEDBitPCB-clearance-smaller)
+              )
+             (vnf-polyhedron trackpad-to-main-body-vnf)
+             (vnf-polyhedron fractyl-right-wall-vnf)
+             (difference
+              (vnf-polyhedron (wall-vnf thumb-single-row-wall-section {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse true :style :default}))
+              (thumb-bl-place MxLEDBitPCB-clearance-smaller)
+              (thumb-tl-place MxLEDBitPCB-clearance-smaller)
+              (thumb-tr-place MxLEDBitPCB-clearance-smaller)
+              )
+             (difference
+              (vnf-polyhedron  (:wall-vnf (thumb-to-left-section-2 wall-cross-section-steps wall-section-steps thumb-outer-points-fn thumb-inner-points-fn)))
+              (thumb-bl-place MxLEDBitPCB-clearance-smaller)) 
+             single-key-pcb-holder-on-main-body
+             single-key-pcb-holder-on-thumbs
+             (vnf-polyhedron thumb-bl-to-tl-vnf)
+             (vnf-polyhedron thumb-tl-to-tr-vnf)
+             ;(key-place 2 2 MxLEDBitPCB)
+             ;(key-place 0 2 MxLEDBitPCB)
+             (difference
+              (thumb-tr-place (intersection MxLEDBitPCB-clearance-smaller
+                                            single-key-pcb-holder-north-leg))
+              (thumb-tr-place single-plate))
+             (key-place 0 2 single-key-pcb-holder-north-leg)
+             (key-place 0 2 (intersection single-key-pcb-holder-south-leg
+                                          MxLEDBitPCB-clearance-smaller) )
+             (difference
+              (union
+               (vnf-polyhedron left-section-vnf-array)
+               (screen-holder-place-side screen-holder)
+                        ;(screen-holder-place-side screen-holder)
+               ;           aviator-assembly-polyhedron
+               )
+              (thumb-tr-place MxLEDBitPCB-clearance-smaller)
+              (key-place 0 2 MxLEDBitPCB-clearance-smaller)
+              ;aviator-assembly-diffs
+              (screen-holder-place-side screen-holder-cut)
+              (screen-holder-place-side (translate [0 0 screen-holder-depth] screen-holder-cut-viewport-cut)) 
+              )
+              (difference (vnf-polyhedron (wall-vnf fractyl-back-wall-wall-section default-vnf-vertex-array-args))
+                          (usb-jack-place-new (fractyl-usb-c-port 60) :extra-z-rot -1.5)
+(rp2040-plus-place rp2040-plus-mount-body-clearance :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
+                          (apply union
+                                 (for [col (range ncols)]
+                                   (key-place col 0 MxLEDBitPCB-clearance-smaller)))
+                          )
+             (difference (vnf-polyhedron (wall-vnf front-wall-wall-section default-vnf-vertex-array-args))
+                         (key-place 2 2 MxLEDBitPCB-clearance-smaller)
+                         (key-place 3 2 MxLEDBitPCB-clearance-smaller)
+                         (key-place 4 2 MxLEDBitPCB-clearance-smaller))
+             )
+     (= side :left) (mirror [1 0 0]))) 
+  )
+
+(comment (spit "things-low/fractyl-case-right.scad"
+               (write-scad
+                (include include-bosl2)
+                (fractyl-body 10 10)
+                )))
+
+(comment (spit "things-low/fractyl-case-left.scad"
+               (write-scad
+                (include include-bosl2)
+                (fractyl-body 10 10 :side :left))))

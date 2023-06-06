@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 390">
+  <defs>
+    <style>
+      .a, .b {
+        fill: none;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: 30px;
+      }
+
+      .a {
+        stroke-linecap: square;
+      }
+    </style>
+  </defs>
+  <rect class="a" x="15" y="135" width="360" height="120"/>
+  <line class="a" x1="255" y1="15" x2="255" y2="375"/>
+  <line class="a" x1="135" y1="15" x2="135" y2="375"/>
+  <line class="a" x1="195" y1="15" x2="195" y2="135"/>
+  <line class="a" x1="195" y1="255" x2="195" y2="375"/>
+  <line class="a" x1="75" y1="135" x2="75" y2="255"/>
+  <line class="a" x1="315" y1="135" x2="315" y2="255"/>
+  <line class="a" x1="135" y1="195" x2="255" y2="195"/>
+  <line class="b" x1="255" y1="75" x2="360" y2="75"/>
+  <line class="a" x1="255" y1="15" x2="375" y2="15"/>
+  <line class="a" x1="135" y1="15" x2="15" y2="15"/>
+  <line class="b" x1="135" y1="315" x2="30" y2="315"/>
+  <line class="a" x1="135" y1="375" x2="15" y2="375"/>
+  <line class="b" x1="255" y1="315" x2="360" y2="315"/>
+  <line class="a" x1="255" y1="375" x2="375" y2="375"/>
+  <line class="b" x1="30" y1="75" x2="135" y2="75"/>
+</svg>
