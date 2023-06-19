@@ -100,3 +100,26 @@
              (rp2040-plus-place rp2040-plus-mount :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
              (difference (fractyl-bottom-plate wall-cross-section-steps wall-section-steps :show-inner-points true)
                          (translate [0 0 -1.5] fractyl-screw-insert-screw-holes))))))
+
+(defn fractyl-bottom-plate-and-mounts [wall-cross-section-steps wall-section-steps &{:keys [side]
+                                                                                     :or {side :right}}]
+  (cond->>
+   (union
+   (IS31FL3743A-standoff-place IS31FL3743A-fillet-standoffs)
+   (drv2605l-place drv2605l-standoffs)
+   (six-pin-ffc-adapter-place six-pin-ffc-adapter-standoffs) 
+   (rp2040-plus-place rp2040-plus-mount :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
+   (difference (fractyl-bottom-plate wall-cross-section-steps wall-section-steps )
+               (translate [0 0 -1.5] fractyl-screw-insert-screw-holes)))
+   (= side :left) (mirror [1 0 0])))
+
+(spit "things-low/fractyl-bottom-plate-right.scad"
+      (write-scad
+(include include-bosl2)
+       (fractyl-bottom-plate-and-mounts 10 10))
+      )
+
+(spit "things-low/fractyl-bottom-plate-left.scad"
+      (write-scad
+       (include include-bosl2)
+       (fractyl-bottom-plate-and-mounts 10 10 :side :left)))

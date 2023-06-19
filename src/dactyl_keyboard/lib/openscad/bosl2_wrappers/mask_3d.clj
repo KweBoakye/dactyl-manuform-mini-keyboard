@@ -8,7 +8,7 @@
 
 (defn chamfer-edge-mask [length chamfer 
                          &{:keys [excess anchor spin orient] 
-                           :or [excess 0.1 anchor :CENTER spin 0 orient :UP]}] 
+                           :or {excess 0.1 anchor :CENTER spin 0 orient :UP}}] 
   (call-module :chamfer_edge_mask (format "length = "))
   )
 

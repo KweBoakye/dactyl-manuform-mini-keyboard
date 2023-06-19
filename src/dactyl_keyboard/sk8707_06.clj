@@ -42,7 +42,7 @@
                    0 
                    (- sk8707-06-pcb-height 0.05)])))
 
-(def sk8707-06-stem (->> (binding [*fn* 36] (cylinder (/ sk8707-06-stem-holder-diameter 3) 30 :center false))
+(def sk8707-06-stem (->> (binding [*fn* 36] (cylinder 0.5 16 :center false))
                          (translate [0 0 (+ sk8707-06-pcb-height sk8707-06-stem-holder-height)])))
 
 (def sk8707-06 

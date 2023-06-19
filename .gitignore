@@ -11,5 +11,4 @@
 /things/*.stl
 /things-low/*.stl
 *.ai
-*.svg
 *.json

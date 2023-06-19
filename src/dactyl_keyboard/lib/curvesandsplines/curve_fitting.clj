@@ -1256,7 +1256,7 @@
 
         ] 
     (if constrained  
-      (global-curve-interp-with-end-derivatives-and-provided-parameters-and-knot-vector Q  3 D-zero D-n  u-k-values knot-vector )
+      (global-curve-interp-with-first-derivatives Q  (mapv #(mul %1 %2) (conj a-k-values tau-zero) tangent-directions) 3   :calculated-u-k-values u-k-values)
       ;(global-curve-interp-with-end-derivatives-and-provided-parameters-and-knot-vector Q p D-zero D-n u-k-values knot-vector :n n)
       (let [{tau-zero-c2 :tau-zero
              tau-n-c2 :tau-n} (forced-orthogonal-derivative-magnitude-estimation Q (nth tangent-directions 0) (peek tangent-directions)

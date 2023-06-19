@@ -37,15 +37,15 @@
 (def fractyl-screw-insert-height 4)
 
 (defn fractyl-screw-insert-all-shapes [bottom-radius top-radius height]
-  (let [left-section-top-left   (fractyl-screw-insert (tps-65-wall-position :tl :north-west) bottom-radius top-radius height :offset [(/ bottom-radius 1.5) (/ bottom-radius -1.5) 0])
+  (let [left-section-top-left   (fractyl-screw-insert (tps-65-wall-position :tl :north-west) bottom-radius top-radius height :offset [(/ bottom-radius 1.5) (/ bottom-radius -1) 0])
         ;left-section-bottom (screw-insert 0 lastrow   bottom-radius top-radius height [-50 7 0]) 
         left-section-top-right  (fractyl-screw-insert (tps-65-wall-position :tr :north) bottom-radius top-radius height :offset [(* 3 (- bottom-radius)) (/ bottom-radius -3)  0])
         left-section-top-mid  (fractyl-screw-insert (tps-65-wall-position :tm :north) bottom-radius top-radius height )
         left-section-left-mid  (fractyl-screw-insert (tps-65-wall-position :tl-lm :west) bottom-radius top-radius height)
-        left-section-bm (fractyl-screw-insert (tps-65-wall-position :bm :south) bottom-radius top-radius height :offset [0 (/ bottom-radius 2) 0])
+        left-section-bm (fractyl-screw-insert (tps-65-wall-position :bm :south) bottom-radius top-radius height :offset [0 (/ bottom-radius 4) 0])
         ;thumb-bottom-left  (fractyl-screw-insert (tps-65-wall-position :tl :north-east) bottom-radius top-radius height)
         ;thumb-bottom-right  (fractyl-screw-insert (tps-65-wall-position :tl :north-east) bottom-radius top-radius height)
-        top-mid  (fractyl-screw-insert (key-wall-position 2 0 0 1 :tm ) bottom-radius top-radius height )
+        top-mid  (fractyl-screw-insert (key-wall-position 2 0 0 1 :tm ) bottom-radius top-radius height :offset [0 (/ bottom-radius 2) 0])
         top-right  (fractyl-screw-insert (key-wall-position lastcol 0 1 1 :tr) bottom-radius top-radius height
                                          :offset [(+ (/ bottom-radius -1.5) -1) (+ (/ bottom-radius -1.5) -1) 0])
         bottom-right  (fractyl-screw-insert (key-wall-position lastcol cornerrow 1 -1 :br :slant :no-slant) bottom-radius top-radius height :offset [(/ bottom-radius -2) (+ (/ bottom-radius 2) 0.5) 0]) ]

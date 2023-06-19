@@ -226,20 +226,23 @@
              position-1 (:wall-locate-2-bottom-floor (calculate-control-points (tps-65-wall-position :tr :north-west)))
              position-2 (:wall-locate-2-bottom-floor (calculate-control-points (key-wall-position 0 0 0 1 :tl  :slant :no-slant)))]
          (union
-          (->>
-           sk8707-06
-           (translate [0 0 -2]) 
-           (rdz 0)
-           (translate (mapv + web-post-tl-translation-vector [-1.5 0 0]
-                            [0 0 (- (+ sk8707-06-stem-holder-height sk8707-06-pcb-height))]))
-           (key-place 2 1))
           ;; (->>
-          ;;  sk8707-51
-          ;;  (translate [0 0 -2])
-          ;;  (rdz 90)
-          ;;  (translate (mapv + web-post-tl-translation-vector [-1.5 0 0]
-          ;;                   [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
+          ;;  sk8707-06
+          ;;  (rdx 5)
+          ;;  (translate [0 0 -0.5]) 
+          ;;  (rdz 0)
+          ;;  (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
+          ;;                   [0 0 (- (+ sk8707-06-stem-holder-height sk8707-06-pcb-height))]))
           ;;  (key-place 2 1))
+          (-# (translate [0 10 -1](cube 20 20 2)))
+          (->>
+           sk8707-51
+           (rdz 0)
+           (rdx 5)
+           (translate [0 0 0.75]) 
+           (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
+                            [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
+           (key-place 2 1))
           (key-place 1 0 (des-scooped 0))
           (key-place 1 1 (des-scooped 1))
           (key-place 2 0 (des-scooped 0))

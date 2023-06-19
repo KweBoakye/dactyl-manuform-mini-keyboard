@@ -9,10 +9,12 @@
                                                        factorial]])
   )
 
-(defn bernstein-polynomial [i n u ]
+(defn bernstein-polynomial
+  ""
+  [i n u ]
   (let [temp (double-array (inc n) 0.0)
         u1 (- 1.0 u)]
-    (aset temp (dec n) 1.0)
+    (aset temp (- n i) 1.0)
     (doseq [k (range 1 (inc n))]
       (loop [j n]
         (if (< j k)
@@ -197,7 +199,15 @@
 
 
 
-(defn calculate-non-vanishing-basis-functions [i u p U]
+(defn calculate-non-vanishing-basis-functions 
+  "Algorithm A2.2 from pg.70 of the Nurbs Book
+   `i` is knot span index. See [[calculate-knot-span-index]]
+   `u` is the parameter
+   `p` is the degree
+   `U` is the knot vector
+   this function returns the non vanishing basis functions
+   in contained in a vector"
+  [i u p U]
   (let [N (double-array (inc p) 0.0)
         m (dec (count U))
         left (double-array  (inc p))
@@ -265,7 +275,15 @@
            (mapv vec all-basis)))
 
 (defn calculate-non-uniform-b-spline-point
-  "from p82 of the nurbs book"
+  "from p82 of the nurbs book
+  `n` is the number of control points - 1
+   `p` is the degree of the curve
+   `U` is the knot vector
+   'P' are the control points each a vector of numerical coordinates 
+   and all contained in a vector
+   'u' is the parameter of the point
+  this function is the same as using [[calculate-nurbs-curve-point]] with all
+   weights set to one"
   [n p U P u]
 
   (let [span (calculate-knot-span-index n p u U)

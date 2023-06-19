@@ -4342,26 +4342,31 @@
 (spit "things-low/orthog-test.scad"
        (write-scad
         (include "../BOSL2/std.scad")
-        (let [points (vec (reverse [(web-post-point-top (partial key-place lastcol 0) :tr :radians)
+        (let [points  [(web-post-point-top (partial key-place lastcol 0) :tr :radians)
                       (web-post-point-top (partial key-place lastcol 0) :br :radians)
                       (web-post-point-top (partial key-place lastcol 1) :tr :radians)
                       (web-post-point-top (partial key-place lastcol 1) :br :radians)
                       (web-post-point-top (partial key-place lastcol cornerrow) :tr :radians)
-                      (web-post-point-top (partial key-place lastcol cornerrow) :br :radians)]))
-              tangents  (vec (reverse [(mapv - (web-post-point-top (partial key-place lastcol 0) :tr :radians) (web-post-point-top (partial key-place lastcol 0) :br :radians) )
-                         (mapv - (web-post-point-top (partial key-place lastcol 0) :br :radians) (web-post-point-top (partial key-place lastcol 1) :tr :radians) )
-                         (mapv - (web-post-point-top (partial key-place lastcol 1) :tr :radians) (web-post-point-top (partial key-place lastcol 1) :br :radians) )
-                         (mapv - (web-post-point-top (partial key-place lastcol 1) :br :radians) (web-post-point-top (partial key-place lastcol cornerrow) :tr :radians) )
-                         (mapv -  (web-post-point-top (partial key-place lastcol cornerrow) :tr :radians) (web-post-point-top (partial key-place lastcol cornerrow) :br :radians))
-                         (mapv - (web-post-point-top (partial key-place lastcol cornerrow) :br :radians) (web-post-point-top (partial key-place 2 cornerrow) :br :radians) )])) 
+                      (web-post-point-top (partial key-place lastcol cornerrow) :br :radians)]
+              tangents  [(mapv - (main-body-web-post-point-top lastcol 0 :br) (main-body-web-post-point-top lastcol 0 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 0 :br) (main-body-web-post-point-top lastcol 0 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 1 :br) (main-body-web-post-point-top lastcol 1 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 1 :br) (main-body-web-post-point-top lastcol 1 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 2 :br) (main-body-web-post-point-top lastcol 2 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 2 :br) (main-body-web-post-point-top lastcol 2 :tr))
+                         ] 
+              tangents-2  [(mapv - (main-body-web-post-point-top lastcol 0 :br) (main-body-web-post-point-top lastcol 0 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 1 :tr) (main-body-web-post-point-top lastcol 0 :br))
+                         (mapv - (main-body-web-post-point-top lastcol 1 :br) (main-body-web-post-point-top lastcol 1 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 2 :tr) (main-body-web-post-point-top lastcol 1 :br))
+                         (mapv - (main-body-web-post-point-top lastcol 2 :br) (main-body-web-post-point-top lastcol 2 :tr))
+                         (mapv - (main-body-web-post-point-top lastcol 2 :br) (main-body-web-post-point-top lastcol 2 :tr))]
                                        
-              params (global-orthogonal-construction-cubic-interpolation points tangents :constrained true :knot-vector-calculation-method :average)
-              steps 150
+              params (global-orthogonal-construction-cubic-interpolation points tangents-2 :constrained true :knot-vector-calculation-method :average)
+              steps 100
               orth-curve (non-uniform-b-spline (:P params) 3 (:U params) steps )
-              glob-curve (global-curve-interp-with-end-unit-derivatives-curve points 3  (nth tangents 0) (peek tangents) steps
-                                                                              :point-paramater-calculation-method :centripetal
-                                                                              :magnitude-estimation-method :arc
-                                                                              :knot-vector-generation-method :natural)
+              glob-curve (global-curve-interp-with-calculated-first-derivatives-curve
+                          points tangents 3 steps)
               c2-curve (global-c2-cubic-spline-curve-interpolation-with-tangent-vectors-curve points (nth tangents 0) (peek tangents) steps
                                                                                               :point-paramater-calculation-method :centripetal
                                                                                               :knot-vector-generation-method :average
@@ -4374,9 +4379,9 @@
            key-holes
            (tps-65-place tps-65-mount-new)
            (plot-bezier-points points (cube 0.5 0.5 0.5))
-           (-# (plot-bezier-points glob-curve (sphere 2)))
-           (plot-bezier-points orth-curve  (sphere 2))
-           (color [0 1 0 1](plot-bezier-points c2-curve (sphere 2) )) 
+           (-# (plot-bezier-points glob-curve (sphere 0.5)))
+           (color [0 0 1 1](plot-bezier-points orth-curve  (sphere 0.5)))
+           ;(color [0 1 0 1](plot-bezier-points c2-curve (sphere 2) )) 
            )
           )))
 
