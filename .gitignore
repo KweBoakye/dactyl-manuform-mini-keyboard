@@ -6,9 +6,15 @@
 
 .lein-*
 *.gcode
-*.scad
+/.clj-kondo
 /target
+/parts/*.stp
+/parts/*.step
+/parts/*.zip
 /things/*.stl
+/things/*.scad
 /things-low/*.stl
+/things-low/*.scad
+/things-low/original/*.scad
 *.ai
 *.json
