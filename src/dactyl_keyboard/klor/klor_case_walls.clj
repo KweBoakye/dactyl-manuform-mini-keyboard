@@ -23,7 +23,8 @@
                                                                                decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves
                                                                                non-uniform-b-spline nurbs nurbs-with-calculated-knot-vector]]
             [dactyl-keyboard.lib.curvesandsplines.splines :refer [catmull-rom-spline-curve]] ;[dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer [include-bosl2]]
-            [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer :all]
+            [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer :all] 
+            [dactyl-keyboard.sk8707-51 :refer :all]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.skin :refer :all]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.vnf :refer [vnf-polyhedron
                                                                      vnf-tri-array vnf-vertex-array vnf-wireframe]]
@@ -31,7 +32,8 @@
             [dactyl-keyboard.lib.transformations :refer [rdx rdy rdz ]]
             [dactyl-keyboard.low.case-low-polyhedron-functions :refer [wall-vnf-array]]
             [dactyl-keyboard.oled :refer [oled-holder-cut oled-holder-width
-                                          oled-pcb-size]]
+                                          oled-pcb-size ST7789-135*240-holder
+                                          ST7789-135*240]]
             [dactyl-keyboard.tps-43 :refer :all]
             [dactyl-keyboard.utils :refer [plot-bezier-points select-values]]
             [scad-clj.model :refer :all]
@@ -46,9 +48,9 @@
                       middle-top-tr-north
                       middle-top-tl-north
                       middle-top-tl-inset
-                      oled-holder-tr-inset
-                      oled-holder-tr-north
-                      oled-holder-tl-north])
+                      screen-holder-tr-inset
+                      screen-holder-tr-north
+                      screen-holder-tl-north])
         n (dec (count points))
         segments (- (count points) 3)
         total-wall-section-steps (* wall-section-steps segments)
@@ -61,12 +63,12 @@
                                 :let [catmull-points (vec (for [inner-index (range (inc n))] (get-in inner-vertical-curves [inner-index index])))]]
                             (catmull-rom-spline-curve catmull-points total-wall-section-steps))))
         nurbs-points (mapv klor-wall-control-points-from-map
-                           [oled-holder-tr-north
-                            oled-holder-tm-north
-                            oled-holder-tl-north
-                            oled-holder-tl-north-west
-                            oled-holder-tl-west
-                            oled-holder-bl-inset
+                           [screen-holder-tr-north
+                            screen-holder-tm-north
+                            screen-holder-tl-north
+                            screen-holder-tl-north-west
+                            screen-holder-tl-west
+                            screen-holder-bl-inset
                             tps-43-tl-north
                             tps-43-tl-north-west
                             tps-43-tl-west]) 
@@ -122,15 +124,15 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
       middle-top-tl-north-control-points (klor-wall-control-points-from-map   middle-top-tl-north)
       middle-top-tl-inset-control-points (klor-wall-control-points-from-map   middle-top-tl-inset)
       inner-index-top-tr-control-points (klor-wall-control-points-from-map inner-index-top-tr)
-      oled-holder-tr-inset-control-points (klor-wall-control-points-from-map   oled-holder-tr-inset)
-      oled-holder-tr-north-control-points (klor-wall-control-points-from-map   oled-holder-tr-north)
-      oled-holder-tr-north-east-control-points (klor-wall-control-points-from-map   oled-holder-tr-north-east)
-      oled-holder-tm-north-control-points (klor-wall-control-points-from-map oled-holder-tm-north)
-      oled-holder-tl-north-control-points (klor-wall-control-points-from-map   oled-holder-tl-north)
-      oled-holder-tl-north-west-control-points (klor-wall-control-points-from-map   oled-holder-tl-north-west)
-      oled-holder-tl-west-control-points (klor-wall-control-points-from-map oled-holder-tl-west)
-      oled-holder-bl-inset-control-points (klor-wall-control-points-from-map oled-holder-bl-inset)
-      oled-holder-bl-control-points (klor-wall-control-points-from-map oled-holder-bl-west)
+      oled-holder-tr-inset-control-points (klor-wall-control-points-from-map   screen-holder-tr-inset)
+      oled-holder-tr-north-control-points (klor-wall-control-points-from-map   screen-holder-tr-north)
+      oled-holder-tr-north-east-control-points (klor-wall-control-points-from-map   screen-holder-tr-north-east)
+      oled-holder-tm-north-control-points (klor-wall-control-points-from-map screen-holder-tm-north)
+      oled-holder-tl-north-control-points (klor-wall-control-points-from-map   screen-holder-tl-north)
+      oled-holder-tl-north-west-control-points (klor-wall-control-points-from-map   screen-holder-tl-north-west)
+      oled-holder-tl-west-control-points (klor-wall-control-points-from-map screen-holder-tl-west)
+      oled-holder-bl-inset-control-points (klor-wall-control-points-from-map screen-holder-bl-inset)
+      oled-holder-bl-control-points (klor-wall-control-points-from-map screen-holder-bl-west)
       
       tps-43-tl-north-control-points (klor-wall-control-points-from-map tps-43-tl-north)
       ;pcb-top-right-corner-point-north-east-control-points (klor-wall-control-points-from-map pcb-top-right-corner-point-north-east)
@@ -548,7 +550,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
         tps-43-bm-inset-west (update-vals (klor-tps-43-wall-control-points :bl :west) #(mapv + bm-inset-offset %))
         tps-43-bm-inset-south-west (update-vals (klor-tps-43-wall-control-points :bl :south-west) #(mapv + bm-inset-offset %))
         tps-43-bm-inset-south (update-vals (klor-tps-43-wall-control-points :bl :south) #(mapv + bm-inset-offset %))
-        oled-holder-bl-inset-control-points (klor-wall-control-points-from-map oled-holder-bl-inset)
+        oled-holder-bl-inset-control-points (klor-wall-control-points-from-map screen-holder-bl-west)
         above-trrs-jack-control-points (klor-wall-control-points-from-map above-trrs-jack)
         below-trrs-jack-control-points (klor-wall-control-points-from-map below-trrs-jack)
         outer-thumb-tm-north-inset-control-points (klor-wall-control-points-from-map outer-thumb-tm-north-inset)
@@ -562,13 +564,13 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
         outer-thumb-bl-south-control-points (klor-wall-control-points-from-map outer-thumb-bl-south)
         outer-thumb-br-south-control-points (klor-wall-control-points-from-map outer-thumb-br-south)
         tps-43-tl-north-outer-curve (klor-outer-wall-vertical-nurbs tps-43-tl-north wall-cross-section-steps)
-        oled-holder-tl-north-control-points (klor-wall-control-points-from-map   oled-holder-tl-north)
-        oled-holder-tl-north-west-control-points (klor-wall-control-points-from-map   oled-holder-tl-north-west)
+        oled-holder-tl-north-control-points (klor-wall-control-points-from-map   screen-holder-tl-north)
+        oled-holder-tl-north-west-control-points (klor-wall-control-points-from-map   screen-holder-tl-north-west)
         oled-holder-tl-north-outer-curve (klor-outer-wall-vertical-nurbs oled-holder-tl-north-control-points wall-cross-section-steps)
         oled-holder-tl-north-inner-curve (klor-inner-wall-vertical-linear oled-holder-tl-north-control-points wall-cross-section-steps)
         oled-holder-tl-north-west-outer-curve (klor-outer-wall-vertical-nurbs oled-holder-tl-north-west-control-points wall-cross-section-steps)
-        oled-holder-tl-west-control-points (klor-wall-control-points-from-map oled-holder-tl-west)
-        oled-holder-lm-west-control-points (klor-wall-control-points-from-map oled-holder-lm-west)
+        oled-holder-tl-west-control-points (klor-wall-control-points-from-map screen-holder-tl-west)
+        oled-holder-lm-west-control-points (klor-wall-control-points-from-map screen-holder-lm-west)
         oled-holder-tl-west-outer-curve (klor-outer-wall-vertical-nurbs oled-holder-tl-west-control-points wall-cross-section-steps)
         oled-holder-lm-west-outer-curve (klor-outer-wall-vertical-nurbs oled-holder-lm-west-control-points wall-cross-section-steps)
         oled-holder-bl-inset-outer-curve (klor-outer-wall-vertical-nurbs oled-holder-bl-inset-control-points wall-cross-section-steps)
@@ -787,7 +789,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
                       tps-43-cutout
                       tps-43-full-cutout))))))
 
-(defn trackpad-attachnent-walls [wall-cross-section-steps wall-section-steps]
+(defn trackpad-attachment-walls [wall-cross-section-steps wall-section-steps]
   (let [offset-value 0.4
         top-tm (klor-tps-43-position (mapv + [-3 offset-value 0] key-spacing-inner-west (tps-43-mount-spacing :tm)) :height klor-case-walls-height)
         top-tl-north (klor-tps-43-position (mapv + [0 offset-value 0] [2 0 0] (tps-43-mount-spacing :tl)) :height klor-case-walls-height)
@@ -835,7 +837,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
         last-points [(mapv + top-tm [-4 -2 -6])
                      (mapv +  top-bm [-2.5 2 -6])]
         
-        oled-holder-bl-inset-control-points (klor-wall-control-points-from-map oled-holder-bl-inset)
+        oled-holder-bl-inset-control-points (klor-wall-control-points-from-map screen-holder-bl-inset)
         oled-holder-bl-inset-outer-curve (klor-outer-wall-vertical-nurbs oled-holder-bl-inset-control-points wall-cross-section-steps)
         above-trrs-jack-control-points (klor-wall-control-points-from-map above-trrs-jack)
         below-trrs-jack-control-points (klor-wall-control-points-from-map below-trrs-jack)
@@ -930,7 +932,115 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
      )
     )
   )
-(def klor-switch-plate-polygon 
+
+(keyword "north")
+(keyword "east")
+(keyword "south")
+(keyword "west")
+(keyword "quarter")
+(keyword "half")
+(keyword "three-quarters")
+(keyword "whole")
+(keyword "clockwise")
+(keyword "anti-clockwise")
+
+(def cardinals 
+  [:north
+   :north-east
+   :east
+   :south-east
+   :south
+   :south-west
+   :west
+   :north-west])
+
+
+(defn cardinal-translation [radius cardinal]
+  (case cardinal
+    :north [0 radius 0]
+    :north-east [radius radius 0]
+    :east [radius 0 0]
+    :south-east [radius (- radius) 0]
+    :south [0 (- radius) 0]
+    :south-west [(- radius) (- radius) 0]
+    :west [(- radius) 0 0]
+    :north-west [(- radius) radius 0]) 
+  )
+
+(defn get-cardinal-points [quadrant start-cardinal radius start-point]
+  (let [start-index (.indexOf cardinals start-cardinal)
+        cardinal-last-index (dec (count cardinals))
+        
+        jump (case quadrant
+               :quarter 2
+               :half 4
+               :three-quarters 6
+               :full 8)
+        last-index (+ start-index jump)
+        ]
+    (println cardinal-last-index)
+    (println last-index)
+    (->> (if (<  cardinal-last-index last-index)
+      (into [](concat (subvec cardinals start-index (inc cardinal-last-index))
+              (subvec cardinals 0 (-  last-index cardinal-last-index))
+              ))
+      (subvec cardinals start-index (inc last-index))
+      )
+         (mapv #(cardinal-translation radius %))
+         (mapv #(mapv + start-point %))
+         )
+    )
+  )
+
+(comment (get-cardinal-points :three-quarters :west 2 [0 0 0]))
+
+(defn generate-circ-weights [number-of-weights]
+  (let [corner-weight (/ (sqrt 2) 2)]
+    (into [](for [index (range number-of-weights)]
+      (if (odd? index) corner-weight 1)
+      ))
+    )
+  )
+
+(defn generate-knot-vector [quadrant]
+  (case quadrant
+    :quarter [0 0 0 1 1 1]
+    :half [0 0 0 2 2 4 4 4]
+    :three-quarters [0 0 0 2 2 4 4 6 6 6]
+    :full [0 0 0 2 2 4 4 6 6 8 8 8])
+  )
+
+(comment (generate-circ-weights 5))
+(defn circ-nurbs-around-point [point radius start-cardinal quadrant steps]
+  (let [points (get-cardinal-points quadrant start-cardinal radius point)
+        weights (generate-circ-weights (count points))
+        knot-vector (generate-knot-vector quadrant) 
+        ]
+    (->> (nurbs points 2 knot-vector weights steps)
+         )
+    )
+  )
+
+(defn circ-corner-nurb [point radius start-cardinal end-cardinal steps]
+  (let [start-point (mapv + point (rotate-around-z-in-degrees anchor-rotation (cardinal-translation radius start-cardinal )))
+        end-point (mapv + point (rotate-around-z-in-degrees anchor-rotation (cardinal-translation radius end-cardinal)))
+        knot-vector (generate-knot-vector :quarter) 
+        weights (generate-circ-weights 3)
+        points [start-point point end-point]]
+    (nurbs points 2 knot-vector weights steps)
+    )
+  )
+
+(comment (let [vert-offset 1.75
+               horiz-offset 0.8
+               inner-index-tl (klor-key-position 0 2 (mapv + [(- horiz-offset) vert-offset 0] keycap-spacing-north-west))
+               radius 4
+               steps 8] 
+           (concat (circ-nurbs-around-point inner-index-tl radius :west :quarter steps)
+                   [[0 0 0][0 0 0]])))
+
+(comment (conj [0 0] 0))
+(defn klor-switch-plate-polygon  [&{:keys [steps] :or {steps 10}}]
   
   (let [vert-offset 1.75
         horiz-offset 0.8
@@ -971,36 +1081,42 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
         outer-thumb-tl (mapv + (:wall-bottom-inner (klor-wall-control-points-from-map outer-thumb-tl-north-west)) [-0.5 0.1 0])
         outer-thumb-tm-inset (klor-thumb-position 3 (mapv + [1.55 1.8 0] key-spacing-north))
         mid-left-thumb-tr (klor-thumb-position 2 (mapv + [-1.5 1.5 0] key-spacing-north-west))
-        inner-index-bl (klor-key-position 0 0 (mapv + [(- horiz-offset) (- (+ vert-offset 1.4)) 0] keycap-spacing-south-west))
-        points (vec (concat [inner-index-tl
-                             inner-index-tr
-                             index-tl
-                             index-tr
-                             middle-tl
-                             middle-tr
-                             fourth-tl
-                             fourth-tr
-                             pinky-tl
-                             pinky-tr
-                             outer-pinky-tl
-                             outer-pinky-tr
-                             outer-pinky-br
-                             outer-pinky-bl
-                             pinky-br
-                             pinky-bl
-                             fourth-br
-                             fourth-bl 
-                             middle-br
-                             middle-bl
-                             inner-thumb-tl-north-east-inset
-                             inner-thumb-tl-north-east
-                             inner-thumb-tl-east
-                             inner-thumb-tl-east-outset]
+        inner-index-bl (klor-key-position 0 0 (mapv + [(- horiz-offset) (- (+ vert-offset 1.4)) 0] keycap-spacing-south-west)) 
+        radius 2
+        radius-junction 1
+        points (vec (concat (circ-corner-nurb inner-index-tl radius :south :east steps)
+                            (circ-corner-nurb inner-index-tr radius-junction :west :north steps)
+                            (circ-corner-nurb index-tl radius-junction :south :east steps) 
+                             (circ-corner-nurb index-tr radius :west :north steps)
+                            (circ-corner-nurb middle-tl radius :south :east steps)
+                            (circ-corner-nurb middle-tr radius :west :south steps)
+                            (circ-corner-nurb fourth-tl radius :north :east steps)
+                            (circ-corner-nurb fourth-tr radius :west :south steps)
+                            (circ-corner-nurb pinky-tl radius :north :east steps)
+                            (circ-corner-nurb pinky-tr radius :west :south steps)
+                            (circ-corner-nurb outer-pinky-tl radius-junction :north :east steps)
+                            (circ-corner-nurb outer-pinky-tr radius :west :south steps)
+                            (circ-corner-nurb outer-pinky-br radius :north :west  steps)
+                            (circ-corner-nurb outer-pinky-bl radius-junction :east :south steps)
+                            (circ-corner-nurb pinky-br radius-junction :north :west steps)
+                            (circ-corner-nurb pinky-bl radius :east :north steps)
+                            (circ-corner-nurb fourth-br radius :south :west steps)
+                             (circ-corner-nurb fourth-bl radius :east :north steps)
+                            (circ-corner-nurb middle-br radius :south :west steps)
+                             (circ-corner-nurb middle-bl radius :east :south steps)
+                             (circ-corner-nurb inner-thumb-tl-north-east-inset radius-junction :north :east steps)
+                            (circ-corner-nurb inner-thumb-tl-north-east radius-junction :west :south steps)
+                            (circ-corner-nurb inner-thumb-tl-east (/ radius-junction 2) :north :east steps)
+                             [inner-thumb-tl-east-outset]
+                             ;(circ-corner-nurb inner-thumb-tl-east-outset (/ radius-junction 2) :west :south steps) 
                  bottom-thumb-points
-                 [outer-thumb-tl
+                 [outer-thumb-bl
+                  outer-thumb-tl
                   outer-thumb-tm-inset
                   mid-left-thumb-tr
-                  inner-index-bl]))] 
+                  inner-index-bl
+                  ]))] 
+                         (println inner-index-tl)
         ;(->> (extrude-linear {:height klor-switchplate-thickness  :convexity 10}
                          (polygon (mapv drop-last points))
           ;               )
@@ -1036,7 +1152,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
 (defn usb-c-port-hole [steps]
   (->> (fractyl-usb-c-port steps)
        (rdz anchor-rotation)
-       (translate (mapv + [5.5 -1.06 -0.7] (#(div (mapv + (nth % 0) (nth % 1)) 2) (select-values  (klor-wall-control-points-from-map oled-holder-tm-north) [:wall-locate3-point :wall-locate3-point-floor]))))))
+       (translate (mapv + [5.5 -1.06 -0.7] (#(div (mapv + (nth % 0) (nth % 1)) 2) (select-values  (klor-wall-control-points-from-map screen-holder-tm-north) [:wall-locate3-point :wall-locate3-point-floor]))))))
 
 (defn klor-case-mounting-hole-place [mounting-hole-position shape]
   (translate (mapv + (klor-point-place mounting-hole-position) (rotate-around-z-in-degrees anchor-rotation [-0.15 0.3 0]))  shape))
@@ -1306,7 +1422,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
          (union
           klor-trackpad-wall-polyhedron
           (klor-tps-43-place (translate [0 0 1] (tps-43-mount)))
-          (trackpad-attachnent-walls 10 10)
+          (trackpad-attachment-walls 10 10)
           ;(plot-bezier-points (vals tps-43-lm-west) (sphere 0.5))
           ;; (plot-bezier-points (circ-fn (nth tree-path 0) 0) (sphere 0.5))
           ;; (plot-bezier-points (select-values tps-43-lm-west [:wall-locate-2-top :wall-locate-2-bottom :wall-top-inner :wall-top-outer]) (sphere 0.5))
@@ -1324,14 +1440,12 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
           ))
        ))
 
-(spit "things-low/klor.scad" 
- (write-scad 
-  (include include-bosl2) 
-  
-  (let [key-shape (extrude-linear {:height klor-switchplate-thickness :center false} (difference (square (dec key-spacing-horizontal) (dec key-spacing-vertical))
+(defn klor-case [&{:keys [wall-cross-section-steps 
+                          wall-section-steps ] :or {wall-cross-section-steps 10
+                                 wall-section-steps 10}}]
+   (let [key-shape (extrude-linear {:height klor-switchplate-thickness :center false} (difference (square (dec key-spacing-horizontal) (dec key-spacing-vertical))
                                                                                                  (square 14 14)))
-        wall-cross-section-steps 10
-        wall-section-steps 10
+        
         cyl (binding [*fn* 36] (cylinder 0.1 14.5 :center false))
         thumb-cyl (binding [*fn* 36] (cylinder 0.5 5.5 :center false))
         tps-43-to-thumb-position (klor-tps-43-position (mapv + [(+ (/ oled-holder-width -2) 5) (- (/ tps-43-mount-length -2) 2) 0] [(- klor-case-offset) 0 0]) :height 0)
@@ -1358,7 +1472,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
          inner-wall-inner-border-fn :inner-wall-inner-border-fn
          klor-trackpad-outer-wall-top-points :outer-wall-top-points
          left-side-cutout-points-floor :left-side-cutout-points-floor
-         left-side-cutout-points-top :left-side-cutout-points-top } (trackpad-walls wall-cross-section-steps wall-section-steps)
+         left-side-cutout-points-top :left-side-cutout-points-top} (trackpad-walls wall-cross-section-steps wall-section-steps)
         {klor-back-wall-polyhedron :wall
          klor-back-outer-wall-top-points :outer-wall-top-points
          klor-back-wall-outer-floor :outer-wall-floor-points
@@ -1368,7 +1482,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
                                               klor-pinky-outer-wall-top-points
                                               klor-back-outer-wall-top-points
                                               klor-trackpad-outer-wall-top-points]))
-
+  
         inner-points (mapv drop-last (apply concat [klor-pinky-wall-inner-floor
                                                     klor-thumb-to-pinky-wall-inner-floor
                                                     klor-thumb-wall-inner-floor
@@ -1385,168 +1499,226 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
         middle-br (klor-key-position 2 0 (mapv + [(- (+ horiz-offset 0.05)) (- (+ vert-offset 0.3)) 0] keycap-spacing-south-east))
         inner-thumb-tl-north-east (klor-thumb-position 0 (mapv + [1.5 1.5 0] key-spacing-north-east))
         inner-thumb-tl-east-outset (klor-thumb-position 0 (mapv + [3 1.4 0] key-spacing-east))
-        left-side-cutout (let [top-points (apply concat [(mapv #(mapv + [0 0 -3.03] %) left-side-cutout-points-top) 
-                                                          (mapv #(mapv + [0 0 (- klor-case-walls-height 3.03)] %)
-                                                                [(mapv + (rotate-around-z-in-degrees anchor-rotation [-1 2.5 0]) (:wall-bottom-inner (klor-wall-control-points-from-map below-trrs-jack)))
-                                                                 (:wall-bottom-inner (klor-tps-43-wall-control-points :br :south :offset [-2 2 0]))
-                                                                 (:wall-bottom-inner (klor-wall-control-points-from-map oled-holder-tr-north))])])
+        left-side-cutout (let [top-points (apply concat [(mapv #(mapv + [0 0 -3.03] %) left-side-cutout-points-top)
+                                                         (mapv #(mapv + [0 0 (- klor-case-walls-height 3.03)] %)
+                                                               [(mapv + (rotate-around-z-in-degrees anchor-rotation [-1 2.5 0]) (:wall-bottom-inner (klor-wall-control-points-from-map below-trrs-jack)))
+                                                                (:wall-bottom-inner (klor-tps-43-wall-control-points :br :south :offset [-2 2 0]))
+                                                                (:wall-bottom-inner (klor-wall-control-points-from-map screen-holder-tr-north))])])
                                bottom-points (apply concat
                                                     [left-side-cutout-points-floor
                                                      [(mapv + (rotate-around-z-in-degrees anchor-rotation [-1 2.5 0]) (:wall-bottom-inner (klor-wall-control-points-from-map below-trrs-jack)))
                                                       (:wall-bottom-inner (klor-tps-43-wall-control-points :br :south :offset [-2 2 0]))
-                                                      (:wall-bottom-inner (klor-wall-control-points-from-map oled-holder-tr-north))]])
-                               wall-points (vec (for [index (range (count top-points))](n-degree-bezier-curve [(nth top-points index) (nth  bottom-points index)] 1)))] 
-                                   (vnf-polyhedron (vnf-vertex-array (rotate-matrix wall-points) :row-wap false :col-wrap true :caps true :reverse false) ))] 
-  ;(println (some #if (double? %) %) klor-thumb-to-pinky-outer-wall-top-points))
-    ;(println klor-trackpad-outer-wall-top-points)
-    
+                                                      (:wall-bottom-inner (klor-wall-control-points-from-map screen-holder-tr-north))]])
+                               wall-points (vec (for [index (range (count top-points))] (n-degree-bezier-curve [(nth top-points index) (nth  bottom-points index)] 1)))]
+                           (vnf-polyhedron (vnf-vertex-array (rotate-matrix wall-points) :row-wap false :col-wrap true :caps true :reverse false)))]
+    ;(println (some #if (double? %) %) klor-thumb-to-pinky-outer-wall-top-points))
+      ;(println klor-trackpad-outer-wall-top-points)
+  
     (union
+  
+       ;(klor-screen-place ST7789-135*240)
+       ;(color [1 0 0 1] (klor-oled-place (cube 30 24 2) :height 13.5))
+       ;(color [0 1 0 1] (klor-oled-place (cube 21.7 10.8 2) :height 13.6))
+     ;  (color [1 0 0 1] (klor-oled-place (cube 32 28 2) :height 13.5))
+       ;(klor-screen-place ST7789-135*240-holder)
+  
+       ;;(-# (klor-screen-place ()))
+      ;;  (color [0 1 0 1] (klor-oled-place (->>(cube 24.91 14.86 2)
+      ;;                                         (translate [(+ (/ (- 24.91 32 ) 2) 1.8) 
+      ;;                                                     (- (/ (- 28 14.6)  2) 6.57) 0])) :height 13.6))
+       ;(plot-bezier-points (mapv #(mapv + [0 0 -3.03] %) left-side-cutout-points-top) (sphere 1))
+      ;(klor-point-place )
+       ;(klor-bottom-plate wall-cross-section-steps wall-section-steps)
+       ;(-# (klor-case-mounting-hole-place top-middle-mounting-hole (translate [0 -4 (- klor-switchplate-z-position 1.1)] (cube 4 4 2.2))))
+  
+      ;;  (plot-bezier-points left-side-cutout-points-floor (sphere 0.5))
+      ;;  (plot-bezier-points (mapv #(mapv + [0 0 (- klor-case-walls-height 3.03)] %) left-side-cutout-points-floor) (sphere 0.5))
+      ;;  (translate (:wall-bottom-inner (klor-wall-control-points-from-map oled-holder-tr-north)) (sphere 1))
+      ;;  (translate (:wall-bottom-inner (klor-tps-43-wall-control-points :br :south :offset [-2 2 0])) (sphere 1))
+       ;(klor-case-mounting-hole-place top-right-inner-mounting-hole pcb-under-support)
+       ;(klor-case-mounting-hole-place top-right-mounting-hole pcb-under-support)
+  
+       ;(klor-case-mounting-hole-place top-right-mounting-hole (rdz (+ anchor-rotation 180) (pcb-to-plate-support)))
+      ;;  (difference support-for-top-left-mounting-hole
+      ;;              (translate (mapv + (klor-point-place top-left-mounting-hole) (rotate-around-z-in-degrees anchor-rotation [-0.15 0.3 0]))  (binding [*fn* 36] (cylinder klor-pcb-mount-hole-radius 8 :center false)))
+      ;;              )
+      ;;  (-# (->> (extrude-linear {:height klor-switchplate-thickness :center true} klor-switch-plate-polygon)
+      ;;           (translate [0 0 (+ klor-switchplate-z-position )])))
+  
+      ;;  (translate (mapv + (klor-point-place top-left-mounting-hole) (rotate-around-z-in-degrees anchor-rotation [-0.15 0.3 0]))  (binding [*fn* 36] (cylinder 1.75 8 :center false)))
+     (difference
+      (-# (trackpad-attachment-walls wall-cross-section-steps wall-section-steps))
+      left-side-cutout)
+     (difference
+                         (union
+        ;(difference
+                ;;  (->>
+                ;;   (extrude-linear {:height (- klor-case-walls-height klor-switchplate-z-position) :center false} (polygon inner-points))
+                ;;   (translate [0 0 klor-switchplate-z-position]))
+                          (translate [0 0 (- klor-switchplate-z-position (/ klor-switchplate-thickness 2))]
+                                     (extrude-linear {:height (+ (- klor-case-walls-height klor-switchplate-z-position) (/ klor-switchplate-thickness 2))
+                                                      :center false}
+                                                     (polygon (mapv #(vec (drop-last %)) outer-top-points))))
+  
+             
+  
+                          klor-trackpad-wall-polyhedron)
+      
+                         trrs-jack-cutout
+                         reset-button-cutout
+                         (->> (extrude-linear {:height (+ (- klor-case-walls-height klor-switchplate-z-position (/ klor-switchplate-thickness 2)) 0.01) :center false} (klor-switch-plate-polygon wall-section-steps))
+                              (translate [0 0 (+ klor-switchplate-z-position (/ klor-switchplate-thickness 2) 0.01)]))
+                         (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
+                              (scale [0.06 0.06])
+                              (mirror [0 1 0])
+      
+                              (extrude-linear {:height (inc (- klor-case-walls-height klor-switchplate-z-position)) :center true :scale 0.5})
+                              (rdx 180)
+         
+                              (klor-key-place 2 0)
+                              (translate [3.5 (- 1.5 key-spacing-length) (+ klor-switchplate-z-position (- klor-switchplate-z-position 0.5))]))
+                         left-side-cutout
+  
+                         (klor-tps-43-place (translate [0 0 1] tps-43-cutout))
+                         (klor-tps-43-place  tps-43-full-cutout)
+       ;(mcu-place mcu-clearance)
+                         klor-key-holes
+                         (klor-screen-place (screen-holder-cut) :height 10.5)
      
-     ;(plot-bezier-points (mapv #(mapv + [0 0 -3.03] %) left-side-cutout-points-top) (sphere 1))
-    ;(klor-point-place )
-     ;(klor-bottom-plate wall-cross-section-steps wall-section-steps)
-     ;(-# (klor-case-mounting-hole-place top-middle-mounting-hole (translate [0 -4 (- klor-switchplate-z-position 1.1)] (cube 4 4 2.2))))
-     
-    ;;  (plot-bezier-points left-side-cutout-points-floor (sphere 0.5))
-    ;;  (plot-bezier-points (mapv #(mapv + [0 0 (- klor-case-walls-height 3.03)] %) left-side-cutout-points-floor) (sphere 0.5))
-    ;;  (translate (:wall-bottom-inner (klor-wall-control-points-from-map oled-holder-tr-north)) (sphere 1))
-    ;;  (translate (:wall-bottom-inner (klor-tps-43-wall-control-points :br :south :offset [-2 2 0])) (sphere 1))
-     ;(klor-case-mounting-hole-place top-right-inner-mounting-hole pcb-under-support)
-     ;(klor-case-mounting-hole-place top-right-mounting-hole pcb-under-support)
-     
-     ;(klor-case-mounting-hole-place top-right-mounting-hole (rdz (+ anchor-rotation 180) (pcb-to-plate-support)))
-     (difference support-for-top-left-mounting-hole
-                 (translate (mapv + (klor-point-place top-left-mounting-hole) (rotate-around-z-in-degrees anchor-rotation [-0.15 0.3 0]))  (binding [*fn* 36] (cylinder klor-pcb-mount-hole-radius 8 :center false)))
-                 )
-    ;;  (-# (->> (extrude-linear {:height klor-switchplate-thickness :center true} klor-switch-plate-polygon)
-    ;;           (translate [0 0 (+ klor-switchplate-z-position )])))
-     
-    ;;  (translate (mapv + (klor-point-place top-left-mounting-hole) (rotate-around-z-in-degrees anchor-rotation [-0.15 0.3 0]))  (binding [*fn* 36] (cylinder 1.75 8 :center false)))
-     
-
-      (difference
-     (union 
-      ;(difference
-              ;;  (->>
-              ;;   (extrude-linear {:height (- klor-case-walls-height klor-switchplate-z-position) :center false} (polygon inner-points))
-              ;;   (translate [0 0 klor-switchplate-z-position]))
-             (translate [0 0 (- klor-switchplate-z-position (/ klor-switchplate-thickness 2))]
-                        (extrude-linear {:height (+ (- klor-case-walls-height klor-switchplate-z-position) (/ klor-switchplate-thickness 2))
-                                         :center false}
-                                        (polygon (mapv #(vec (drop-last %)) outer-top-points))))
-     
-             ;(klor-tps-43-place (tps-43-cutout-with-height (- klor-case-walls-height klor-switchplate-z-position )) :height klor-switchplate-z-position))
-            klor-trackpad-wall-polyhedron)
-     ;(klor-tps-43-place (tps-43-cutout-with-height (- klor-case-walls-height klor-switchplate-z-position)) :height klor-switchplate-z-position)
-            trrs-jack-cutout
-       reset-button-cutout
-     (->> (extrude-linear {:height (- klor-case-walls-height klor-switchplate-z-position (/ klor-switchplate-thickness 2)) :center false} klor-switch-plate-polygon)
-          (translate [0 0 (+ klor-switchplate-z-position (/ klor-switchplate-thickness 2))]))
-     (->> (svg-import "../svg/FUNTUNFUNEFU-DENKYEMFUNEFU.svg")
-          (scale [0.06 0.06])
-          (mirror [0 1 0])
-     ;(rdz anchor-rotation)
-          (extrude-linear {:height (inc (- klor-case-walls-height klor-switchplate-z-position)) :center true :scale 0.5})
-          (rdx 180)
-         ;(rdz 180)
-          (klor-key-place 2 0)
-          (translate [3.5 (- 1.5 key-spacing-length) (+ klor-switchplate-z-position (- klor-switchplate-z-position 0.5))]))
-     left-side-cutout
-     (klor-tps-43-place (translate [0 0 1] tps-43-cutout))
-     (klor-tps-43-place  tps-43-full-cutout)
-     ;(mcu-place mcu-clearance)
-     klor-key-holes
-     (klor-oled-place oled-holder-cut :height 10.5)
-     ;(klor-oled-place (translate [0 0 -5] (apply cube (mapv + [2 0.5 10] oled-pcb-size))))
-    ;;  (klor-oled-place (translate [(+ (/ (nth oled-pcb-size 0) -2) 5.5) (- (/ (nth oled-pcb-size 1) -2)  1) -2.875] (cube (* (nth oled-pcb-size 0) (/  2 5)) 2 6.25)))
-     
-     case-mounting-holes
-     
-     
-     (let [sphere-size 0.1]
-       (chained-hull-to-points (plot-bezier-points (update-vals klor-thumb-to-pinky-outer-border #(assoc % 2 klor-case-walls-height)) (sphere sphere-size))
-                               (translate (assoc inner-thumb-tl-east-outset 2 klor-case-walls-height) (sphere sphere-size))
-                               (plot-bezier-points klor-thumb-to-pinky-outer-border (sphere sphere-size))
-                               (translate (assoc inner-thumb-tl-east-outset 2 klor-case-walls-height) (sphere sphere-size))
-                               (dec (count klor-thumb-to-pinky-outer-border))))
-     (let [st (dec (count inner-wall-inner-border-level))] (chained-hull-for-four-lists
-                                                            (plot-bezier-points inner-wall-inner-border-level (sphere 0.1))
-                                                            (plot-bezier-points inner-wall-inner-border (sphere 0.1))
-                                                            (plot-bezier-points (n-degree-bezier-curve [(mapv + mid-left-thumb-tr [0 0 klor-case-walls-height]) (peek inner-wall-inner-border-level)] st) (sphere epsilon))
-                                                              (plot-bezier-points (n-degree-bezier-curve [(mapv + mid-left-thumb-tr [0 0 klor-case-walls-height]) (mapv + mid-left-thumb-tr [0 -2 (+ klor-switchplate-z-position klor-switchplate-thickness)]) (peek inner-wall-inner-border)] st) (sphere epsilon))
-                                                              st))) 
-     (translate (mapv + (rotate-around-z-in-degrees anchor-rotation [0 2.5 0])(:wall-bottom-inner (klor-wall-control-points-from-map below-trrs-jack))) (sphere 1))
-
+  
+                         case-mounting-holes
+  
+  
+  
+                         (let [sphere-size 0.1]
+                           (chained-hull-to-points (plot-bezier-points (update-vals klor-thumb-to-pinky-outer-border #(assoc % 2 klor-case-walls-height)) (sphere sphere-size))
+                                                   (translate (assoc inner-thumb-tl-east-outset 2 klor-case-walls-height) (sphere sphere-size))
+                                                   (plot-bezier-points klor-thumb-to-pinky-outer-border (sphere sphere-size))
+                                                   (translate (assoc inner-thumb-tl-east-outset 2 klor-case-walls-height) (sphere sphere-size))
+                                                   (dec (count klor-thumb-to-pinky-outer-border))))
+                         (let [st (dec (count inner-wall-inner-border-level))] (chained-hull-for-four-lists
+                                                                                (plot-bezier-points inner-wall-inner-border-level (sphere 0.1))
+                                                                                (plot-bezier-points inner-wall-inner-border (sphere 0.1))
+                                                                                (plot-bezier-points (n-degree-bezier-curve [(mapv + mid-left-thumb-tr [0 0 klor-case-walls-height]) (peek inner-wall-inner-border-level)] st) (sphere epsilon))
+                                                                                (plot-bezier-points (n-degree-bezier-curve [(mapv + mid-left-thumb-tr [0 0 klor-case-walls-height]) (mapv + mid-left-thumb-tr [0 -2 (+ klor-switchplate-z-position klor-switchplate-thickness)]) (peek inner-wall-inner-border)] st) (sphere epsilon))
+                                                                                st)))
+      
+  
      klor-pinky-wall-polyhedron
      klor-thumb-to-pinky-wall-polyhedron
      klor-thumb-wall-polyhedron
-      (difference klor-back-wall-polyhedron
-                  (usb-c-port-hole 10))
-    
+     (difference klor-back-wall-polyhedron
+                 (usb-c-port-hole 10))
+  
      (->> (svg-import "../svg/Ananse-Ntontan.svg")
           (scale [0.15 0.15])
           (extrude-linear {:height 0.5 :center false :scale 0.9})
           (klor-key-place 3 2)
           (translate [(+ key-spacing-width 1) (+ (/ key-spacing-length  2) 1) klor-case-walls-height]))
-     ;(translate (klor-thumb-position 3 (mapv + key-spacing-south-west [-2.5 -3.0 -1.5])) (cube 1 1 1.5 :center false))
-
-
-    ;;  (->> (import "../parts/klor-ks27-polydactyl-body-right.stl")
-    ;;       (rdz anchor-rotation)
-    ;;       (translate [715.65 85.25 2.5])
-    ;;       (-#)) 
-    ;;  (->> (import "../parts/klor-ks27-polydactyl-bottom-right.stl")
-    ;;       (rdz anchor-rotation)
-    ;;       (translate (rotate-around-z-in-degrees anchor-rotation [0 160 0]))
-    ;;       (translate [715.65 85.25 -3])
+      (->>
+       (import "../parts/tps-43.stl")
+       (translate [(/ tps-43-width -2) (/ tps-43-length -2) 0])
+       (color [0 1 0 0.4])
+       (klor-tps-43-place ))
+     (->>
+      (cylinder 4 1 :center false)
+      (binding [*fn* 36])
+      (translate [(/ tps-43-width -2) (/ tps-43-length -2) -1])
+      (klor-tps-43-place)
+      )
+     (->>
+      (cylinder 4 1 :center false)
+      (binding [*fn* 36])
+      (color [0 0 1 1])
+      (translate [(- (/ tps-43-width -2) 1) (/ tps-43-length -2) 0])
+      (klor-tps-43-place))
+    ;;  (->> 
+    ;;   (cylinder 20 2 :center false)
+    ;;   (binding [*fn* 36])
+    ;;   ;(translate [-20 -20 0])
+    ;;   (klor-tps-43-place))
+     
+       ;(translate (rotate-around-z-in-degrees anchor-rotation[0 19.05 0])(cylinder 1.1 30))
+       ;(klor-key-place 1 2 sk8707-51)
+       ;(translate (klor-thumb-position 3 (mapv + key-spacing-south-west [-2.5 -3.0 -1.5])) (cube 1 1 1.5 :center false))
+  
+  
+      ;;  (->> (import "../parts/klor-ks27-polydactyl-body-right.stl")
+      ;;       (rdz anchor-rotation)
+      ;;       (translate [715.65 85.25 2.5])
+      ;;       (-#)) 
+      ;;  (->> (import "../parts/klor-ks27-polydactyl-bottom-right.stl")
+      ;;       (rdz anchor-rotation)
+      ;;       (translate (rotate-around-z-in-degrees anchor-rotation [0 160 0]))
+      ;;       (translate [715.65 85.25 -3])
+      ;;       (-#))
+  
+      
+    ;;  (->> (import "../parts/klor1_3-klor1_3.stl")
+    ;;       (rdz 10)
+    ;;       (translate [-31 -4.5 (+ 1.6 1.9)])
     ;;       (-#))
-     
-      ;; (->> (import "../parts/Kailh LP Choc Burnt Orange.stl")
-      ;;      (rdx 90)
-      ;;      (rdz -90)
-      ;;      (klor-key-place 1 2)
-      ;;      (translate [0 0 (+ (- (+ klor-switchplate-z-position klor-switchplate-thickness) 0.2) 0)])) 
-      ;;  (->> (import "../parts/klor1_3-klor1_3.stl") 
-      ;;       (rdz 10)
-      ;;       (translate [-31 -4.5 (+ 1.6 1.9)])
-      ;;       (-#)
-      ;;       )
-    ;;  (->> (import "../parts/pin header  2.54-12.stl")
-    ;;       (rdz anchor-rotation)
-    ;;       (translate (klor-key-position 0 2 [(- (* key-spacing-width -2) 2.75) -13.4 -9.46]) ))
-      ;; (->> des-r3 
-      ;;      (klor-key-place 5 0)
-      ;;      (translate [0 0 -2]))
-     
-     
-      ;; (mapv #(->> des-r2
-      ;;            (klor-key-place % 2)
-      ;;            (translate [0 0 -2])) (vec (range 0 5)))
-     
-    ;;  (->>(import "../parts/adafruit kb2040.stl")
-    ;;   (rdy 180)
-    ;;   (rdz anchor-rotation)
-    ;;   (translate (rotate-around-z-in-degrees anchor-rotation [(- (+ key-spacing-width 6) ) (+ (* 2 key-spacing-length) 6) 7.4]))
-    ;;   )
-      ;;  (->> (import "../parts/pim452.stl")
-      ;;       (rdz (+ anchor-rotation 180))
-      ;;       (klor-key-place 4 2)
-      ;;       (translate (rotate-around-z-in-degrees anchor-rotation [-3 (+ (/ key-spacing-length 2) -0.125) 0]))
-      ;;       )
-     
-     (klor-tps-43-place (translate [0 0 1] (tps-43-mount)))
+      
+  
+     (-# (klor-tps-43-place (translate [0 0 1] (tps-43-mount))))
+     )))
 
+(spit "things-low/klor.scad" 
+ (write-scad 
+  (include include-bosl2) 
+  (klor-case :wall-cross-section-steps 10 :wall-section-steps 10)
+  )
+      )
 
+(spit "things-low/klor-test.scad"
+      (write-scad
+       (include include-bosl2)
+       (union
+        (klor-case)
+        (for [row (range 3) col (range 6)
+              :let [cap (case row
+                          0 des-r4
+                          1 des-r3
+                          2 des-r2 )]
+              :while (or (not= col 5) (and (not= row 2) (not= row 1)))]
+          (klor-key-place col row cap) 
+          )
+        (klor-key-place-with-offset 3 2  (mapv + key-spacing-south-west (rotate-around-z-in-degrees anchor-rotation [-0.5 0 0]))
+                                    (cylinder 1 30 :center false) )
+        (klor-key-place-with-offset 4 2  (mapv + key-spacing-south-west (rotate-around-z-in-degrees anchor-rotation  [-0.75 0 0])) (cylinder 1 30 :center false))
+        (klor-key-place 5 1 des-r2))
+       (klor-thumb-place 0 des-r5 )
+       (klor-thumb-place 1 des-r5 )
+       (klor-thumb-place 2 des-r5)
+       (klor-thumb-place 3 des-r5)
+       ))
 
+ (spit "things-low/klor-switchplat-test.scad"
+      (write-scad
+       (union
+        (for [col (range 5)]
+          (klor-key-place col 2 des-r2)
+          )
+        
+        (for [col (range 5)]
+          (klor-key-place col 1 des-r3))
+         (for [col (range 5)]
+          (klor-key-place col 0 des-r4))
+        (difference
+        (->> (extrude-linear {:height (+ (- klor-case-walls-height klor-switchplate-z-position (/ klor-switchplate-thickness 2)) 0.01) :center false} (klor-switch-plate-polygon))
+             (translate [0 0 (+ klor-switchplate-z-position (/ klor-switchplate-thickness 2) 0.01)]))
+        klor-key-holes
+        ))))
+ 
+ (spit "things-low/klor-switchplate-test.scad"
+       (write-scad
+        (difference
+         (extrude-linear {:height klor-switchplate-thickness :center false} (klor-switch-plate-polygon))
+         (translate [0 0 (- (/ klor-switchplate-thickness 2) klor-switchplate-z-position )] klor-key-holes))))
 
+(comment (#(div (mapv + (nth % 0) (nth % 1)) 2) (select-values  (klor-wall-control-points-from-map screen-holder-tm-north) [:wall-locate3-point :wall-locate3-point-floor])))
 
-     (trackpad-attachnent-walls wall-cross-section-steps wall-section-steps))
-    )
-  ))
-
-(comment (#(div (mapv + (nth % 0) (nth % 1)) 2) (select-values  (klor-wall-control-points-from-map oled-holder-tm-north) [:wall-locate3-point :wall-locate3-point-floor])))
-
-(comment (#(mapv + (nth % 0) (nth % 1))(select-values  (klor-wall-control-points-from-map oled-holder-tm-north) [:wall-locate3-point :wall-locate3-point-floor])))
+(comment (#(mapv + (nth % 0) (nth % 1))(select-values  (klor-wall-control-points-from-map screen-holder-tm-north) [:wall-locate3-point :wall-locate3-point-floor])))
 (comment 
   (spit "things-low/triangular-test.scad"
         (write-scad 

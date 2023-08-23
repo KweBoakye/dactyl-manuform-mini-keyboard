@@ -12,7 +12,7 @@
                                                                      vnf-vertex-array]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer [include-bosl2]]
             [dactyl-keyboard.lib.transformations :refer [rdz]]
-            [dactyl-keyboard.oled :refer [oled-holder-height oled-holder-width]]
+            [dactyl-keyboard.oled :refer [oled-holder-length oled-holder-width]]
             [dactyl-keyboard.utils :refer [plot-bezier-points select-values]]
             [scad-clj.model :refer :all]
             [scad-clj.scad :refer :all])
@@ -97,11 +97,14 @@
   )
 
 
-(defn klor-oled-place [shape &{:keys [ offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height  11  translate-fn translate rotate-z-fn rdz}}]
-  (klor-key-place-with-offset 0 2 (mapv + [-30 7 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn))
+(defn klor-screen-place [shape &{:keys [ offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height  11  translate-fn translate rotate-z-fn rdz}}]
+  (let [x-offset (case screen-type
+                   :SSD1306 -30
+                   :ST7789-135*240 -34)]
+    (klor-key-place-with-offset 0 2 (mapv + [x-offset 7 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn)))
 
-(defn klor-oled-position [offset &{:keys [height] :or { height 0 }}]
-  (klor-oled-place [0 0 0] :offset offset :height height :translate-fn (partial mapv +) :rotate-z-fn rotate-around-z-in-degrees))
+(defn klor-screen-position [offset &{:keys [height] :or { height 0 }}]
+  (klor-screen-place [0 0 0] :offset offset :height height :translate-fn (partial mapv +) :rotate-z-fn rotate-around-z-in-degrees))
 
 (defn klor-tps-43-place [shape & {:keys [offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height (- klor-case-walls-height 1) translate-fn translate rotate-z-fn rdz}}] 
   (klor-key-place-with-offset 0 1 (mapv + [-32.5 -10 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn))

@@ -52,8 +52,8 @@
     [left-wall-x-offset-oled 0 (- left-wall-z-offset 2)]
     (key-position 0 left-wall-plate-key-position [0 0 0])
     [(* mount-width -0.5) (* mount-width 0.5) 0]
-    [(* oled-holder-width -0.5) (* oled-holder-height -0.5) 0]
-    [(* xdir oled-holder-width 0.5) (* ydir oled-holder-height 0.5) 0]
+    [(* oled-holder-width -0.5) (* oled-holder-length -0.5) 0]
+    [(* xdir oled-holder-width 0.5) (* ydir oled-holder-length 0.5) 0]
     [-3 7 -7])))
 
 (defn left-wall-plate-position-variable [xdir ydir]

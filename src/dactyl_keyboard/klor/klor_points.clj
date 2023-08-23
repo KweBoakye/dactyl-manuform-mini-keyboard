@@ -2,7 +2,9 @@
 (:refer-clojure :exclude [use import])
   (:require
  [dactyl-keyboard.klor.klor-config :refer :all]
- [dactyl-keyboard.oled :refer [oled-holder-height oled-holder-width]]
+ [dactyl-keyboard.oled :refer [oled-holder-length oled-holder-width
+                               ST7789-135*240-holder-length ST7789-135*240-holder-width
+                               ST7789-135*240-holder-inner-width ST7789-135*240-holder-inner-length ]]
  [dactyl-keyboard.tps-43 :refer [tps-43-mount-width tps-43-mount-length]]
  ))
 
@@ -186,30 +188,63 @@
     :br key-spacing-inner-south-east
     :bl key-spacing-inner-south-west))
 
-(defn oled-holder-spacing [corner]
+(defn ST7789-135*240-holder-spacing [corner]
   (case corner
-    :tm [0 (/ oled-holder-height 2) 0]
-    :rm [(/ oled-holder-width 2) 0 0]
-    :bm [0 (/ oled-holder-height 2) 0]
-    :lm [(/ oled-holder-width -2) 0 0]
-    :tl [(/ oled-holder-width -2) (/ oled-holder-height 2) 0]
-    :tr [(/ oled-holder-width 2) (/ oled-holder-height 2) 0]
-    :br [(/ oled-holder-width 2) (/ oled-holder-height 2) 0]
-    :bl [(/ oled-holder-width -2) (/ oled-holder-height -2) 0])
+    :tm [0 (/ ST7789-135*240-holder-length 2) 0]
+    :rm [(/ ST7789-135*240-holder-width 2) 0 0]
+    :bm [0 (/ ST7789-135*240-holder-length 2) 0]
+    :lm [(/ ST7789-135*240-holder-width -2) 0 0]
+    :tl [(/ ST7789-135*240-holder-width -2) (/ ST7789-135*240-holder-length 2) 0]
+    :tr [(/ ST7789-135*240-holder-width 2) (/ ST7789-135*240-holder-length 2) 0]
+    :br [(/ ST7789-135*240-holder-width 2) (/ ST7789-135*240-holder-length 2) 0]
+    :bl [(/ ST7789-135*240-holder-width -2) (/ ST7789-135*240-holder-length -2) 0])
   )
 
+(defn ST7789-135*240-holder-spacing-inner [corner]
+  
+    (case corner
+    :tm [0 (/ ST7789-135*240-holder-inner-length 2) 0]
+    :rm [(/ ST7789-135*240-holder-inner-width 2) 0 0]
+    :bm [0 (/ ST7789-135*240-holder-inner-length 2) 0]
+    :lm [(/ ST7789-135*240-holder-inner-width -2) 0 0]
+    :tl [(/ ST7789-135*240-holder-inner-width -2) (/ ST7789-135*240-holder-inner-length 2) 0]
+    :tr [(/ ST7789-135*240-holder-inner-width 2) (/ ST7789-135*240-holder-inner-length 2) 0]
+    :br [(/ ST7789-135*240-holder-inner-width 2) (/ ST7789-135*240-holder-inner-length 2) 0]
+    :bl [(/ ST7789-135*240-holder-inner-width -2) (/ ST7789-135*240-holder-inner-length -2) 0]))
+
+(defn oled-holder-spacing [corner]
+  (case corner
+    :tm [0 (/ oled-holder-length 2) 0]
+    :rm [(/ oled-holder-width 2) 0 0]
+    :bm [0 (/ oled-holder-length 2) 0]
+    :lm [(/ oled-holder-width -2) 0 0]
+    :tl [(/ oled-holder-width -2) (/ oled-holder-length 2) 0]
+    :tr [(/ oled-holder-width 2) (/ oled-holder-length 2) 0]
+    :br [(/ oled-holder-width 2) (/ oled-holder-length 2) 0]
+    :bl [(/ oled-holder-width -2) (/ oled-holder-length -2) 0]))
+
 (defn oled-holder-spacing-inner [corner]
-  (let [oled-holder-inner-height (- oled-holder-height 2.5)
+  (let [oled-holder-inner-height (- oled-holder-length 2.5)
         oled-holder-inner-width (- oled-holder-width 2.5)]
     (case corner
-    :tm [0 (/ oled-holder-inner-height 2) 0]
-    :rm [(/ oled-holder-inner-width 2) 0 0]
-    :bm [0 (/ oled-holder-inner-height 2) 0]
-    :lm [(/ oled-holder-inner-width -2) 0 0]
-    :tl [(/ oled-holder-inner-width -2) (/ oled-holder-inner-height 2) 0]
-    :tr [(/ oled-holder-inner-width 2) (/ oled-holder-inner-height 2) 0]
-    :br [(/ oled-holder-inner-width 2) (/ oled-holder-inner-height 2) 0]
-    :bl [(/ oled-holder-inner-width -2) (/ oled-holder-inner-height -2) 0])))
+      :tm [0 (/ oled-holder-inner-height 2) 0]
+      :rm [(/ oled-holder-inner-width 2) 0 0]
+      :bm [0 (/ oled-holder-inner-height 2) 0]
+      :lm [(/ oled-holder-inner-width -2) 0 0]
+      :tl [(/ oled-holder-inner-width -2) (/ oled-holder-inner-height 2) 0]
+      :tr [(/ oled-holder-inner-width 2) (/ oled-holder-inner-height 2) 0]
+      :br [(/ oled-holder-inner-width 2) (/ oled-holder-inner-height 2) 0]
+      :bl [(/ oled-holder-inner-width -2) (/ oled-holder-inner-height -2) 0])))
+
+(defn screen-holder-spacing [corner]
+  (case screen-type 
+    :SSD1306 (oled-holder-spacing corner)
+    :ST7789-135*240 (ST7789-135*240-holder-spacing corner)))
+
+(defn screen-holder-spacing-inner [corner]
+  (case screen-type
+    :SSD1306 (oled-holder-spacing-inner corner)
+    :ST7789-135*240 (ST7789-135*240-holder-spacing-inner corner)))
 
 (defn tps-43-mount-spacing [corner]
   (case corner
@@ -297,17 +332,17 @@
 (def middle-top-tl-north-west {:type :main-body :column 2 :row 2 :corner :tl :offset [-3 2.6 0] :direction :north-west})
 (def middle-top-tl-west {:type :main-body :column 2 :row 2 :corner :tl :offset [-3 2.6 0] :direction :west})
 (def inner-index-top-tr  {:type :main-body :column 0 :row 2 :corner :tr :offset [0 10.5 0] :direction :north})
-(def oled-holder-tr-inset {:type :oled :corner :tr :direction :north-east :offset [1.5 (- klor-case-offset 2.5) 0]})
-(def oled-holder-tr-east {:type :oled :corner :tr :direction :east})
-(def oled-holder-tr-north-east {:type :oled :corner :tr :direction :north-east})
-(def oled-holder-tr-north {:type :oled :corner :tr :direction :north})
-(def oled-holder-tm-north {:type :oled :corner :tm :direction :north})
-(def oled-holder-tl-north {:type :oled :corner :tl :direction :north})
-(def oled-holder-tl-north-west {:type :oled :corner :tl :direction :north-west})
-(def oled-holder-tl-west {:type :oled :corner :tl :direction :west})
-(def oled-holder-lm-west {:type :oled :corner :lm :direction :west})
-(def oled-holder-bl-west {:type :oled :corner :bl :direction :west})
-(def oled-holder-bl-inset {:type :oled :corner :bl :direction :west :offset [0 3 0]})
+(def screen-holder-tr-inset {:type :screen :corner :tr :direction :north-east :offset [1.5 (- klor-case-offset 2.5) 0]})
+(def screen-holder-tr-east {:type :screen :corner :tr :direction :east})
+(def screen-holder-tr-north-east {:type :screen :corner :tr :direction :north-east})
+(def screen-holder-tr-north {:type :screen :corner :tr :direction :north})
+(def screen-holder-tm-north {:type :screen :corner :tm :direction :north})
+(def screen-holder-tl-north {:type :screen :corner :tl :direction :north})
+(def screen-holder-tl-north-west {:type :screen :corner :tl :direction :north-west})
+(def screen-holder-tl-west {:type :screen :corner :tl :direction :west})
+(def screen-holder-lm-west {:type :screen :corner :lm :direction :west})
+(def screen-holder-bl-west {:type :screen :corner :bl :direction :west})
+(def screen-holder-bl-inset {:type :screen :corner :bl :direction :west :offset [0 3 0]})
 (def tps-43-tl-north {:type :tps-43 :corner :tl :direction :north})
 (def tps-43-tl-north-west {:type :tps-43 :corner :tl :direction :north-west})
 (def tps-43-tl-west {:type :tps-43 :corner :tl :direction :west})

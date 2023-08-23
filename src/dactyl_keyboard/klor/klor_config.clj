@@ -105,3 +105,8 @@
 (def reset-button-inner-radius 1)
 (def reset-button-outer-radius 2.5)
 
+(keyword "SSD1306")
+(keyword "ST7789-135*240")
+
+(def screen-type :ST7789-135*240)
+

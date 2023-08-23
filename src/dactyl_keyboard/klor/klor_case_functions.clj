@@ -5,6 +5,7 @@
             [dactyl-keyboard.klor.klor-constants :refer :all]
             [dactyl-keyboard.klor.klor-placement-functions :refer :all]
             [dactyl-keyboard.klor.klor-points :refer :all]
+            [dactyl-keyboard.oled :refer [oled-holder-cut ST7789-135*240-holder-cut]]
             [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-curve]]
             [dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline :refer [nurbs-with-calculated-knot-vector]]
             [dactyl-keyboard.utils :refer [select-values]])
@@ -109,11 +110,11 @@
   ;;                           :height height :dx-and-dy dx-and-dy :xy xy :position-offset position-offset)
   (klor-main-body-wall-points  2 2 :tr [46.5 -1 0] direction))
 
-(defn klor-oled-position-control-points [corner direction
+(defn klor-screen-position-control-points [corner direction
                                          & {:keys [height xy offset]
                                             :or {height klor-case-walls-height xy klor-wall-xy-offset offset [0 0 0]}}]
-  (klor-wall-control-points (partial klor-oled-position) corner offset direction :height height
-                            :outer-spacing-fn oled-holder-spacing :inner-spacing-fn oled-holder-spacing-inner
+  (klor-wall-control-points (partial klor-screen-position) corner offset direction :height height
+                            :outer-spacing-fn screen-holder-spacing :inner-spacing-fn screen-holder-spacing-inner
                             :xy xy))
 
 (defn klor-tps-43-wall-control-points [corner direction
@@ -163,11 +164,11 @@
     )
   )
 
-(defmethod  klor-wall-control-points-from-map :oled
+(defmethod  klor-wall-control-points-from-map :screen
   [data-map]
   (let [{:keys [corner direction height xy offset]
          :or {height klor-case-walls-height xy klor-wall-xy-offset offset [0 0 0]}} data-map]
-    (klor-oled-position-control-points corner direction :height height :xy xy :offset offset)))
+    (klor-screen-position-control-points corner direction :height height :xy xy :offset offset)))
 
 (defmethod klor-wall-control-points-from-map :tps-43 
   [data-map]
@@ -175,6 +176,12 @@
          :or {height klor-case-walls-height xy klor-wall-xy-offset offset [0 0 0]}} data-map]
     (klor-tps-43-wall-control-points corner direction :height height :xy xy :offset offset)
     )
+  )
+
+(defn screen-holder-cut []
+  (case screen-type
+    :SSD1306 oled-holder-cut
+    :ST7789-135*240 ST7789-135*240-holder-cut)
   )
 
 

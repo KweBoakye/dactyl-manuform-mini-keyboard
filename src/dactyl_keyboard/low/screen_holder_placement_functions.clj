@@ -26,9 +26,9 @@
 
 (defn screen-holder-place-x-y [xdir ydir shape]
   (->> shape
-       (translate [(* xdir oled-holder-width 0.5) (* ydir oled-holder-height 0.5) (/ screen-holder-depth 2)])
+       (translate [(* xdir oled-holder-width 0.5) (* ydir oled-holder-length 0.5) (/ screen-holder-depth 2)])
        (screen-holder-rotate)
-       (translate [(- (* xdir oled-holder-width 0.5)) (- (* ydir oled-holder-height 0.5)) 0])
+       (translate [(- (* xdir oled-holder-width 0.5)) (- (* ydir oled-holder-length 0.5)) 0])
        (left-wall-plate-place xdir ydir)
 
        (translate screen-holder-position)))

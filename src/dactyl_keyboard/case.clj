@@ -39,7 +39,7 @@
 (defn left-key-position-oled [row direction]
   (map - (key-position 0 row [(*  mount-width -0.5) (* direction  mount-height 0.5) 0])
        [left-wall-x-offset 0 left-wall-z-offset]
-       (key-position 0 row [(*  oled-holder-width -0.5) (* direction oled-holder-height 0.5) 0])))
+       (key-position 0 row [(*  oled-holder-width -0.5) (* direction oled-holder-length 0.5) 0])))
 
 (defn left-key-place [row direction shape]
   (translate (left-key-position row direction) shape))
@@ -56,8 +56,8 @@
     [left-wall-x-offset-oled 0 (- left-wall-z-offset 2)]
     (key-position 0 0 [0 0 0])
     [(* mount-width -0.5) (* mount-width 0.5) 0]
-    [(* oled-holder-width -0.5) (* oled-holder-height -0.5) 0]
-    [(* xdir oled-holder-width 0.5) (* ydir oled-holder-height 0.5) 0]
+    [(* oled-holder-width -0.5) (* oled-holder-length -0.5) 0]
+    [(* xdir oled-holder-width 0.5) (* ydir oled-holder-length 0.5) 0]
     [-3 7 -7])))
 
 

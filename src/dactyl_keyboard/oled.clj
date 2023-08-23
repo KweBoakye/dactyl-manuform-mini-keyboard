@@ -7,6 +7,8 @@
             [dactyl-keyboard.switch-hole :refer :all]
             [dactyl-keyboard.web-connecters :refer :all]
             [dactyl-keyboard.utils :refer :all]
+            [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer :all]
+            [dactyl-keyboard.lib.openscad.bosl2-wrappers.shapes-3d :refer [cuboid]]
             [dactyl-keyboard.lib.transformations :refer [rdx rdy rdz ]]
             [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             ))
@@ -26,9 +28,9 @@
 (def oled-viewport-offset [0 1.0 0])
 (def oled-mount-size [22.35 23.3 0.5])
 (def oled-holder-width (+ 3 (nth oled-pcb-size 0)))
-(def oled-holder-height (+ 3 (nth oled-pcb-size 1)))
+(def oled-holder-length (+ 3 (nth oled-pcb-size 1)))
 (def oled-holder-thickness plate-thickness)
-(def oled-holder-size [oled-holder-width oled-holder-height oled-holder-thickness])
+(def oled-holder-size [oled-holder-width oled-holder-length oled-holder-thickness])
 (def oled-mount-rotation-x-old  20)
 (def oled-mount-rotation-z-old  -3)
 
@@ -178,21 +180,42 @@
                                                                  (translate [(- adjustment (/ ST7789-240x240-154-holder-width 2)) (- adjustment (/ ST7789-240x240-154-holder-height 2)) 0] corner)
                                                                  (translate [(- (/ ST7789-240x240-154-holder-width 2) adjustment) (- adjustment (/ ST7789-240x240-154-holder-height 2)) 0] corner)))
    (with-fn 20)))
+
+(def ST7789-240x240-154-holder-new
+  (let [height (+ (-  ST7789-240x240-154-holder-thickness ST7789-240x240-154-holder-thickness-modifier) ST7789-240x240-154-holder-thickness-modifier)]
+    (->> (cuboid [ST7789-240x240-154-holder-width ST7789-240x240-154-holder-height height]
+                 :rounding 1.8 :edges [TOP] :fn 36
+                 ;[(mapv + RIGHT TOP)]
+                 )
+         (translate [0 0 (/ height 2)]))))
 (def ST7789-240x240-154-holder
-  (->>
-    ; main body
-   (hull
-    (for [i [0 0.25 0.5 0.75 1]
-          :let [y (* (Math/cos (* i 90)) ST7789-240x240-154-holder-thickness-modifier) x  (+ -0.95 (* (Math/sin (* i 90)) 1))]]
+  ST7789-240x240-154-holder-new
+  ;; (->>
+  ;;   ; main body
+  ;;  (hull
+  ;;   (for [i [0 0.25 0.5 0.75 1]
+  ;;         :let [y (* (Math/cos (* i 90)) ST7789-240x240-154-holder-thickness-modifier) x  (+ -0.95 (* (Math/sin (* i 90)) 1))]]
 
-      (extrude-linear {:height (+ (-  ST7789-240x240-154-holder-thickness ST7789-240x240-154-holder-thickness-modifier) y) :center false :convexity 10}
-                      (offset-delta {:delta x  :chamfer false :r false} ST7789-240x240-154-holder-base))))
+  ;;     (extrude-linear {:height (+ (-  ST7789-240x240-154-holder-thickness ST7789-240x240-154-holder-thickness-modifier) y) :center false :convexity 10}
+  ;;                     (offset-delta {:delta x  :chamfer false :r false} ST7789-240x240-154-holder-base))))
 
-   ;(apply cube ST7789-240x240-154-holder-size)
-   ;(translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)])
-   ;(rdy 180)
+  ;;  ;(apply cube ST7789-240x240-154-holder-size)
+  ;;  ;(translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)])
+  ;;  ;(rdy 180)
 
-   (translate [0 0 0])))
+  ;;  (translate [0 0 0]))
+  )
+
+
+
+(comment 
+  (spit "things-low/screen-holder-test.scad"
+      (write-scad
+       (include include-bosl2)
+       (union
+  (-#  ST7789-240x240-154-holder)
+        ST7789-240x240-154-holder-new)
+       )))
 
 (def ST7789-240x240-154-holder-old
   (->>
@@ -203,4 +226,158 @@
    (rdy 180)
 
    (translate [0 0 (/ ST7789-240x240-154-holder-thickness 2)])))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ST7789-240x240-1.54 screen holder ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def ST7789-135*240-pcb-width 31.4)
+(def ST7789-135*240-pcb-length 28.0)
+(def ST7789-135*240-pcb-thickness 1.2)
+(def ST7789-135*240-screen-length 17.6)
+(def ST7789-135*240-screen-width 31.00)
+(def ST7789-135*240-holder-x-offset 2)
+(def ST7789-135*240-holder-y-offset 2)
+(def ST7789-135*240-holder-x-inner-offset 0.4)
+(def ST7789-135*240-holder-y-inner-offset 0.4)
+(def ST7789-135*240-holder-width (+ ST7789-135*240-pcb-width ST7789-135*240-holder-x-offset))
+(def ST7789-135*240-holder-length (+ ST7789-135*240-pcb-length ST7789-135*240-holder-y-offset))
+(def ST7789-135*240-holder-inner-width (+ ST7789-135*240-pcb-width ST7789-135*240-holder-x-inner-offset))
+(def ST7789-135*240-holder-inner-length (+ ST7789-135*240-pcb-length ST7789-135*240-holder-y-inner-offset))
+(def ST7789-135*240-viewport-width 24.95)
+(def ST7789-135*240-viewport-length 14.9)
+(def ST7789-135*240-viewport-x-distance-from-left 1.8)
+(def ST7789-135*240-viewport-x-position (+ (/ (- ST7789-135*240-viewport-width ST7789-135*240-pcb-width) 2) ST7789-135*240-viewport-x-distance-from-left))
+(def ST7789-135*240-viewport-y-distance-from-top 6.57)
+(def ST7789-135*240-viewport-y-position 
+  (- (/ ST7789-135*240-pcb-length 2) 
+    (/ ST7789-135*240-viewport-length  2)
+     ST7789-135*240-viewport-y-distance-from-top 
+     ) 
+  )
+(def ST7789-135*240-thickness 3.0)
+(def ST7789-135*240-screen-thickness 1.6)
+(def ST7789-135*240-viewport-thickness 1.8)
+(def ST7789-135*240-mounting-hole-diameter 2)
+(def ST7789-135*240-horizontal-distance-between-mounting-holes 26.4)
+(def ST7789-135*240-vertical-distance-between-mounting-holes 23)
+(def ST7789-135*240-vertical-distance-from-bottom-left-corner-to-centre-of-mounting-hole 2.5)
+(def ST7789-135*240-horzontal-distance-from-bottom-left-corner-to-centre-of-mounting-hole 2.5)
+
+(def ST7789-135*240-pcb (->>
+                         (cube ST7789-135*240-pcb-width ST7789-135*240-pcb-length ST7789-135*240-pcb-thickness)
+                         (translate [0 0 (/ ST7789-135*240-pcb-thickness 2)])))
+(def ST7789-135*240-screen
+  (->> (cube ST7789-135*240-screen-width ST7789-135*240-screen-length ST7789-135*240-screen-thickness)
+       (translate [0 0 (+ ST7789-135*240-pcb-thickness (/ ST7789-135*240-screen-thickness 2))])))
+(def ST7789-135*240-viewport (->> (cube ST7789-135*240-viewport-width ST7789-135*240-viewport-length ST7789-135*240-screen-thickness)
+                                (translate [ST7789-135*240-viewport-x-position ST7789-135*240-viewport-y-position (+ ST7789-135*240-pcb-thickness (/ ST7789-135*240-screen-thickness 2))])))
+
+(def ST7789-135*240-mounting-hole (->> (cylinder (/ ST7789-135*240-mounting-hole-diameter 2) 10 :center false)
+                                       (binding [*fn* 36] )
+                                       (translate [0 0 -0.1])))
+
+(def ST7789-135*240-bottom-right-mounting-hole-position 
+  [(- (/ ST7789-135*240-pcb-width 2) ST7789-135*240-horzontal-distance-from-bottom-left-corner-to-centre-of-mounting-hole)
+   (+ (/ ST7789-135*240-pcb-length -2) ST7789-135*240-vertical-distance-from-bottom-left-corner-to-centre-of-mounting-hole)
+   0])
+
+(def ST7789-135*240-top-right-mounting-hole-position
+  (mapv + ST7789-135*240-bottom-right-mounting-hole-position 
+        [0 ST7789-135*240-vertical-distance-between-mounting-holes 0]))
+
+(def ST7789-135*240-top-left-mounting-hole-position 
+  (mapv + ST7789-135*240-bottom-right-mounting-hole-position
+        [(- ST7789-135*240-horizontal-distance-between-mounting-holes)
+         ST7789-135*240-vertical-distance-between-mounting-holes
+         0]))
+
+(def ST7789-135*240-bottom-left-mounting-hole-position
+  (mapv + ST7789-135*240-bottom-right-mounting-hole-position
+        [(- ST7789-135*240-horizontal-distance-between-mounting-holes)
+         0 
+         0])
+  )
+
+
+
+(def ST7789-135*240-mounting-hole-positions 
+  [ST7789-135*240-bottom-right-mounting-hole-position
+   ST7789-135*240-top-right-mounting-hole-position
+   ST7789-135*240-top-left-mounting-hole-position
+   ST7789-135*240-bottom-left-mounting-hole-position])
+
+(defn ST7789-135*240-mounting-place [shape]
+  (->>
+   (mapv #(translate % shape) ST7789-135*240-mounting-hole-positions)
+   (apply union)))
+(def ST7789-135*240-mounting-holes 
+  (ST7789-135*240-mounting-place ST7789-135*240-mounting-hole))
+
+(def ST7789-135*240-mounting-standoff
+  (->> (cylinder (/ (inc ST7789-135*240-mounting-hole-diameter ) 2) ST7789-135*240-viewport-thickness :center false)
+       (binding [*fn* 36])
+       (translate [0 0 ST7789-135*240-pcb-thickness])))
+(def ST7789-135*240-mounting-standoffs
+  (ST7789-135*240-mounting-place ST7789-135*240-mounting-standoff))
+(def ST7789-135*240-holder
+
+  (union
+   (->>
+    (cuboid [ST7789-135*240-holder-width ST7789-135*240-holder-length (+ ST7789-135*240-thickness 0.4 0.)]
+            :rounding 1.5  :fn 36
+            :edges Z)
+    (translate [0 0 (- ST7789-135*240-viewport-thickness 0.2)]))
+  ;;  (->>
+  ;;  (cube ST7789-135*240-holder-width ST7789-135*240-holder-length (+ ST7789-135*240-thickness 0.4))
+  ;;  (translate [0 0 (- ST7789-135*240-viewport-thickness 0.2)])
+  ;;        (-#))
+   (translate [0 0 0.5] ST7789-135*240-viewport)))
+
+(comment (- ST7789-135*240-viewport-thickness 0.2 (/ 0.4 2)))
+
+(comment (/ ST7789-135*240-pcb-length 2))
+(def ST7789-135*240-holder-cut
+  (let [clearance 0.4]
+    (union
+     (difference 
+     (union
+   (->> (cube (+ ST7789-135*240-viewport-width clearance) (+ ST7789-135*240-viewport-length clearance) 6)
+        (translate [ST7789-135*240-viewport-x-position ST7789-135*240-viewport-y-position  (+ ST7789-135*240-pcb-thickness 0)]))
+   (->> (cube ST7789-135*240-holder-inner-width ST7789-135*240-holder-inner-length (+ ST7789-135*240-thickness 0.4 clearance))
+        (translate [0 0 (- ST7789-135*240-viewport-thickness 0.2 clearance)])) 
+                       )
+     ST7789-135*240-mounting-standoffs)
+     ST7789-135*240-mounting-holes
+     )))
+
+
+(def ST7789-135*240
+  (union(difference 
+   (union  (color [0 0 1 1] ST7789-135*240-pcb)
+          ST7789-135*240-mounting-standoffs)
+   ST7789-135*240-mounting-holes)
+   
+   (translate [0 0 0.1](color [0 1 1 1] ST7789-135*240-viewport))
+   (color [0 1 0 1] ST7789-135*240-screen )
+   )
+  )
+
+(spit "things-low/ST7789-135-240-test.scad"
+      (write-scad
+       (include include-bosl2)
+       (union 
+        ;(import "../parts/1.14 TFT IPS - Module.stl")
+        ST7789-135*240
+        (color [1 0 0 0.2] (difference 
+         ST7789-135*240-holder
+         ST7789-135*240-holder-cut))
+        ) 
+       
+       ))
+
+
+
+
 
