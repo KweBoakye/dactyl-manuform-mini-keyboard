@@ -15,7 +15,8 @@
                      (double? size) (format "size = %f" size)
                      (number? size) (format "size = %d" size)
                      (vector? size) (cl-format nil "size = ~A" (vec-to-scad-vec size)))
-        args (cond-> [size_param (format "chamfer = %d" chamfer) (format-arg "rounding" rounding) (cl-format nil "edges = ~A" (nested-vec-to-nested-scad-vec edges))
+        
+        args (cond-> [size_param (format-arg "chamfer" chamfer) (format-arg "rounding" rounding) (cl-format nil "edges = ~A" (nested-vec-to-nested-scad-vec edges))
                       (cl-format nil "except = ~A" (nested-vec-to-nested-scad-vec except)) (format "trimcorners = %b" trim-corners)
                       (format "teardrop = %b" teardrop) (cl-format nil "anchor = ~A" (vec-to-scad-vec anchor))
                       (format "spin = %d" spin) (cl-format nil "orient = ~A" (vec-to-scad-vec orient))]

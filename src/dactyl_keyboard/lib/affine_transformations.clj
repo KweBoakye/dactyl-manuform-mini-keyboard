@@ -32,3 +32,14 @@
    position))
 
 (defn rotate-around-z-in-degrees [angle-in-degrees position] (rotate-around-z (deg2rad angle-in-degrees) position))
+
+(defn rotate-around-point-z-axis [angle point position]
+  (let [rotation-point (mapv - position point)]
+    (->>
+     (rotate-around-z angle rotation-point)
+     (mapv + point)))
+  )
+
+(defn rotate-around-point-z-axis-in-degrees [angle-in-degrees point position]
+  (rotate-around-point-z-axis (deg2rad angle-in-degrees) point position)
+  )

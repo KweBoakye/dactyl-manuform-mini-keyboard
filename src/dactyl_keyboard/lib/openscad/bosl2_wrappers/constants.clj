@@ -21,3 +21,7 @@
 (def CENTER [0 0 0])
 (def CTR CENTER)
 (def CENTRE CENTER)
+
+(def EDGES_ALL  [[1 1 1 1] [1 1 1 1] [1 1 1 1]])
+(def Z [[0 0 0 0] [0 0 0 0] [1 1 1 1]])
+(def CORNERS_ALL [1 1 1 1 1 1 1 1])

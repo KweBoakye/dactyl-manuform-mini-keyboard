@@ -217,6 +217,8 @@
            (->> single-plate
                 (key-place column row)))))
 
+
+
 (def caps
   (apply union
          (for [column columns
