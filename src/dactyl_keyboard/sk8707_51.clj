@@ -25,7 +25,7 @@
 
 (def sk8707-51-stem-holder (->> (binding [*fn* 36] (cylinder (/ sk8707-51-stem-holder-diameter 2) sk8707-51-stem-holder-height :center false))
                                 (translate sk8707-51-stem-holder-position)))
-(def sk8707-51-stem (->> (binding [*fn* 36] (cylinder 0.4 16 :center false))
+(def sk8707-51-stem (->> (binding [*fn* 36] (cylinder 0.6 20 :center false))
                                 (translate (mapv + sk8707-51-stem-holder-position [0 0 sk8707-51-stem-holder-height]))))
 (def sk8707-51-pcb (cube sk8707-51-width sk8707-51-length sk8707-51-pcb-thickness :center false))
 
@@ -36,7 +36,11 @@
   (translate (mapv #(* -1 %) sk8707-51-stem-holder-position)(difference 
  (union sk8707-51-pcb
         sk8707-51-stem
-        stem-extension
+        (->> (sphere 2)
+             (binding [*fn* 36]) 
+             (translate (mapv + sk8707-51-stem-holder-position [0 0 (+ sk8707-51-stem-holder-height 20 2)]))
+             (-#))
+        ;stem-extension
         (color [0 0 1 1] sk8707-51-stem-holder))
  sk8707-51-bottom-left-mounting-hole
  sk8707-51-bottom-right-mounting-hole

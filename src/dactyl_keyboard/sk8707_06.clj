@@ -42,7 +42,7 @@
                    0 
                    (- sk8707-06-pcb-height 0.05)])))
 
-(def sk8707-06-stem (->> (binding [*fn* 36] (cylinder 0.5 16 :center false))
+(def sk8707-06-stem (->> (binding [*fn* 36] (cylinder 0.6 20 :center false))
                          (translate [0 0 (+ sk8707-06-pcb-height sk8707-06-stem-holder-height)])))
 
 (def sk8707-06 
@@ -50,8 +50,12 @@
       sk8707-06-pcb
       (difference (sk8707-06-mounting-tab) (sk8707-06-mounting-hole))
       (difference (sk8707-06-mounting-tab :side :left) (sk8707-06-mounting-hole :side :left))
-      sk8707-06-stem-holder
-   (-# sk8707-06-stem)))
+   (->> (sphere 2)
+        (binding [*fn* 36])
+        (translate [0 0 (+ sk8707-06-pcb-height sk8707-06-stem-holder-height 22)])
+        (-#))   
+   (-# sk8707-06-stem-holder)
+   sk8707-06-stem))
 (spit "things-low/sk8707-06-test.scad"
       (write-scad
        sk8707-06

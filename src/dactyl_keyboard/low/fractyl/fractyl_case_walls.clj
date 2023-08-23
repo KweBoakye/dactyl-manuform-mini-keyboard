@@ -208,6 +208,15 @@
                   ;;       (rdz 180)
                   ;;       (translate [(/ rp2040-plus-width 2) (/ rp2040-plus-length -2)  (- rp2040-plus-mount-height rp2040-plus-thickness)]))
                    ))))
+
+(defn sk8707-51-place [shape]
+  (->> shape 
+      (rdz 0)
+      (rdx 5)
+      (translate [0 0 0.75])
+      (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
+                       [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
+      (key-place 2 1)))
 (comment (spit "things-low/back-wall-test.scad"
       (write-scad
        (include "../BOSL2/std.scad")
@@ -226,16 +235,16 @@
              position-1 (:wall-locate-2-bottom-floor (calculate-control-points (tps-65-wall-position :tr :north-west)))
              position-2 (:wall-locate-2-bottom-floor (calculate-control-points (key-wall-position 0 0 0 1 :tl  :slant :no-slant)))]
          (union
-          ;; (->>
-          ;;  sk8707-06
-          ;;  (rdx 5)
-          ;;  (translate [0 0 -0.5]) 
-          ;;  (rdz 0)
-          ;;  (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
-          ;;                   [0 0 (- (+ sk8707-06-stem-holder-height sk8707-06-pcb-height))]))
-          ;;  (key-place 2 1))
-          (-# (translate [0 10 -1](cube 20 20 2)))
           (->>
+           sk8707-06
+           (rdx 5)
+           (translate [0 0 -0.5]) 
+           (rdz 0)
+           (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
+                            [0 0 (- (+ sk8707-06-stem-holder-height sk8707-06-pcb-height))]))
+           (key-place 2 1))
+          (-# (translate [0 10 -1](cube 20 20 2)))
+           (->>
            sk8707-51
            (rdz 0)
            (rdx 5)
@@ -243,13 +252,15 @@
            (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
                             [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
            (key-place 2 1))
+          
           (key-place 1 0 (des-scooped 0))
           (key-place 1 1 (des-scooped 1))
           (key-place 2 0 (des-scooped 0))
           (key-place 2 1 (des-scooped 1))
           (let [items (union
                        (-# MxLEDBitPCB)
-                       kailh-hotswap-mx)]
+                       kailh-hotswap-mx
+                       switch-model)]
             (union (key-place 1 0 items)
           (key-place 1 1 items)
           (key-place 2 0 items)
@@ -1886,9 +1897,10 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
 
 
 (defn fractyl-body [wall-cross-section-steps
-                   wall-section-steps &{:keys [steps side] 
+                   wall-section-steps &{:keys [steps side show-aviator-assembly] 
                                         :or {steps wall-section-steps
-                                             side :right}}]
+                                             side :right
+                                             show-aviator-assembly true}}]
   (let [{thumb-single-row-wall-section :wall-section
          outer-key-gap-fn-coll :outer-key-gap-fn-coll
          inner-key-gap-fn-coll :inner-key-gap-fn-coll} (thumb-wall-section-for-single-thumb-row-fn wall-cross-section-steps wall-section-steps)
@@ -1926,86 +1938,92 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                                                                              ;:thumb-bl-to-tl-P-u-zero-inner ((nth inner-key-gap-fn-coll 1) steps)
                                                                              ;:thumb-tl-to-tr-P-u-zero-inner ((nth inner-key-gap-fn-coll 0) steps)
                                                                         )]
-   (cond->> (union
-             fractyl-screw-insert-outers
-             (case-symbols :side side)
+   (cond->> (difference (union
+                         
+                         (sk8707-51-place sk8707-51)
+                         fractyl-screw-insert-outers
+                         (case-symbols :side side)
           ;(let [height 55](-# (translate [-30 -20 (/ height 2)] (cube 190 140 height))))
-             chained-hull-shapes
-                    (tps-65-place (difference  tps-65-mount-new
-                                      tps-65
-                                      tps-65-mount-cutout
-                                      (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout)))
-             
-             (fractyl-switch-plate steps
-                                   inner-index-to-index-connector-outer-curve-fn inner-index-to-index-connector-inner-curve-fn
-                                   left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll
-                                   key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll)
-             thumb-type
-             (vybronics-vl91022-place vybronics-vl91022-mount) 
-             key-holes
-             (difference 
-              (vnf-polyhedron thumb-tr-rm-to-index-br-vnf-array)
-              (thumb-tr-place MxLEDBitPCB-clearance-smaller)
-              )
-             (vnf-polyhedron trackpad-to-main-body-vnf)
-             (vnf-polyhedron fractyl-right-wall-vnf)
-             (difference
-              (vnf-polyhedron (wall-vnf thumb-single-row-wall-section {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse true :style :default}))
-              (thumb-bl-place MxLEDBitPCB-clearance-smaller)
-              (thumb-tl-place MxLEDBitPCB-clearance-smaller)
-              (thumb-tr-place MxLEDBitPCB-clearance-smaller)
-              )
-             (difference
-              (vnf-polyhedron  (:wall-vnf (thumb-to-left-section-2 wall-cross-section-steps wall-section-steps thumb-outer-points-fn thumb-inner-points-fn)))
-              (thumb-bl-place MxLEDBitPCB-clearance-smaller)) 
-             single-key-pcb-holder-on-main-body
-             single-key-pcb-holder-on-thumbs
-             (vnf-polyhedron thumb-bl-to-tl-vnf)
-             (vnf-polyhedron thumb-tl-to-tr-vnf)
+                         chained-hull-shapes
+                         (color [0 1 0 1](tps-65-place (translate [0 0 -1] tps-65-model)))
+                         (tps-65-place (translate [0 0 -1] (
+                                             color [0 0 0 1]
+                                             tps-65-overlay)))
+                         (-# (tps-65-place (difference  tps-65-mount-new
+                                                    tps-65
+                                                     tps-65-mount-cutout
+                                                    (translate [0 0 -1]tps-65-mount-cutout)
+                                                    (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout))))
+
+                         (difference
+                          (fractyl-switch-plate steps
+                                               inner-index-to-index-connector-outer-curve-fn inner-index-to-index-connector-inner-curve-fn
+                                               left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll
+                                               key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll)
+                          (sk8707-51-place (binding [*fn* 36] (cylinder 1.0 20))))
+                         thumb-type
+                         (vybronics-vl91022-place vybronics-vl91022-mount)
+                         key-holes
+                         (difference 
+                          (vnf-polyhedron thumb-tr-rm-to-index-br-vnf-array)
+                          (thumb-tr-place MxLEDBitPCB-clearance-smaller))
+                         (vnf-polyhedron trackpad-to-main-body-vnf)
+                         (vnf-polyhedron fractyl-right-wall-vnf)
+                         (difference
+                          (vnf-polyhedron (wall-vnf thumb-single-row-wall-section {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse true :style :default}))
+                          (thumb-bl-place MxLEDBitPCB-clearance-smaller)
+                          (thumb-tl-place MxLEDBitPCB-clearance-smaller)
+                          (thumb-tr-place MxLEDBitPCB-clearance-smaller)
+                          (key-place 1 2 MxLEDBitPCB-clearance-smaller))
+                         (difference
+                          (vnf-polyhedron  (:wall-vnf (thumb-to-left-section-2 wall-cross-section-steps wall-section-steps thumb-outer-points-fn thumb-inner-points-fn)))
+                          (thumb-bl-place MxLEDBitPCB-clearance-smaller))
+                         single-key-pcb-holder-on-main-body
+                         single-key-pcb-holder-on-thumbs
+                         (vnf-polyhedron thumb-bl-to-tl-vnf)
+                         (vnf-polyhedron thumb-tl-to-tr-vnf)
              ;(key-place 2 2 MxLEDBitPCB)
              ;(key-place 0 2 MxLEDBitPCB)
-             (difference
-              (thumb-tr-place (intersection MxLEDBitPCB-clearance-smaller
-                                            single-key-pcb-holder-north-leg))
-              (thumb-tr-place single-plate))
-             (key-place 0 2 single-key-pcb-holder-north-leg)
-             (key-place 0 2 (intersection single-key-pcb-holder-south-leg
-                                          MxLEDBitPCB-clearance-smaller) )
-             (difference
-              (union
-               (vnf-polyhedron left-section-vnf-array)
-               (screen-holder-place-side screen-holder)
+                         (difference
+                          (thumb-tr-place (intersection MxLEDBitPCB-clearance-smaller
+                                                        single-key-pcb-holder-north-leg))
+                          (thumb-tr-place single-plate))
+                         (key-place 0 2 single-key-pcb-holder-north-leg)
+                         (key-place 0 2 (intersection single-key-pcb-holder-south-leg
+                                                      MxLEDBitPCB-clearance-smaller))
+                         (difference
+                          (union
+                           (vnf-polyhedron left-section-vnf-array)
+                           (screen-holder-place-side screen-holder)
                         ;(screen-holder-place-side screen-holder)
-               ;           aviator-assembly-polyhedron
-               )
-              (thumb-tr-place MxLEDBitPCB-clearance-smaller)
-              (key-place 0 2 MxLEDBitPCB-clearance-smaller)
-              ;aviator-assembly-diffs
-              (screen-holder-place-side screen-holder-cut)
-              (screen-holder-place-side (translate [0 0 screen-holder-depth] screen-holder-cut-viewport-cut)) 
-              )
-              (difference (vnf-polyhedron (wall-vnf fractyl-back-wall-wall-section default-vnf-vertex-array-args))
-                          (usb-jack-place-new (fractyl-usb-c-port 60) :extra-z-rot -1.5)
-(rp2040-plus-place rp2040-plus-mount-body-clearance :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
-                          (apply union
-                                 (for [col (range ncols)]
-                                   (key-place col 0 MxLEDBitPCB-clearance-smaller)))
-                          )
-             (difference (vnf-polyhedron (wall-vnf front-wall-wall-section default-vnf-vertex-array-args))
-                         (key-place 2 2 MxLEDBitPCB-clearance-smaller)
-                         (key-place 3 2 MxLEDBitPCB-clearance-smaller)
-                         (key-place 4 2 MxLEDBitPCB-clearance-smaller))
-             )
+                           (cond show-aviator-assembly aviator-assembly-polyhedron))
+                          (thumb-tr-place MxLEDBitPCB-clearance-smaller)
+                          (key-place 0 2 MxLEDBitPCB-clearance-smaller)
+                          (cond show-aviator-assembly aviator-assembly-diffs)
+                          (screen-holder-place-side screen-holder-cut)
+                          (screen-holder-place-side (translate [0 0 screen-holder-depth] screen-holder-cut-viewport-cut)))
+                         (difference (vnf-polyhedron (wall-vnf fractyl-back-wall-wall-section default-vnf-vertex-array-args))
+                                     (usb-jack-place-new (fractyl-usb-c-port 60) :extra-z-rot -1.5)
+                                     (rp2040-plus-place rp2040-plus-mount-body-clearance :place-fn (fn [shape] (usb-jack-place-new shape :extra-z-rot -1.5)))
+                                     (apply union
+                                            (for [col (range ncols)]
+                                              (key-place col 0 MxLEDBitPCB-clearance-smaller))))
+                         (difference (vnf-polyhedron (wall-vnf front-wall-wall-section default-vnf-vertex-array-args))
+                                     (key-place 2 2 MxLEDBitPCB-clearance-smaller)
+                                     (key-place 3 2 MxLEDBitPCB-clearance-smaller)
+                                     (key-place 4 2 MxLEDBitPCB-clearance-smaller)))
+                        fractyl-screw-insert-holes)
      (= side :left) (mirror [1 0 0]))) 
   )
 
 (comment (spit "things-low/fractyl-case-right.scad"
                (write-scad
                 (include include-bosl2)
-                (fractyl-body 10 10)
+                (fractyl-body 10 10 :show-aviator-assembly false)
                 )))
 
 (comment (spit "things-low/fractyl-case-left.scad"
                (write-scad
                 (include include-bosl2)
                 (fractyl-body 10 10 :side :left))))
+
