@@ -71,16 +71,23 @@
               0] tps-65-overlay-corner-cylinder))
  
   (def tps-65-overlay
-    (union
-     (hull
-    ;(cube tps-65-mount-width tps-65-mount-length tps-65-overlay-thickness)
-     tps-65-overlay-corner-cylinder-top-left
-     tps-65-overlay-corner-cylinder-top-right
-     tps-65-overlay-corner-cylinder-bottom-left
-     tps-65-overlay-corner-cylinder-bottom-right)
-     (color [1 0 0 1] (rdx 90 (import "reform2-trackpad-support-20201005.stl")) )
-     ))
+    (let [radius 4
+          x-translation (- (/ tps-65-width 2) radius)
+          y-translation (- (/ tps-65-length  2) radius)
+          thickness 1
+          corner (binding [*fn* 72](cylinder radius thickness :center false))]
+      (hull 
+       (translate [x-translation y-translation 0] corner)
+       (translate [x-translation (- y-translation) 0] corner)
+       (translate [(- x-translation) (- y-translation) 0] corner)
+       (translate [(- x-translation) y-translation 0] corner)
+       ) 
+      )
+    )
 
+(spit "things-low/tps-65-overlay.scad"
+      (write-scad 
+       (project tps-65-overlay)))
 
 
  
@@ -375,6 +382,28 @@ tps-65-overlay-corner-cylinder-top-right
 tps-65-overlay-corner-cylinder-bottom-left
 tps-65-overlay-corner-cylinder-bottom-right
     ))
+ 
+ (def tps-65-model
+   (->>
+    (import "../parts/tps-65.stl")
+    (translate [(/ tps-65-width -2) (/ tps-65-length -2) 0])))
+ 
+ (spit "things-low/tps-65-test.scad"
+       (write-scad
+        (include  "../BOSL2/std.scad")
+        (union 
+         (translate [0 0 0](color [0 0 0 1]tps-65-overlay))
+         (let [radius 4](->> (cylinder radius 1 :center false)
+              (binding [*fn* 72])
+              (translate [(+ radius(/ 65 -2)) (+ radius (/ 49 -2)) 0])))
+         (translate [0 0 0.5](cube 65 1 1))
+         (translate [0 0 0.5] (cube 1 49 1))
+         tps-65-model 
+        ;;  (-# (difference 
+        ;;       tps-65-mount-new
+        ;;       (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout)
+        ;;       tps-65-mount-cutout))
+                )))
  
  (def tps-65-mount-corner-radius-mod (+ tps-65-mount-corner-radius 0))
 (def tps-65-mount-corner-radius-with-offset-mod (+ tps-65-mount-corner-radius-with-offset 2))
