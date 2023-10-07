@@ -1,7 +1,7 @@
 (ns dactyl-keyboard.lib.affine-transformations
   
   (:require
-   [clojure.core.matrix :refer [mmul]]
+   [clojure.core.matrix :refer [mmul mul]]
    [dactyl-keyboard.lib.geometry :refer [deg2rad]])
   )
 
@@ -43,3 +43,12 @@
 (defn rotate-around-point-z-axis-in-degrees [angle-in-degrees point position]
   (rotate-around-point-z-axis (deg2rad angle-in-degrees) point position)
   )
+
+(defn mirror-x [point]
+  (mul [-1 0 0] point))
+
+(defn mirror-y [point]
+  (mul [0 -1 0] point))
+
+(defn mirror-z [point]
+  (mul [0 0 -1] point))
