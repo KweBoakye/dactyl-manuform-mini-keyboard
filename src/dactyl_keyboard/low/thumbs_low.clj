@@ -117,7 +117,11 @@
  
           ))))
 
-
+(def thumb-place-convex-extra-z-rotation-value 30)
+(def thumb-place-convex-fan-radius 
+   (+ (radius-of-chord (+ mount-width) (deg2rad thumb-fan-angle))
+                  (+ 
+                   (/ (+ mount-height extra-height) 2))))
 (defn thumb-place-convex ([column row shape] 
                           (thumb-place-convex column row translate rdx rdy rdz  shape))
   ([column row translate-fn rotate-x-fn  rotate-y-fn rotate-z-fn  shape]
@@ -160,7 +164,7 @@ column-radius (+ (/ (/ (+ mount-width extra-width) 2)
          
          (rotate-x-fn 7.5)
            (rotate-y-fn (/ 180 -14))
-           (rotate-z-fn 30)
+           (rotate-z-fn thumb-place-convex-extra-z-rotation-value)
         
           (translate-fn [(- (+ (* (/ max-thumb-rows 2) (+ mount-width extra-width)) (/ mount-width 2) )) (/ mount-height -2) (/ cap-top-height -2)]) 
         (translate-fn thumborigin-convex)
@@ -169,6 +173,17 @@ column-radius (+ (/ (/ (+ mount-width extra-width) 2)
                            ]) 
 
          ))))
+
+(defn thumb-place-convex-z-rotation [thumb-position]
+  (let [col (case thumb-position 
+              :tr 0
+              :tl 1
+              :mr 1
+              :bl 2
+              :br 2)]
+    (+ 0 (* thumb-fan-angle col))
+    )
+  )
 
 
 (def thumb-tr-standard-rotation-values {:x 14 :y -15 :z 10})
@@ -354,7 +369,7 @@ column-radius (+ (/ (/ (+ mount-width extra-width) 2)
        (translate-fn thumborigin)
        (translate-fn bl-minithumb-loc)))) ;        (translate [-51 -25 -12])))
 
-(def thumb-bl-rotate-convex-values 
+(def thumb-bl-convex-rotation-values 
   {:x (+ (thumb-tr-convex-rotation-values :x) -8)
    :y (+ (thumb-tr-convex-rotation-values :y) 5)
    :z (+ (thumb-tr-convex-rotation-values :z) 20)}
@@ -363,9 +378,9 @@ column-radius (+ (/ (/ (+ mount-width extra-width) 2)
 (defn thumb-bl-rotate-convex ([shape] (thumb-bl-rotate-convex rdx rdy rdz shape))
   ([rotate-x-fn rotate-y-fn rotate-z-fn shape]
    (->> shape
-        (rotate-x-fn  (thumb-bl-rotate-convex-values :x))
-        (rotate-y-fn (thumb-bl-rotate-convex-values :y))
-        (rotate-z-fn  (thumb-bl-rotate-convex-values :z)))))
+        (rotate-x-fn  (thumb-bl-convex-rotation-values :x))
+        (rotate-y-fn (thumb-bl-convex-rotation-values :y))
+        (rotate-z-fn  (thumb-bl-convex-rotation-values :z)))))
 
 (def thumb-bl-rotate (case thumb-curvature-type
                        :thumb-curvature-standard thumb-bl-rotate-standard

@@ -1,15 +1,12 @@
 (ns dactyl-keyboard.low.fractyl.fractyl-case-walls
   (:refer-clojure :exclude [use import])
   (:require [clojure.core.matrix :refer [div mul]]
-            [clojure.math :refer [sqrt]]
-            [dactyl-keyboard.des-caps :refer [des-r1 des-r2 des-r5 des-scooped]]
-            [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-z-in-degrees]]
+            [clojure.math :refer [cos sqrt]]
+            [dactyl-keyboard.des-caps :refer [des-scooped]]
+            [dactyl-keyboard.lib.affine-transformations :refer :all]
             [dactyl-keyboard.lib.algebra :refer [find-point-on-line-using-x]]
             [dactyl-keyboard.lib.constants :refer [epsilon]]
-            [dactyl-keyboard.low.aviator-low :refer [aviator-assembly aviator-assembly-diffs 
-                                                     aviator-assembly-polyhedron]]
-            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-curve bezier-linear-spline]]
-            [dactyl-keyboard.lib.curvesandsplines.coons-surface :refer [bicubic-coons-surface triangular-coons-surface]]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-curve]]
             [dactyl-keyboard.lib.curvesandsplines.curve-fitting :refer [calculate-tangents-for-local-cubic-curve-interpolation-from-tangent
                                                                         global-curve-interp-with-calculated-first-derivatives
                                                                         global-curve-interp-with-calculated-first-derivatives-curve global-curve-interp-with-end-derivatives-calculated
@@ -20,45 +17,45 @@
                                                                                decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves get-function-for-u-k-values
                                                                                non-uniform-b-spline nurbs nurbs-with-calculated-knot-vector]]
             [dactyl-keyboard.lib.curvesandsplines.splines :refer [catmull-rom-spline-curve]]
-            [dactyl-keyboard.lib.geometry :refer [two-d-intersection-for-3d]]
+            [dactyl-keyboard.lib.geometry :refer [deg2rad]]
             [dactyl-keyboard.lib.matrices :refer [rotate-matrix]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.constants :refer [include-bosl2]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.joiners :refer [dovetail]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.vnf :refer :all]
-            [dactyl-keyboard.lib.openscad.hull :refer [chained-hull-to-points chained-hull-for-four-lists chained-hull-for-two-lists]]
-            [dactyl-keyboard.lib.transformations :refer [rdx rdz ry]]
+            [dactyl-keyboard.lib.openscad.hull :refer [chained-hull-to-points]]
+            [dactyl-keyboard.lib.transformations :refer [rdx rdy rdz rz]]
+            [dactyl-keyboard.low.aviator-low :refer [aviator-assembly-diffs
+                                                     aviator-assembly-polyhedron]]
             [dactyl-keyboard.low.case-low :refer [usb-jack-height
                                                   usb-jack-width]]
             [dactyl-keyboard.low.case-low-polyhedron-functions :refer :all]
             [dactyl-keyboard.low.fractyl.fractyl-key-plate-connectors :refer :all]
             [dactyl-keyboard.low.fractyl.fractyl-screw-inserts :refer :all]
             [dactyl-keyboard.low.fractyl.svg.svg-point :refer [svg-import]]
-            [dactyl-keyboard.low.oled-low-placements :refer [screen-holder screen-holder-cut
-                                                             screen-holder-cut-viewport-cut
-                                                             screen-holder-depth]]
-            [dactyl-keyboard.low.placement-functions-low :refer :all] 
+            [dactyl-keyboard.low.oled-low-placements :refer [screen-holder
+                                                             screen-holder-cut
+                                                             screen-holder-cut-viewport-cut screen-holder-depth]]
+            [dactyl-keyboard.low.placement-functions-low :refer :all]
             [dactyl-keyboard.low.screen-holder-placement-functions :refer [screen-holder-place-side]]
             [dactyl-keyboard.low.screen-holder-placement-points :refer :all]
             [dactyl-keyboard.low.shape-parameters-low :refer :all]
             [dactyl-keyboard.low.thumbs-low :refer :all]
             [dactyl-keyboard.low.tps-65-placement-functions :refer :all]
             [dactyl-keyboard.low.tps-65-placement-points :refer :all]
+            [dactyl-keyboard.low.vvybronics-vl91022-placement-functions :refer [vybronics-vl91022-place]]
             [dactyl-keyboard.low.web-connecters-low :refer :all]
             [dactyl-keyboard.MxLEDBitPCB-holder :refer [MxLEDBitPCB
                                                         MxLEDBitPCB-clearance-smaller
-                                                        single-key-pcb-holder
-                                                        single-key-pcb-holder-north-leg
+                                                        single-key-pcb-holder single-key-pcb-holder-north-leg
                                                         single-key-pcb-holder-south-leg]]
             [dactyl-keyboard.RP2040-Plus :refer [rp2040-plus rp2040-plus-mount
                                                  rp2040-plus-mount-body-clearance rp2040-plus-place]]
-            [dactyl-keyboard.switch-hole :refer [plate-thickness
-                                                 single-plate]]
-            [dactyl-keyboard.vybronics-vl91022 :refer [vybronics-vl91022-mount]]
-            [dactyl-keyboard.low.vvybronics-vl91022-placement-functions :refer [vybronics-vl91022-place]]
-            [dactyl-keyboard.tps-65 :refer :all]
-            [dactyl-keyboard.sk8707-51 :refer :all]
             [dactyl-keyboard.sk8707-06 :refer :all]
+            [dactyl-keyboard.sk8707-51 :refer :all]
+            [dactyl-keyboard.switch-hole :refer [plate-thickness single-plate]]
+            [dactyl-keyboard.tps-65 :refer :all]
             [dactyl-keyboard.utils :refer [plot-bezier-points]]
+            [dactyl-keyboard.vybronics-vl91022 :refer [vybronics-vl91022-mount]]
             [scad-clj.model :refer :all]
             [scad-clj.scad :refer :all]))
 
@@ -210,13 +207,24 @@
                    ))))
 
 (defn sk8707-51-place [shape]
-  (->> shape 
-      (rdz 0)
-      (rdx 5)
-      (translate [0 0 0.75])
-      (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
-                       [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
-      (key-place 2 1)))
+  (if (and (vector? shape)  (number? (nth shape 0))) 
+    (->> shape 
+         (rotate-around-z-in-degrees 0)
+         (rotate-around-x-in-degrees 5)
+         (mapv + [0 0 0.75] (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
+                                  [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
+         (key-place 2 1 (partial mapv +) rotate-around-x-in-degrees rotate-around-y-in-degrees rotate-around-z-in-degrees))
+    (->> shape
+         (rdz 0)
+         (rdx 5)
+         (translate [0 0 0.75])
+         (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
+                          [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
+         (key-place 2 1))))
+
+(comment 
+  (cos (deg2rad 30)))
+
 (comment (spit "things-low/back-wall-test.scad"
       (write-scad
        (include "../BOSL2/std.scad")
@@ -235,23 +243,27 @@
              position-1 (:wall-locate-2-bottom-floor (calculate-control-points (tps-65-wall-position :tr :north-west)))
              position-2 (:wall-locate-2-bottom-floor (calculate-control-points (key-wall-position 0 0 0 1 :tl  :slant :no-slant)))]
          (union
-          (->>
-           sk8707-06
-           (rdx 5)
-           (translate [0 0 -0.5]) 
-           (rdz 0)
-           (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
-                            [0 0 (- (+ sk8707-06-stem-holder-height sk8707-06-pcb-height))]))
-           (key-place 2 1))
+          ;; (->>
+          ;;  sk8707-06
+          ;;  (rdx 5)
+          ;;  (translate [0 0 -0.5]) 
+          ;;  (rdz 0)
+          ;;  (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
+          ;;                   [0 0 (- (+ sk8707-06-stem-holder-height sk8707-06-pcb-height))]))
+          ;;  (key-place 2 1))
+          (sk8707-51-breakout-place (translate [0 0 4] sk8707-51-breakout))
           (-# (translate [0 10 -1](cube 20 20 2)))
-           (->>
-           sk8707-51
-           (rdz 0)
-           (rdx 5)
-           (translate [0 0 0.75]) 
-           (translate (mapv + web-post-tl-translation-vector [-1.5 2.5 0]
-                            [0 0 (- (+ sk8707-51-stem-holder-height sk8707-51-pcb-thickness 0))]))
-           (key-place 2 1))
+           (sk8707-51-place (sk8707-51-mount))
+          (difference (hull (sk8707-51-place (translate [0 0 (- 2)](sk8707-51-mount :sk8707-51-mount-thickness 0.1)) )
+          (extrude-linear {:height 0.1 :center false } (project (sk8707-51-place (translate [0 0 (- 2)] (sk8707-51-mount :sk8707-51-mount-thickness 0.1)) ))))
+                    (sk8707-51-place (sk8707-51-mount-cutout :sk8707-51-mount-thickness 10))  
+                      )
+          (plot-bezier-points  (sk8707-51-mount-shape (/ (+ sk8707-51-mounting-hole-diameter 4) 2) :func sk8707-51-place) (sphere 0.1))
+          ;; (->>
+          ;;  sk8707-51
+          ;; (sk8707-51-place)
+           
+          ;;  )
           
           (key-place 1 0 (des-scooped 0))
           (key-place 1 1 (des-scooped 1))
@@ -264,7 +276,9 @@
             (union (key-place 1 0 items)
           (key-place 1 1 items)
           (key-place 2 0 items)
-          (key-place 2 1 items)))
+          (key-place 2 1 items)
+                   (key-place 1 2 items)
+                   (key-place 2 2 items)))
           (key-place 3 0 (des-scooped 0))
           (key-place 3 1 (des-scooped 1))
 
@@ -1271,15 +1285,40 @@
                (rdz 14)
                 (translate (mapv + (div (mapv + (:wall-locate3-point left-section-bottom-mid-south-control-points) (:wall-locate3-point left-section-bottom-left-south-control-points)) 2) [0 0.2 0]))
                )
-          (->> (svg-import "../svg/Odenkyem.svg")
+          (->>
+           (svg-import "../svg/Onyakopon_Aniwa.svg")
+           (scale [0.03 0.03 1])
+           (extrude-linear {:height 3 :scale 0.8})
+           ;(translate [0 0 -1])
+           (rdz -10)
+           (rdy -88)
+           (rdz 5)
+           (translate (mapv + (div (mapv + (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl-lm :west)))
+                                         (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl :west :offset [-0.00000001 0.0 0.0])))) 2)
+                            [0 2.5 -14]))
+           )
+          (->>
+           (svg-import "../svg/nkyinkyim_log_spiral.svg")
+           (mirror [1 0 0])
+           (scale [0.2 0.2 1])
+           (extrude-linear {:height 3 :scale 0.8})
+           (translate [0 0 -1])
+           (rdz -90)
+           (rdy -88)
+           (rdz 5)
+           (translate (mapv + (div (mapv + (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl-lm :west)))
+                                         (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl :west :offset [-0.00000001 0.0 0.0])))) 2)
+                            [0 2.5 -30]))
+           )
+          ;; (->> (svg-import "../svg/Odenkyem.svg")
 
-               ;(translate [(* (/ -3 2) 25 ) (* (/ -3 2) 23.3 )])
-               (scale [0.1 0.1 1])
-               (extrude-linear {:height 2 :scale 0.8})
-               (rdx 80)
-               (rdz -80)
-               (translate (mapv + (div (mapv + (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl-lm :west)) )
-                                        (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl :west :offset [-0.00000001 0.0 0.0])))) 2) [0 0.0 -8])))
+          ;;      ;(translate [(* (/ -3 2) 25 ) (* (/ -3 2) 23.3 )])
+          ;;      (scale [0.1 0.1 1])
+          ;;      (extrude-linear {:height 2 :scale 0.8})
+          ;;      (rdx 80)
+          ;;      (rdz -80)
+          ;;      (translate (mapv + (div (mapv + (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl-lm :west)) )
+          ;;                               (:wall-locate3-point (calculate-control-points (tps-65-wall-position :tl :west :offset [-0.00000001 0.0 0.0])))) 2) [0 0.0 -8])))
           
           ;(plot-bezier-points thumb-inner-points (sphere 0.5))
          ; (plot-bezier-points thumb-bl-tr-tm-north-west-offest-inner-curve (sphere 0.5))
@@ -1503,17 +1542,102 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                     )  
   )
 
-(comment (spit "things-low/fractyl-right-wall-test.scad"
-      (write-scad
-       (include include-bosl2)
-       (let []
-         (union
-        (fractyl-right-wall 5 5) 
-        ;(front-wall-nurbs 10 30)
-          (fractyl-back-wall 5 5)
-        key-holes
-        )))))
+(comment
+  (spit
+   "things-low/fractyl-right-wall-test.scad"
+   (write-scad
+    (include include-bosl2)
 
+    (let
+     [scale-factor 0.1
+      face-scale-factor 0.9
+      z-height (/ (* 69.213 scale-factor) 2)
+      width 1.6
+      row-2-rot (+ (:z (apply-key-geometry-rotation-values 4 2)) (deg2rad 7))
+      row-1-rot (+ (:z (apply-key-geometry-rotation-values 4 2)) (deg2rad 0.19))
+      row-1-to-0-rot (+ (:z (apply-key-geometry-rotation-values 4 2)) (deg2rad -3.61))
+      row-0-rot (+ (:z (apply-key-geometry-rotation-values 4 2)) (deg2rad -6.34))
+      place-nkyinkyim-spiral (fn [wall-pos & {:keys [offset  y-rot z-rot level flip extrude-scale x-rot x-extra-offset z-extra-offset orientation]
+                                              :or {offset [0 0 0] y-rot 90 z-rot 186 level 0
+                                                   extrude-scale face-scale-factor flip false
+                                                   x-rot 0 x-extra-offset 0 z-extra-offset 0 orientation 90}}]
+                               (->>
+                                (cond->>
+                                 (svg-import "../svg/nkyinkyim_log_spiral.svg")
+                                  flip (mirror [1 0 0]))
+                                (scale [scale-factor scale-factor 1])
+                                (extrude-linear {:height 1.5 :scale extrude-scale})
+                                         ;(translate [0 0 -0.5])
+                                                   ;(translate [0 0 -1])
+                                (rdz orientation) 
+                                (rdy y-rot)
+                                (rdx x-rot) 
+                                (rz z-rot) 
+                                
+                                (translate
+                                 (assoc (mapv + (:wall-locate3-point (calculate-control-points wall-pos))
+                                              (rotate-around-z z-rot offset)) 2
+                                        z-height))
+                                (translate (rotate-around-y-in-degrees (- y-rot 90) (rotate-around-z z-rot [0 0 (- (+ (* z-height level 2 face-scale-factor)) (* level width 0.88))])))
+                                (translate (rotate-around-y-in-degrees (- y-rot 90 ) (rotate-around-z z-rot [x-extra-offset 0 z-extra-offset])))
+                                ))
+      x-offset 0
+      r2-br [(key-wall-position 4 2 1 0 :br) :z-rot row-2-rot :offset [0 1.7 0] :y-rot 86]
+      r2-rm [(key-wall-position 4 2 1 0 :rm) :z-rot row-2-rot :offset [x-offset 0 0] :y-rot 86]
+      r2-tr [(key-wall-position 4 2 1 0 :tr) :z-rot row-2-rot :offset [x-offset -1.70 0] :y-rot 86]
+      r2-r1 [(key-wall-position 4 1 1 0 :br) :z-rot row-2-rot :offset [(+ -0.6 x-offset) -6.3 0] :y-rot 84]
+      r1-br [(key-wall-position 4 1 1 0 :br) :z-rot row-2-rot :offset [(+ -0.6 x-offset) -0.5 0 ] :y-rot 78]
+      r1-br-rm [(key-wall-position 4 1 1 0 :br-rm) :z-rot row-1-rot :offset [(+ -0.80 x-offset) 1 0] :y-rot 78]
+      r1-tr-rm [(key-wall-position 4 1 1 0 :tr-rm) :z-rot row-1-rot  :offset [(+ -0.80 x-offset) -1.8 0] :y-rot 78]
+      r1-tr [(key-wall-position 4 1 1 0 :tr) :z-rot row-1-rot  :offset [(+ -0.80 x-offset) -0.3 0] :y-rot 78]
+      r1-r0 [(key-wall-position 4 0 1 0 :br) :z-rot row-1-to-0-rot  :offset [(+ -0.80 x-offset) -5.1 0] :y-rot 81]
+      r0-br [(key-wall-position 4 0 1 0 :br) :z-rot row-0-rot  :offset [(+ -0.666 x-offset) 0.7 0] :y-rot 84]
+      r0-rm [(key-wall-position 4 0 1 0 :rm) :z-rot (+ (:z (apply-key-geometry-rotation-values 4 2)) (deg2rad -7))  :offset [(+ -0.666 x-offset) -1.3 0] :y-rot 84]
+      r0-tr [(key-wall-position 4 0 1 0 :tr) :z-rot (+ (:z (apply-key-geometry-rotation-values 4 2)) (deg2rad -12.2)) 
+             :offset [(+ -0.0 x-offset) -3.17 0] :y-rot 84]
+      spiral-list [r2-br r2-rm r2-tr r2-r1 r1-br r1-br-rm r1-tr-rm r1-tr
+                   r1-r0 r0-br  ]]
+      (union
+       
+       (-# (cube z-height z-height 2))
+       (-# (vnf-polyhedron (:fractyl-right-wall-vnf  (fractyl-right-wall 5 5))))
+        ;(front-wall-nurbs 10 30)
+
+       (vnf-polyhedron (wall-vnf (fractyl-back-wall 5 5) default-vnf-vertex-array-args))
+       key-holes
+       (apply place-nkyinkyim-spiral (concat r2-br [:level 2 :flip false :orientation -45]))
+       (apply place-nkyinkyim-spiral (concat r2-br [:level 2 :flip false :orientation -45 :x-extra-offset -1.5 :extrude-scale 1]))
+       (apply place-nkyinkyim-spiral (concat r2-br [:level 2 :flip false :orientation -45 :x-extra-offset -3 :extrude-scale 1]))
+       (apply place-nkyinkyim-spiral (concat r2-br [:level 1  :flip true :orientation -90]))
+       (apply place-nkyinkyim-spiral (concat r2-br [:level 1  :flip true :orientation -90]))
+       ;(apply place-nkyinkyim-spiral (conj r0-tr [:level 2]))
+       (apply place-nkyinkyim-spiral (concat r0-rm [:level 1 :z-extra-offset 0.1]))
+       (apply place-nkyinkyim-spiral (concat r0-rm [:level 1 :z-extra-offset 0.1 :x-extra-offset -1.5 :extrude-scale 1]))
+       (apply place-nkyinkyim-spiral (concat r0-rm [:flip true :orientation -90]))
+       (apply place-nkyinkyim-spiral (concat r0-tr [:orientation -90 ]))
+       ;(apply place-nkyinkyim-spiral (concat r0-tr [:level 1 :flip true]))
+       (apply place-nkyinkyim-spiral (concat r0-tr [:level 1 :flip true :z-extra-offset 0.1]))
+       (apply place-nkyinkyim-spiral (concat r0-tr [:level 1 :flip true :z-extra-offset 0.1 :extrude-scale 1 :x-extra-offset -1.5]))
+       (map #(apply place-nkyinkyim-spiral %) spiral-list)
+       (map #(apply place-nkyinkyim-spiral %) 
+            (mapv #(concat % [:level 1 :flip true]) [ r2-rm  ]))
+        (map #(apply place-nkyinkyim-spiral %)
+             (mapv #(concat % [:x-extra-offset -1.5 :extrude-scale 1])
+                   [r2-tr r2-r1 r1-br r1-br-rm r1-tr-rm r1-tr r1-r0 r0-br]))
+       (map #(apply place-nkyinkyim-spiral %) 
+             (mapv #(concat % [:x-extra-offset -1.5 :extrude-scale 1 :level 1 :flip true])
+                  [ r2-rm  ]))
+       
+       
+      ;;  (map #(apply place-nkyinkyim-spiral %)
+      ;;       (mapv #(concat % [:x-extra-offset -3 :extrude-scale 1])
+      ;;             [r2-tr r2-r1 r1-br r1-br-rm r1-tr-rm r1-tr r1-r0 r0-br]))
+       
+       (-# (translate  (mapv + (:wall-locate3-point-floor (calculate-control-points (key-wall-position 4 2 1 0 :tr))) [0 0 -2]) (cube 40 40 4)))))))
+  )
+(comment (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position 4 2 1 0 :tr))) [0 1 3.8]))
+(comment (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position 4 2 1 0 :rm))) [0 0 -0.7]))
+(comment (- 5.44421158845456 5.025555231351336))
 (comment (spit "things-low/horizontal-first-test.scad"
                (write-scad
                 (include "../BOSL2/std.scad")
@@ -1642,7 +1766,44 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                        thumb-bl-to-tl-outer-curve-fn :thumb-bl-to-tl-outer-curve-fn
                        thumb-tl-to-tr-outer-curve-fn :thumb-tl-to-tr-outer-curve-fn
                        thumb-bl-to-tl-inner-curve-fn :thumb-bl-to-tl-inner-curve-fn
-                       thumb-tl-to-tr-inner-curve-fn :thumb-tl-to-tr-inner-curve-fn} left-section-data]
+                       thumb-tl-to-tr-inner-curve-fn :thumb-tl-to-tr-inner-curve-fn} left-section-data
+                      scale-factor 0.12
+                      face-scale-factor 0.9
+                      z-height (/ (* 69.213 scale-factor) 2)
+                      width 1.6
+                      place-nkyinkyim-spiral (fn [wall-pos & {:keys [offset x-rot z-rot y-rot level wall-elevation flip extrude-scale] 
+                                                              :or {offset [0 0 0] x-rot 90 z-rot 0 y-rot 0
+                                                                   level 0 wall-elevation 0 flip  false extrude-scale face-scale-factor}}]
+                                               (->>
+                                                (cond->> (svg-import "../svg/nkyinkyim_log_spiral.svg")
+                                                flip  (mirror [1 0 0]))
+                                                                         ;(mirror [1 0 0])
+                                                (scale [scale-factor scale-factor 1])
+                                                (extrude-linear {:height 1.5 :scale extrude-scale})
+                                                
+                                              
+                                    
+                                                                         ;(translate [0 0 -1])
+                                                (rdz 0)
+                                                (rdx x-rot) 
+                                                (rdy y-rot)
+                                                (rdz z-rot) 
+                                                (translate
+                                                 (assoc (mapv + (:wall-locate3-point (calculate-control-points wall-pos)) 
+                                                              (rotate-around-z-in-degrees z-rot offset)) 2
+                                                        (- (+ z-height (* z-height level 2 face-scale-factor)) (* level width))))))
+                      x-offset -1
+                      y-offset-bl 0.23
+                      x-rot-bl 90
+                      two-level-spiral (fn [spiral-config]
+                                         (union 
+                                          (spiral-config)
+                                          (apply spiral-config [:flip true :level 1])))
+                      three-level-spiral (fn [spiral-config]
+                                         (union
+                                          (spiral-config)
+                                          (apply spiral-config [:flip true :level 1])
+                                          (apply spiral-config [:y-rot 180 :level 2])))]
                   (union
                    ;(plot-bezier-points curve (sphere 0.5))
                    ;(color [1 0 0 1](plot-bezier-points end-curve-outer (sphere 0.5)))
@@ -1651,23 +1812,128 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                    thumb-type
                    key-holes
                    (-# (vnf-polyhedron (wall-vnf thumb-single-row-wall-section {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse true :style :default})))
-                   (key-place 1 2 des-r2)
+                  ;;  (key-place 1 2 des-r2)
                    (vnf-polyhedron vnf-array)
                    ;(plot-bezier-points outer-bottom-points (sphere 0.5))
                    (translate (nth outer-bottom-points 0) (sphere 0.5))
                    (plot-bezier-points inner-bottom-points (sphere 0.5))
                    single-key-pcb-holder-on-thumbs
                    (-# (vnf-polyhedron  (:wall-vnf (thumb-to-left-section-2 wall-cross-section-steps wall-section-steps thumb-outer-points-fn thumb-inner-points-fn))))
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bl-bm :xy 5)
+                                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                                           :offset [(+ -0.6 x-offset) (+ 0.6 y-offset-bl) 0] 
+                                           :level 1 :flip true :x-rot x-rot-bl)
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bl-bm :xy 5)
+                                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                                           :offset [(+ -0.6 x-offset) (+ 2.1 y-offset-bl) 0]
+                                           :level 1 :flip true :extrude-scale 1
+                                           :x-rot x-rot-bl)
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bl-bm :xy 5 )
+                                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15) 
+                                           :offset [(+ -0.6 x-offset) (+ 0.6 y-offset-bl) 0]
+                                           :x-rot x-rot-bl)
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bm :xy 5 )
+                                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15) 
+                                           :offset [(+ 1.96 x-offset) (+ 0.4 y-offset-bl) 0]
+                                           :x-rot x-rot-bl)
+                  (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bm :xy 5)
+                                          :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                                          :offset [(+ 1.96 x-offset) (+ 0.4 y-offset-bl) 0] 
+                                          :level 1 :flip true :x-rot x-rot-bl )
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bm :xy 5)
+                                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                                           :offset [(+ 1.96 x-offset) (+ 1.9 y-offset-bl) 0] 
+                                           :level 1 :flip true :extrude-scale 1 :x-rot x-rot-bl)
+                  ;;  (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :br-bm :xy 5 :slant :no-slant)
+                  ;;                          :offset [-1.7 0 0] :z-rot (+ (thumb-place-convex-z-rotation :bl) 15))
+                   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :br :xy 5 :slant :no-slant)
+                                           :offset [(+ 0.16 x-offset) -0.11 0] 
+                                           :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tl) 15) (+ (thumb-place-convex-z-rotation :bl) 15)) 2)
+                                                     4)
+                                           :x-rot 90))
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :br :xy 5 :slant :no-slant)
+                            :offset [(+ 0.16 x-offset) (+ -0.11 1.5) 0]
+                            :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tl) 15) (+ (thumb-place-convex-z-rotation :bl) 15)) 2)
+                                      4)
+                            :x-rot 90 :level 1 :flip true :extrude-scale 1)
+                  (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :br :xy 5 :slant :no-slant)
+                                          :offset [(+ 0.16 x-offset) (+ -0.11 2.3) 0]
+                                          :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tl) 15) (+ (thumb-place-convex-z-rotation :bl) 15)) 2)
+                                                    4)
+                                          :x-rot 90 :level 1 :flip true :extrude-scale 1)
+                   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bl :xy 5 :slant :no-slant)
+                                           :offset [(+ 1.8 x-offset) 0.6 0]:z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0))
+                  
+                   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bm :xy 5 :slant :no-slant)
+                                           :offset [(+ x-offset 0.16) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0))
+                  ;;  (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bm :xy 5 :slant :no-slant)
+                  ;;                          :offset [(+ x-offset 0.16) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) 
+                  ;;                          :level 2 :y-rot 180 :flip true)
+                  ;;  (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bm :xy 5 :slant :no-slant)
+                  ;;                          :offset [(+ x-offset 0.16) 2.1 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15)
+                  ;;                          :level 2 :extrude-scale 1)
+                  ;;  (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bm :xy 5 :slant :no-slant)
+                  ;;                          :offset [(+ x-offset 0.16) 3.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15)
+                  ;;                          :level 2 :extrude-scale 1)
+                  ;;  (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bm :xy 5 :slant :no-slant)
+                  ;;                          :offset [(+ x-offset 0.16) 5.1 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15)
+                  ;;                          :level 2 :extrude-scale 1)
+                   (two-level-spiral  (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                                           :offset [(+ -1.52 x-offset) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0))
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                            :offset [(+ -1.52 x-offset) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0
+                                           :level 2)
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                                           :offset [(+ -1.52 x-offset) 2.1 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0
+                                           :level 2 :extrude-scale 1)
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                                           :offset [(+ -1.52 x-offset) 3.3 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0
+                                           :level 2 :extrude-scale 1)
+                   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                                           :offset [(+ x-offset -0.1) -0.23 0] 
+                                           :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                                     (+  (thumb-place-convex-z-rotation :tl) 15) ) 2) 2) 
+                                           :x-rot 90))
                    
-                   (->> (svg-import "../svg/Gye_Nyame.svg")
-                        (scale [0.115 0.115])
-                        (extrude-linear {:height 2 :scale 0.8})
-                        (rdx 88)
-                        (rdz 10) 
-                        (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant))))
-                        (translate (rotate-around-z-in-degrees 10 [-1 0 0]))
-                        (translate [0 0 -8])
-                        )
+                   (translate [0 0 0.5](place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                            :offset [(+ x-offset -0.1) -0.23 0]
+                            :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                            (+  (thumb-place-convex-z-rotation :tl) 15)) 2) 2)
+                            :x-rot 90 :level 2  :y-rot 180))
+                   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                                                                :offset [(+ x-offset -0.1) (+ -0.23 2.4) 0]
+                                                                :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                                                                (+  (thumb-place-convex-z-rotation :tl) 15)) 2) 2)
+                                                                :x-rot 90 :level 2  :y-rot 180 :extrude-scale 1))
+                   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                                                                :offset [(+ x-offset -0.1) (+ -0.23 1.5) 0]
+                                                                :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                                                                (+  (thumb-place-convex-z-rotation :tl) 15)) 2) 2)
+                                                                :x-rot 90 :level 2  :y-rot 180 :extrude-scale 1))
+                  (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant)
+                                          :offset [(+ -0.68 x-offset) 0.22 0] :z-rot 10 ))
+                   
+                   (two-level-spiral  (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                                                              :offset [(+ -1.4 x-offset) 0.3 0] :z-rot 10))
+                   (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                            :offset [(+ -1.4 x-offset) 0.3 0] :z-rot 10 :level 2 :y-rot 180)
+                   (translate [0 0 0.5](place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                                           :offset [(+ -2.4 x-offset) 0.3 0] :z-rot 10 :level 3 :y-rot 90))
+                   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                                                                :offset [(+ -2.4 x-offset) 1.8 0] :z-rot 10 :level 3 :y-rot 90 
+                                                                :extrude-scale 1))
+                   (translate [0 0 0.5](place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant)
+                            :offset [(+ 0 x-offset) 0.22 0] :z-rot 10 :level 2 :y-rot -90 :flip true ))
+                     
+                  ;;  (->> (svg-import "../svg/Gye_Nyame.svg")
+                  ;;       (scale [0.115 0.115])
+                  ;;       (extrude-linear {:height 2 :scale 0.8})
+                  ;;       (rdx 88)
+                  ;;       (rdz 10) 
+                  ;;       (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant))))
+                  ;;       (translate (rotate-around-z-in-degrees 10 [-1 0 0]))
+                  ;;       (translate [0 0 -8])
+                  ;;       )
                    (->> (svg-import "../svg/dwenninem.svg")
                         (scale [0.15 0.15])
                         (extrude-linear {:height 2 :scale 0.8})
@@ -1676,7 +1942,7 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                         (translate (:wall-locate3-point (calculate-control-points (thumb-wall-position thumb-bl-place -1 0 :lm :xy 4 :slant :no-slant))))
                         (translate [0 0 -5])
                         )
-                   
+                   (translate (transform-position thumb-bl-place [0 0 0]) (rdz 50(cube 8 8 4)))
                    ;(vnf-polyhedron (wall-vnf-array outer-wall inner-wall-2 ))
                    ;(vnf-polyhedron (vnf-vertex-array outer-wall :caps false :col-wrap false))
                    ;(vnf-polyhedron (vnf-vertex-array inner-wall-2 :caps false :col-wrap false))
@@ -1702,6 +1968,142 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                   ;;    default-vnf-vertex-array-args))
                    )))))
 
+(def nkyinkyim-on-thumb 
+  (let 
+   [scale-factor 0.12
+    face-scale-factor 0.9
+    z-height (/ (* 69.213 scale-factor) 2)
+    width 1.6
+    place-nkyinkyim-spiral (fn [wall-pos & {:keys [offset x-rot z-rot y-rot level wall-elevation flip extrude-scale]
+                                            :or {offset [0 0 0] x-rot 90 z-rot 0 y-rot 0
+                                                 level 0 wall-elevation 0 flip  false extrude-scale face-scale-factor}}]
+                             (->>
+                              (cond->> (svg-import "../svg/nkyinkyim_log_spiral.svg")
+                                flip  (mirror [1 0 0]))
+                                                                             ;(mirror [1 0 0])
+                              (scale [scale-factor scale-factor 1])
+                              (extrude-linear {:height 1.5 :scale extrude-scale})
+
+
+
+                                                                             ;(translate [0 0 -1])
+                              (rdz 0)
+                              (rdx x-rot)
+                              (rdy y-rot)
+                              (rdz z-rot)
+                              (translate
+                               (assoc (mapv + (:wall-locate3-point (calculate-control-points wall-pos))
+                                            (rotate-around-z-in-degrees z-rot offset)) 2
+                                      (- (+ z-height (* z-height level 2 face-scale-factor)) (* level width))))))
+    x-offset -1
+    y-offset-bl 0.23
+    x-rot-bl 90
+    two-level-spiral (fn [spiral-config]
+                       (union
+                        (spiral-config)
+                        (apply spiral-config [:flip true :level 1])))
+    three-level-spiral (fn [spiral-config]
+                         (union
+                          (spiral-config)
+                          (apply spiral-config [:flip true :level 1])
+                          (apply spiral-config [:y-rot 180 :level 2])))]
+   (union
+    (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bl-bm :xy 5)
+                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                           :offset [(+ -0.6 x-offset) (+ 0.6 y-offset-bl) 0]
+                           :level 1 :flip true :x-rot x-rot-bl)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bl-bm :xy 5)
+                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                           :offset [(+ -0.6 x-offset) (+ 2.1 y-offset-bl) 0]
+                           :level 1 :flip true :extrude-scale 1
+                           :x-rot x-rot-bl)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bl-bm :xy 5)
+                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                           :offset [(+ -0.6 x-offset) (+ 0.6 y-offset-bl) 0]
+                           :x-rot x-rot-bl)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bm :xy 5)
+                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                           :offset [(+ 1.96 x-offset) (+ 0.4 y-offset-bl) 0]
+                           :x-rot x-rot-bl)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bm :xy 5)
+                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                           :offset [(+ 1.96 x-offset) (+ 0.4 y-offset-bl) 0]
+                           :level 1 :flip true :x-rot x-rot-bl)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :bm :xy 5)
+                           :z-rot (+ (thumb-place-convex-z-rotation :bl) 15)
+                           :offset [(+ 1.96 x-offset) (+ 1.9 y-offset-bl) 0]
+                           :level 1 :flip true :extrude-scale 1 :x-rot x-rot-bl)
+   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :br :xy 5 :slant :no-slant)
+                              :offset [(+ 0.16 x-offset) -0.11 0]
+                              :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tl) 15) (+ (thumb-place-convex-z-rotation :bl) 15)) 2)
+                                        4)
+                              :x-rot 90))
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :br :xy 5 :slant :no-slant)
+                           :offset [(+ 0.16 x-offset) (+ -0.11 1.5) 0]
+                           :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tl) 15) (+ (thumb-place-convex-z-rotation :bl) 15)) 2)
+                                     4)
+                           :x-rot 90 :level 1 :flip true :extrude-scale 1)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-bl-place 0 -1 :br :xy 5 :slant :no-slant)
+                           :offset [(+ 0.16 x-offset) (+ -0.11 2.3) 0]
+                           :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tl) 15) (+ (thumb-place-convex-z-rotation :bl) 15)) 2)
+                                     4)
+                           :x-rot 90 :level 1 :flip true :extrude-scale 1)
+   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bl :xy 5 :slant :no-slant)
+                              :offset [(+ 1.8 x-offset) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0))
+   
+   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :bm :xy 5 :slant :no-slant)
+                              :offset [(+ x-offset 0.16) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0)) 
+   (two-level-spiral  (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                               :offset [(+ -1.52 x-offset) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0))
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                           :offset [(+ -1.52 x-offset) 0.6 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0
+                           :level 2)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                           :offset [(+ -1.52 x-offset) 2.1 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0
+                           :level 2 :extrude-scale 1)
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-tl-place 0 -1 :br :xy 5 :slant :no-slant)
+                           :offset [(+ -1.52 x-offset) 3.3 0] :z-rot (+  (thumb-place-convex-z-rotation :tl) 15) :wall-elevation 0
+                           :level 2 :extrude-scale 1)
+   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                              :offset [(+ x-offset -0.1) -0.23 0]
+                              :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                              (+  (thumb-place-convex-z-rotation :tl) 15)) 2) 2)
+                              :x-rot 90))
+   
+   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                                                :offset [(+ x-offset -0.1) -0.23 0]
+                                                :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                                                (+  (thumb-place-convex-z-rotation :tl) 15)) 2) 2)
+                                                :x-rot 90 :level 2  :y-rot 180))
+   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                                                :offset [(+ x-offset -0.1) (+ -0.23 2.4) 0]
+                                                :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                                                (+  (thumb-place-convex-z-rotation :tl) 15)) 2) 2)
+                                                :x-rot 90 :level 2  :y-rot 180 :extrude-scale 1))
+   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bl :xy 5 :slant :no-slant)
+                                                :offset [(+ x-offset -0.1) (+ -0.23 1.5) 0]
+                                                :z-rot (+ (/ (+ (+  (thumb-place-convex-z-rotation :tr) 15)
+                                                                (+  (thumb-place-convex-z-rotation :tl) 15)) 2) 2)
+                                                :x-rot 90 :level 2  :y-rot 180 :extrude-scale 1))
+   (two-level-spiral (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant)
+                              :offset [(+ -0.68 x-offset) 0.22 0] :z-rot 10))
+   
+   (two-level-spiral  (partial place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                               :offset [(+ -1.4 x-offset) 0.3 0] :z-rot 10))
+   (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                           :offset [(+ -1.4 x-offset) 0.3 0] :z-rot 10 :level 2 :y-rot 180)
+   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                                                :offset [(+ -2.4 x-offset) 0.3 0] :z-rot 10 :level 3 :y-rot 90))
+   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :br :xy 5 :slant :no-slant)
+                                                :offset [(+ -2.4 x-offset) 1.8 0] :z-rot 10 :level 3 :y-rot 90
+                                                :extrude-scale 1))
+   (translate [0 0 0.5] (place-nkyinkyim-spiral (thumb-wall-position thumb-tr-place 0 -1 :bm :xy 5 :slant :no-slant)
+                                                :offset [(+ 0 x-offset) 0.22 0] :z-rot 10 :level 2 :y-rot -90 :flip true))
+                     
+   ))
+  )
+
+(comment (apply (partial map + [0 1 2] [4 1 2]) [[1 1 1]]))
 
 (defn case-symbols [&{:keys [side] :or {side :right}}] 
   (let [mirror-fn (fn [shape] (if (= side :left) (mirror [1 0 0] shape)
@@ -1751,7 +2153,9 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
         (rdx -85)
         (rdz -5)
         (translate (mapv + (:wall-locate3-point (calculate-control-points (key-wall-position lastcol 0 0 1 :tm )))
-                         [0 -0.5 -7.1]))))))
+                         [0 -0.5 -7.1])))
+   nkyinkyim-on-thumb
+   )))
 
 
 
@@ -1897,10 +2301,11 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
 
 
 (defn fractyl-body [wall-cross-section-steps
-                   wall-section-steps &{:keys [steps side show-aviator-assembly] 
+                   wall-section-steps &{:keys [steps side show-aviator-assembly trackpoint-cutout] 
                                         :or {steps wall-section-steps
                                              side :right
-                                             show-aviator-assembly true}}]
+                                             show-aviator-assembly true
+                                             trackpoint-cutout false}}]
   (let [{thumb-single-row-wall-section :wall-section
          outer-key-gap-fn-coll :outer-key-gap-fn-coll
          inner-key-gap-fn-coll :inner-key-gap-fn-coll} (thumb-wall-section-for-single-thumb-row-fn wall-cross-section-steps wall-section-steps)
@@ -1937,30 +2342,31 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
                                                                         :thumb-tl-to-tr-P-u-one-outer ((nth outer-key-gap-fn-coll 0) steps)
                                                                              ;:thumb-bl-to-tl-P-u-zero-inner ((nth inner-key-gap-fn-coll 1) steps)
                                                                              ;:thumb-tl-to-tr-P-u-zero-inner ((nth inner-key-gap-fn-coll 0) steps)
-                                                                        )]
+                                                                        )
+        switch-plate (fractyl-switch-plate steps
+                                           inner-index-to-index-connector-outer-curve-fn inner-index-to-index-connector-inner-curve-fn
+                                           left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll
+                                           key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll)]
    (cond->> (difference (union
                          
-                         (sk8707-51-place sk8707-51)
+                         
                          fractyl-screw-insert-outers
                          (case-symbols :side side)
           ;(let [height 55](-# (translate [-30 -20 (/ height 2)] (cube 190 140 height))))
                          chained-hull-shapes
-                         (color [0 1 0 1](tps-65-place (translate [0 0 -1] tps-65-model)))
-                         (tps-65-place (translate [0 0 -1] (
-                                             color [0 0 0 1]
-                                             tps-65-overlay)))
-                         (-# (tps-65-place (difference  tps-65-mount-new
+                         
+                         (tps-65-place (difference  tps-65-mount-new
                                                     tps-65
                                                      tps-65-mount-cutout
                                                     (translate [0 0 -1]tps-65-mount-cutout)
-                                                    (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout))))
+                                                    (translate [0 0 (+ 0 1)] tps-65-mount-main-cutout)))
 
-                         (difference
-                          (fractyl-switch-plate steps
-                                               inner-index-to-index-connector-outer-curve-fn inner-index-to-index-connector-inner-curve-fn
-                                               left-side-key-gap-outer-curve-fn-coll left-side-key-gap-inner-curve-fn-coll
-                                               key-gap-outer-curve-fn-coll key-gap-inner-curve-fn-coll)
-                          (sk8707-51-place (binding [*fn* 36] (cylinder 1.0 20))))
+                         (if trackpoint-cutout 
+                           (difference
+                          switch-plate
+                          (sk8707-51-place sk8707-51-stem-cutout ))
+                           switch-plate
+                           )
                          thumb-type
                          (vybronics-vl91022-place vybronics-vl91022-mount)
                          key-holes
@@ -2019,7 +2425,7 @@ pinky-row-2-bl-south (wall-cross-section-parameter (key-wall-position lastcol 2 
 (comment (spit "things-low/fractyl-case-right.scad"
                (write-scad
                 (include include-bosl2)
-                (fractyl-body 10 10 :show-aviator-assembly false)
+                (fractyl-body 10 10 :show-aviator-assembly true :trackpoint-cutout true)
                 )))
 
 (comment (spit "things-low/fractyl-case-left.scad"
