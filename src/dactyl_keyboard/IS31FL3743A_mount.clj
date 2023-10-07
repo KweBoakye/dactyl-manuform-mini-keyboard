@@ -39,6 +39,9 @@
 (def IS31FL3743A-upper-mounting-hole-position [IS31FL3743A-top-mounting-hole-horizontal-distance-from-center IS31FL3743A-mounting-hole-vertical-mounting-distance-from-center])
 (def IS31FL3743A-bottom-mounting-hole-position [IS31FL3743A-bottom-mounting-hole-horizontal-distance-from-center (- IS31FL3743A-mounting-hole-vertical-mounting-distance-from-center)])
 
+(def IS31FL3743A-upper-mounting-hole-position-reverse [(- IS31FL3743A-top-mounting-hole-horizontal-distance-from-center) IS31FL3743A-mounting-hole-vertical-mounting-distance-from-center])
+(def IS31FL3743A-bottom-mounting-hole-position-reverse [(- IS31FL3743A-bottom-mounting-hole-horizontal-distance-from-center) (- IS31FL3743A-mounting-hole-vertical-mounting-distance-from-center)])
+
 (def IS31FL3743A-mounting-top-hole (translate IS31FL3743A-upper-mounting-hole-position IS31FL3743A-mounting-hole))
 (def IS31FL3743A-mounting-bottom-hole (translate IS31FL3743A-bottom-mounting-hole-position IS31FL3743A-mounting-hole))
 
@@ -76,6 +79,13 @@
   [IS31FL3743A-upper-mounting-hole-position IS31FL3743A-bottom-mounting-hole-position] 
    )
   )
+
+(def IS31FL3743A-fillet-standoffs-reverse
+  (multiple-standoffs
+   IS31FL3743A-standoff-inner-radius
+   IS31FL3743A-standoff-outer-radius
+   IS31FL3743A-standoff-height
+   [IS31FL3743A-upper-mounting-hole-position-reverse IS31FL3743A-bottom-mounting-hole-position-reverse]))
 
 (defn IS31FL3743A-standoff-place [shape]
   (translate [-66 -20 0] shape)

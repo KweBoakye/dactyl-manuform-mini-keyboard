@@ -101,7 +101,7 @@
    
    (rdy 180 (union
    rp2040-plus-body
-   rp2040-plus-usb-c-connecter
+   ;rp2040-plus-usb-c-connecter
     rp2040-plus-battery-connecter
      rp2040-plus-button-array)
    ;(color [1 0 0 1](translate
@@ -141,6 +141,15 @@
    )
   )
 
+(def rp2040-plus-usb-c-connecter-cutout
+  (->>
+   ;(import "USB_Type_C_Female_Connector.stl")
+   ;(rdz 180)
+   (cube rp2040-plus-usb-connecter-width rp2040-plus-usb-connecter-length rp2040-plus-usb-connecter-height)
+   (translate [(- (/ rp2040-plus-width 2) (/ rp2040-plus-usb-connecter-width 2) rp2040-plus-horizontal-distance-from-right-edge-to-usb-connecter)
+               (+ (/ rp2040-plus-length 2) (/ rp2040-plus-usb-connecter-length -2) rp2040-plus-usb-connecter-vertical-distance-infront-of-board-edge)
+               (+ (/ rp2040-plus-usb-connecter-height 2)  (/ rp2040-plus-mount-depth 2))]))) 
+
 (def rp2040-plus-usb-c-connecter-wider-cutout
   (->>
    ;(import "USB_Type_C_Female_Connector.stl")
@@ -162,9 +171,12 @@
     (translate rp2040-plus-position (cube rp2040-plus-width rp2040-plus-mount-length (+ rp2040-plus-mount-thickness (/ rp2040-plus-thickness 2))))
    rp2040-plus
    rp2040-plus-mount-front-cutout
+   ;(translate [0 5 0] rp2040-plus-mount-front-cutout)
    rp2040-plus-centre-cutout
-   rp2040-plus-usb-c-connecter-wider-cutout
-   ;(-# rp2040-plus-connecter-cutout)
+    rp2040-plus-usb-c-connecter-wider-cutout
+   ;(translate [0 4 0] rp2040-plus-usb-c-connecter-wider-cutout)
+    rp2040-plus-connecter-cutout
+   rp2040-plus-usb-c-connecter-cutout
    )
   )
 
@@ -177,3 +189,9 @@
        ;(translate (rotate-around-z far-index-splay [-0.5 (first far-index-post-splay-translation) 0]))
        )
   )
+
+(comment 
+  (spit "things-low/rp2040-plus-mount-test.scad"
+        (write-scad
+         rp2040-plus-mount
+         )))
