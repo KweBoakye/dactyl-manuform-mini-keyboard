@@ -103,7 +103,7 @@
    drv2605l-left-hole
    drv2605l-right-hole
    ))
-   (color [1 0 0 1](import "2305 DRV2605L.stl"))
+   (color [1 0 0 1](import "../parts/2305 DRV2605L.stl"))
    ))
 
 (defn drv2605l-place [shape]
