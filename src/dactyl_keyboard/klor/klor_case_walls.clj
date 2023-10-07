@@ -1487,17 +1487,9 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
                                                     klor-thumb-to-pinky-wall-inner-floor
                                                     klor-thumb-wall-inner-floor
                                                     klor-trackpad-wall-inner-floor
-                                                    klor-back-wall-inner-floor]))
-        outer-thumb-tm-inset (mapv + [0 0 klor-case-walls-height] (klor-thumb-position 3 (mapv + [1.55 1.8 0] key-spacing-north)))
-        inner-index-bl (klor-key-position 0 0 (mapv + [(- 0.8) (- (+ 1.75 1.4)) 0] keycap-spacing-south-west))
+                                                    klor-back-wall-inner-floor])) 
         mid-left-thumb-tr (klor-thumb-position 2 (mapv + [-1.5 1.5 0] key-spacing-north-west))
-        inner-wall-inner-border-level (update-vals inner-wall-inner-border #(assoc % 2 klor-case-walls-height))
-        inner-thumb-tl-north-east-inset (klor-thumb-position 0 (mapv + [-1.4 1.5 0] key-spacing-north-east))
-        horiz-offset 1.75
-        vert-offset 0.8
-        middle-bl (klor-key-position 2 0 (mapv + [(+ horiz-offset 0.15) (- (+ vert-offset 0.3)) 0] keycap-spacing-south-west))
-        middle-br (klor-key-position 2 0 (mapv + [(- (+ horiz-offset 0.05)) (- (+ vert-offset 0.3)) 0] keycap-spacing-south-east))
-        inner-thumb-tl-north-east (klor-thumb-position 0 (mapv + [1.5 1.5 0] key-spacing-north-east))
+        inner-wall-inner-border-level (update-vals inner-wall-inner-border #(assoc % 2 klor-case-walls-height)) 
         inner-thumb-tl-east-outset (klor-thumb-position 0 (mapv + [3 1.4 0] key-spacing-east))
         left-side-cutout (let [top-points (apply concat [(mapv #(mapv + [0 0 -3.03] %) left-side-cutout-points-top)
                                                          (mapv #(mapv + [0 0 (- klor-case-walls-height 3.03)] %)
@@ -1511,43 +1503,10 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
                                                       (:wall-bottom-inner (klor-wall-control-points-from-map screen-holder-tr-north))]])
                                wall-points (vec (for [index (range (count top-points))] (n-degree-bezier-curve [(nth top-points index) (nth  bottom-points index)] 1)))]
                            (vnf-polyhedron (vnf-vertex-array (rotate-matrix wall-points) :row-wap false :col-wrap true :caps true :reverse false)))]
-    ;(println (some #if (double? %) %) klor-thumb-to-pinky-outer-wall-top-points))
-      ;(println klor-trackpad-outer-wall-top-points)
-  
-    (union
-  
-       ;(klor-screen-place ST7789-135*240)
-       ;(color [1 0 0 1] (klor-oled-place (cube 30 24 2) :height 13.5))
-       ;(color [0 1 0 1] (klor-oled-place (cube 21.7 10.8 2) :height 13.6))
-     ;  (color [1 0 0 1] (klor-oled-place (cube 32 28 2) :height 13.5))
-       ;(klor-screen-place ST7789-135*240-holder)
-  
-       ;;(-# (klor-screen-place ()))
-      ;;  (color [0 1 0 1] (klor-oled-place (->>(cube 24.91 14.86 2)
-      ;;                                         (translate [(+ (/ (- 24.91 32 ) 2) 1.8) 
-      ;;                                                     (- (/ (- 28 14.6)  2) 6.57) 0])) :height 13.6))
-       ;(plot-bezier-points (mapv #(mapv + [0 0 -3.03] %) left-side-cutout-points-top) (sphere 1))
-      ;(klor-point-place )
-       ;(klor-bottom-plate wall-cross-section-steps wall-section-steps)
-       ;(-# (klor-case-mounting-hole-place top-middle-mounting-hole (translate [0 -4 (- klor-switchplate-z-position 1.1)] (cube 4 4 2.2))))
-  
-      ;;  (plot-bezier-points left-side-cutout-points-floor (sphere 0.5))
-      ;;  (plot-bezier-points (mapv #(mapv + [0 0 (- klor-case-walls-height 3.03)] %) left-side-cutout-points-floor) (sphere 0.5))
-      ;;  (translate (:wall-bottom-inner (klor-wall-control-points-from-map oled-holder-tr-north)) (sphere 1))
-      ;;  (translate (:wall-bottom-inner (klor-tps-43-wall-control-points :br :south :offset [-2 2 0])) (sphere 1))
-       ;(klor-case-mounting-hole-place top-right-inner-mounting-hole pcb-under-support)
-       ;(klor-case-mounting-hole-place top-right-mounting-hole pcb-under-support)
-  
-       ;(klor-case-mounting-hole-place top-right-mounting-hole (rdz (+ anchor-rotation 180) (pcb-to-plate-support)))
-      ;;  (difference support-for-top-left-mounting-hole
-      ;;              (translate (mapv + (klor-point-place top-left-mounting-hole) (rotate-around-z-in-degrees anchor-rotation [-0.15 0.3 0]))  (binding [*fn* 36] (cylinder klor-pcb-mount-hole-radius 8 :center false)))
-      ;;              )
-      ;;  (-# (->> (extrude-linear {:height klor-switchplate-thickness :center true} klor-switch-plate-polygon)
-      ;;           (translate [0 0 (+ klor-switchplate-z-position )])))
-  
-      ;;  (translate (mapv + (klor-point-place top-left-mounting-hole) (rotate-around-z-in-degrees anchor-rotation [-0.15 0.3 0]))  (binding [*fn* 36] (cylinder 1.75 8 :center false)))
+
+    (union 
      (difference
-      (-# (trackpad-attachment-walls wall-cross-section-steps wall-section-steps))
+      (trackpad-attachment-walls wall-cross-section-steps wall-section-steps)
       left-side-cutout)
      (difference
                          (union
@@ -1583,7 +1542,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
                          (klor-tps-43-place  tps-43-full-cutout)
        ;(mcu-place mcu-clearance)
                          klor-key-holes
-                         (klor-screen-place (screen-holder-cut) :height 10.5)
+                         (klor-screen-place (screen-holder-cut) :height 10.3)
      
   
                          case-mounting-holes
@@ -1615,23 +1574,12 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
           (extrude-linear {:height 0.5 :center false :scale 0.9})
           (klor-key-place 3 2)
           (translate [(+ key-spacing-width 1) (+ (/ key-spacing-length  2) 1) klor-case-walls-height]))
-      (->>
-       (import "../parts/tps-43.stl")
-       (translate [(/ tps-43-width -2) (/ tps-43-length -2) 0])
-       (color [0 1 0 0.4])
-       (klor-tps-43-place ))
-     (->>
-      (cylinder 4 1 :center false)
-      (binding [*fn* 36])
-      (translate [(/ tps-43-width -2) (/ tps-43-length -2) -1])
-      (klor-tps-43-place)
-      )
-     (->>
-      (cylinder 4 1 :center false)
-      (binding [*fn* 36])
-      (color [0 0 1 1])
-      (translate [(- (/ tps-43-width -2) 1) (/ tps-43-length -2) 0])
-      (klor-tps-43-place))
+      ;; (->>
+      ;;  (import "../parts/tps-43.stl")
+      ;;  (translate [(/ tps-43-width -2) (/ tps-43-length -2) 0])
+      ;;  (color [0 1 0 0.4])
+      ;;  (klor-tps-43-place ))
+     
     ;;  (->> 
     ;;   (cylinder 20 2 :center false)
     ;;   (binding [*fn* 36])
@@ -1660,7 +1608,7 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
     ;;       (-#))
       
   
-     (-# (klor-tps-43-place (translate [0 0 1] (tps-43-mount))))
+     (klor-tps-43-place (translate [0 0 1] (tps-43-mount)))
      )))
 
 (spit "things-low/klor.scad" 
@@ -1669,6 +1617,13 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
   (klor-case :wall-cross-section-steps 10 :wall-section-steps 10)
   )
       )
+
+(spit "things-low/klor-screen-test.scad"
+      (write-scad
+       (include include-bosl2)
+       (intersection
+        (klor-case :wall-cross-section-steps 10 :wall-section-steps 10)
+        (translate [0 0 2](klor-screen-place (cube 35 32 4))))))
 
 (spit "things-low/klor-test.scad"
       (write-scad
@@ -1715,6 +1670,12 @@ nurbs-outer-wall (vec (for [index (range (inc wall-cross-section-steps))
         (difference
          (extrude-linear {:height klor-switchplate-thickness :center false} (klor-switch-plate-polygon))
          (translate [0 0 (- (/ klor-switchplate-thickness 2) klor-switchplate-z-position )] klor-key-holes))))
+ 
+ (spit "things-low/klor-border-test.scad"
+       (write-scad
+        (include include-bosl2)
+        (intersection (klor-case)
+               (klor-key-place 1 0 (translate [0 0 2](cube 200 150 4))))))
 
 (comment (#(div (mapv + (nth % 0) (nth % 1)) 2) (select-values  (klor-wall-control-points-from-map screen-holder-tm-north) [:wall-locate3-point :wall-locate3-point-floor])))
 

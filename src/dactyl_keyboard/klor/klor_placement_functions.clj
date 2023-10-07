@@ -6,7 +6,8 @@
             [dactyl-keyboard.klor.klor-constants :refer :all]
             [dactyl-keyboard.klor.klor-points :refer :all]
             [dactyl-keyboard.lib.affine-transformations :refer [rotate-around-x-in-degrees
-                                                                rotate-around-z-in-degrees]]
+                                                                rotate-around-z-in-degrees
+                                                                mirror-x]]
             [dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline :refer [nurbs nurbs-with-calculated-knot-vector]]
             [dactyl-keyboard.lib.openscad.bosl2-wrappers.vnf :refer [vnf-polyhedron
                                                                      vnf-vertex-array]]
@@ -97,14 +98,15 @@
   )
 
 
-(defn klor-screen-place [shape &{:keys [ offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height  11  translate-fn translate rotate-z-fn rdz}}]
+(defn klor-screen-place [shape &{:keys [ offset height translate-fn rotate-z-fn side mirror-fn] :or {offset [0 0 0] height  11  translate-fn translate rotate-z-fn rdz mirror-fn #(mirror [-1 0 0])}}]
   (let [x-offset (case screen-type
                    :SSD1306 -30
                    :ST7789-135*240 -34)]
-    (klor-key-place-with-offset 0 2 (mapv + [x-offset 7 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn)))
+    (klor-key-place-with-offset 0 2 (mapv + [x-offset 7 height] offset) (if (= side :left )(mirror-fn shape) shape) :translate-fn translate-fn :rotate-z-fn rotate-z-fn)))
 
-(defn klor-screen-position [offset &{:keys [height] :or { height 0 }}]
-  (klor-screen-place [0 0 0] :offset offset :height height :translate-fn (partial mapv +) :rotate-z-fn rotate-around-z-in-degrees))
+(defn klor-screen-position [offset &{:keys [height side] :or { height 0 side :right}}]
+  (klor-screen-place [0 0 0] :offset offset :height height :translate-fn (partial mapv +) 
+                     :rotate-z-fn rotate-around-z-in-degrees :side side :mirror-fn mirror-x))
 
 (defn klor-tps-43-place [shape & {:keys [offset height translate-fn rotate-z-fn] :or {offset [0 0 0] height (- klor-case-walls-height 1) translate-fn translate rotate-z-fn rdz}}] 
   (klor-key-place-with-offset 0 1 (mapv + [-32.5 -10 height] offset) shape :translate-fn translate-fn :rotate-z-fn rotate-z-fn))
