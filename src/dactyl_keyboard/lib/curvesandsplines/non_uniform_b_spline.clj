@@ -1,9 +1,12 @@
 (ns dactyl-keyboard.lib.curvesandsplines.non-uniform-b-spline
-  (:require [clojure.core.matrix :refer [cross div magnitude mul log dot mmul]] 
-            [clojure.math :refer [asin pow sqrt floor]]
-            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-point bezier-basis-fn]]
-            [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [homogenize-cooridinates homogenize-single-point project-coordinate
-                                                                      project-coordinate-and-drop-weight]]
+  (:require [clojure.core.matrix :refer [cross div dot log magnitude mmul mul]]
+            [clojure.math :refer [asin floor pow sqrt]]
+            [dactyl-keyboard.lib.curvesandsplines.beziers :refer [n-degree-bezier-point]]
+            [dactyl-keyboard.lib.curvesandsplines.curve-utils :refer [homogenize-cooridinates
+                                                                      homogenize-single-point
+                                                                      project-coordinate
+                                                                      project-coordinate-and-drop-weight
+                                                                      project-coordinates-and-split-weights]]
             [dactyl-keyboard.lib.general-maths :refer [all-binomials-for-n
                                                        binomial-coefficient-2
                                                        factorial]])
@@ -1545,6 +1548,7 @@
         Pw (homogenize-cooridinates P W)
         {nb :nb
          Qw :Qw} (decompose-curve n p U Pw)] 
+    
     {:nb nb :Q Qw})
   )
 
@@ -1562,6 +1566,22 @@
 
 (comment (let [p 3]
            (vec (concat (repeat (inc p) 0) (repeat (inc p) 1)))))
+(defn decompose-non-homogoneus-nurbs-to-nurbs-params [p U P W ]
+  (let [{Qw :Q  
+         nb :nb    }(decompose-non-homogoneus-nurbs-curve p U P W)]
+    
+    (vec (for [index (range (count Qw))
+               :when (not (zero? (last (first (nth Qw index)))))
+               :let [{points :points
+                      weights :weights} (project-coordinates-and-split-weights (nth Qw index)) 
+                     knot-vector (vec (concat (repeat (inc p) 0) (repeat (inc p) 1))) 
+                     n (dec (count points))]
+               ]
+           (do 
+             (println "points" points)
+           {:n n :p p :knot-vector knot-vector :points points :weights weights})
+           )))
+  )
 
 (defn decompose-non-homogoneus-nurbs-curve-and-calculate-bezier-curves [p U P W start-index end-index-inclusive steps & {:keys [reverse-curve] :or {reverse-curve false}}] 
   (let [params (decompose-non-homogoneus-nurbs-curve p U P W)

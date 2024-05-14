@@ -245,11 +245,11 @@
 (def ST7789-135*240-holder-length (+ ST7789-135*240-pcb-length ST7789-135*240-holder-y-offset))
 (def ST7789-135*240-holder-inner-width (+ ST7789-135*240-pcb-width ST7789-135*240-holder-x-inner-offset))
 (def ST7789-135*240-holder-inner-length (+ ST7789-135*240-pcb-length ST7789-135*240-holder-y-inner-offset))
-(def ST7789-135*240-viewport-width 28)
-(def ST7789-135*240-viewport-length 18)
-(def ST7789-135*240-viewport-x-distance-from-left 0)
+(def ST7789-135*240-viewport-width 24.95)
+(def ST7789-135*240-viewport-length 14.72)
+(def ST7789-135*240-viewport-x-distance-from-left 1.8)
 (def ST7789-135*240-viewport-x-position (+ (/ (- ST7789-135*240-viewport-width ST7789-135*240-pcb-width) 2) ST7789-135*240-viewport-x-distance-from-left))
-(def ST7789-135*240-viewport-y-distance-from-top 5.4)
+(def ST7789-135*240-viewport-y-distance-from-top 6.64)
 (def ST7789-135*240-viewport-y-position 
   (- (/ ST7789-135*240-pcb-length 2) 
     (/ ST7789-135*240-viewport-length  2)
@@ -264,6 +264,7 @@
 (def ST7789-135*240-vertical-distance-between-mounting-holes 23)
 (def ST7789-135*240-vertical-distance-from-bottom-left-corner-to-centre-of-mounting-hole 2.5)
 (def ST7789-135*240-horzontal-distance-from-bottom-left-corner-to-centre-of-mounting-hole 2.5)
+(def ST7789-135*240-holder-height (+ ST7789-135*240-thickness 0.4))
 
 (def ST7789-135*240-pcb (->>
                          (cube ST7789-135*240-pcb-width ST7789-135*240-pcb-length ST7789-135*240-pcb-thickness)
@@ -325,7 +326,7 @@
 
   (union
    (->>
-    (cuboid [ST7789-135*240-holder-width ST7789-135*240-holder-length (+ ST7789-135*240-thickness 0.4 0.)]
+    (cuboid [ST7789-135*240-holder-width ST7789-135*240-holder-length ST7789-135*240-holder-height]
             :rounding 1.5  :fn 36
             :edges Z)
     (translate [0 0 (- ST7789-135*240-viewport-thickness 0.2)]))

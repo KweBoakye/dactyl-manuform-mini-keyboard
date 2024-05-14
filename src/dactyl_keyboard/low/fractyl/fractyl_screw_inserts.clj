@@ -1,12 +1,11 @@
 (ns dactyl-keyboard.low.fractyl.fractyl-screw-inserts
   (:refer-clojure :exclude [use import])
-  (:require 
-   [scad-clj.model :refer :all]
-   [scad-clj.scad :refer :all]
-   [dactyl-keyboard.low.shape-parameters-low :refer :all]
-   [dactyl-keyboard.low.placement-functions-low :refer :all]
-   [dactyl-keyboard.switch-hole :refer [mount-width]]
-   [dactyl-keyboard.low.case-low-polyhedron-functions :refer :all]))
+  (:require [dactyl-keyboard.low.case-low-polyhedron-functions :refer :all]
+            [dactyl-keyboard.low.placement-functions-low :refer :all]
+            [dactyl-keyboard.low.shape-parameters-low :refer :all]
+            [dactyl-keyboard.low.thumbs-low :refer [thumb-tr-place thumb-bl-place]]
+            [scad-clj.model :refer :all]
+            [scad-clj.scad :refer :all]))
 
 (defn fractyl-screw-insert-shape [bottom-radius top-radius height &{:keys [top-sphere]
                                                                     :or {top-sphere true}}]
@@ -31,6 +30,8 @@
 ;;          (translate (map + offset [(first position) (second position) (/ height 2)])))))
 ; Hole Diameter C: 4.1-4.4
 
+
+
 (defn fractyl-screw-insert [wall-position bottom-radius top-radius height 
                             &{:keys [offset top-sphere] :or {offset [0 0 0] top-sphere true}}]
   (let [wall-inner-floor-position (:wall-locate-2-bottom-floor (calculate-control-points wall-position))]
@@ -42,28 +43,35 @@
 (def fractyl-screw-insert-top-radius (/ 4.4 2))
 (def fractyl-screw-insert-height 4)
 
+(def left-section-top-left (tps-65-wall-position :tl :north-west))
+
 (defn fractyl-screw-insert-all-shapes [bottom-radius top-radius height &{:keys [top-sphere] :or {top-sphere true}}]
-  (let [left-section-top-left   (fractyl-screw-insert (tps-65-wall-position :tl :north-west) bottom-radius top-radius height :offset [(/ fractyl-screw-insert-outer-bottom-radius 1.5) (/ fractyl-screw-insert-outer-bottom-radius -1) 0] :top-sphere top-sphere)
+  (let [left-section-top-left   (fractyl-screw-insert (tps-65-wall-position :tl :north-west) bottom-radius top-radius height :offset [(/ fractyl-screw-insert-outer-bottom-radius 0.8) (/ fractyl-screw-insert-outer-bottom-radius -1.2) 0] :top-sphere top-sphere)
         ;left-section-bottom (screw-insert 0 lastrow   bottom-radius top-radius height [-50 7 0]) 
-        left-section-top-right  (fractyl-screw-insert (tps-65-wall-position :tr :north) bottom-radius top-radius height :offset [(* 3 (- fractyl-screw-insert-outer-bottom-radius)) (/ fractyl-screw-insert-outer-bottom-radius -3)  0] :top-sphere top-sphere)
+        left-section-top-right  (fractyl-screw-insert (tps-65-wall-position :tr :north) bottom-radius top-radius height :offset [(* 3 (- fractyl-screw-insert-outer-bottom-radius)) (/ fractyl-screw-insert-outer-bottom-radius -2)  0] :top-sphere top-sphere)
         left-section-top-mid  (fractyl-screw-insert (tps-65-wall-position :tm :north) bottom-radius top-radius height :top-sphere top-sphere)
-        left-section-left-mid  (fractyl-screw-insert (tps-65-wall-position :tl-lm :west) bottom-radius top-radius height :top-sphere top-sphere)
-        left-section-bm (fractyl-screw-insert (tps-65-wall-position :bm :south) bottom-radius top-radius height :offset [0 (/ fractyl-screw-insert-outer-bottom-radius 4) 0] :top-sphere top-sphere)
-        ;thumb-bottom-left  (fractyl-screw-insert (tps-65-wall-position :tl :north-east) bottom-radius top-radius height)
-        ;thumb-bottom-right  (fractyl-screw-insert (tps-65-wall-position :tl :north-east) bottom-radius top-radius height)
+        left-section-left-mid  (fractyl-screw-insert (tps-65-wall-position :lm :west) bottom-radius top-radius height 
+                                                     :offset [(/ fractyl-screw-insert-bottom-radius -2) (* fractyl-screw-insert-outer-bottom-radius 2) 0]:top-sphere top-sphere)
+        left-section-bm (fractyl-screw-insert (tps-65-wall-position :bm :south) bottom-radius top-radius height 
+                                              :offset [(/ fractyl-screw-insert-outer-bottom-radius -1) (/ fractyl-screw-insert-outer-bottom-radius 4) 0] :top-sphere top-sphere)
+        thumb-bottom-left  (fractyl-screw-insert (thumb-wall-position thumb-bl-place -1 0 :lm) bottom-radius top-radius height
+                                                                             :offset [(/ fractyl-screw-insert-outer-bottom-radius 2) (/ fractyl-screw-insert-outer-bottom-radius 2)  0]
+                                                 )
+        thumb-bottom-right  (fractyl-screw-insert (thumb-wall-position thumb-tr-place 1 -1 :br) bottom-radius top-radius height :offset [(/ fractyl-screw-insert-outer-bottom-radius -1) (/ fractyl-screw-insert-outer-bottom-radius 2)  0])
         top-mid  (fractyl-screw-insert (key-wall-position 2 0 0 1 :tm) bottom-radius top-radius height :offset [0 0 0] :top-sphere top-sphere)
         top-right  (fractyl-screw-insert (key-wall-position lastcol 0 1 1 :tr) bottom-radius top-radius height
-                                         :offset [(+ (/ bottom-radius -1.5) -1) (+ (/ fractyl-screw-insert-outer-bottom-radius -1.5) -1) 0] :top-sphere top-sphere)
-        bottom-right  (fractyl-screw-insert (key-wall-position lastcol cornerrow 1 -1 :br :slant :no-slant) bottom-radius top-radius height :offset [(/ fractyl-screw-insert-outer-bottom-radius -2) (+ (/ fractyl-screw-insert-outer-bottom-radius 2) 0.5) 0] :top-sphere top-sphere) ]
+                                         :offset [(+ (/ bottom-radius -1.5) -1.5) (+ (/ fractyl-screw-insert-outer-bottom-radius -1.5) -1) 0] :top-sphere top-sphere)
+        bottom-right  (fractyl-screw-insert (key-wall-position lastcol cornerrow 1 -1 :br :slant :no-slant) bottom-radius top-radius height 
+                                            :offset [(/ fractyl-screw-insert-outer-bottom-radius -1.5) (+ (/ fractyl-screw-insert-outer-bottom-radius 1.5) ) 0] :top-sphere top-sphere) ]
     (union
      left-section-bm
      left-section-top-left
      ;left-section-top-mid
-     ;left-section-left-mid
+     left-section-left-mid
      left-section-top-right
-     ;thumb-bottom-left
+     thumb-bottom-left
      top-mid
-     ;thumb-bottom-right
+     thumb-bottom-right
      top-right
      bottom-right)))
 

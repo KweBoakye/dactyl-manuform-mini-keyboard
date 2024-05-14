@@ -140,7 +140,7 @@ MxLEDBitPCB-holder-leg-3
 
 (def new-thickness (* plate-thickness 0.5))
 (def end-thickness (* new-thickness 0.5))
-(def hook-thickness (- end-thickness 0.5))
+(def hook-thickness (- end-thickness 0))
 (def length (- MxLEDBitPCB-holder-leg-depth 0.3))
 (def insertion-angle 30)
 (def retention-face-angle 85)
@@ -181,7 +181,7 @@ MxLEDBitPCB-holder-leg-3
                       2
                       [0 0 0 (/ 4 3) 2 2 2]
                       [1 (/ (sqrt 2) 2) 1 1]
-                      10)
+                      20)
                      )
           (drop-last (global-curve-interp-with-calculated-first-derivatives-curve
                       [inner-right-bottom-pos
@@ -197,7 +197,7 @@ MxLEDBitPCB-holder-leg-3
                        (mapv - outer-right-top-upper-fillet-pos outer-right-bottom-pos)
                        (mapv -  outer-right-top-pos outer-right-top-upper-fillet-pos)]
                       2
-                      20
+                      40
                       :point-paramater-calculation-method :centripetal)
                      )
           (nurbs
@@ -230,7 +230,7 @@ MxLEDBitPCB-holder-leg-3
                                          2
                                          [0 0 0 (/ 4 3) 2 2 2]
                                          [1 (/ (sqrt 2) 2) 1 1]
-                                         10))
+                                         20))
                              (drop-last (global-curve-interp-with-calculated-first-derivatives-curve
                                          [inner-left-bottom-pos
                                           hook-left-pos
@@ -245,7 +245,7 @@ MxLEDBitPCB-holder-leg-3
                                           (mapv - outer-left-top-upper-fillet-pos outer-left-bottom-pos)
                                           (mapv -  outer-left-top-pos outer-left-top-upper-fillet-pos)]
                                          2
-                                         20
+                                         40
                                          :point-paramater-calculation-method :dynamic-centripetal))
                              (nurbs
                               [outer-left-top-upper-fillet-pos
@@ -320,16 +320,20 @@ MxLEDBitPCB-holder-leg-3
      (write-scad
       (include include-bosl2)
       (union
-       ;(-# single-plate)
+       (-# single-plate)
        
-       (translate [0 (/ (+ MxLEDBitPCB-holder-length new-thickness) 2) (- (/ MxLEDBitPCB-holder-leg-z-coordinate -2) 0.2)] (union 
-                                                                                                                            holder-leg))
-       (translate [0 (/ (+ MxLEDBitPCB-holder-length new-thickness) -2) (- (/ MxLEDBitPCB-holder-leg-z-coordinate -2) 0.2)] (rdz 180 holder-leg))
+       ;(translate [0 (/ (+ MxLEDBitPCB-holder-length new-thickness) 2) (- (/ MxLEDBitPCB-holder-leg-z-coordinate -2) 0.2)] 
+        ;          (union  holder-leg)) 
+       ;(translate [0 (/ (+ MxLEDBitPCB-holder-length new-thickness) -2) (- (/ MxLEDBitPCB-holder-leg-z-coordinate -2) 0.2)] (rdz 180 holder-leg))
        ;switch-model
        ;(-# dsa-cap)
-       ;(translate [0.75 -4.75 (- plate-thickness)](-# (import "../parts/Kailh Hotswap MX v22.stl")))
-       (-# MxLEDBitPCB)
-       MxLEDBitPCB-holder-legs
+       ;(translate [0.75 -4.75 (- plate-thickness)](-# (import "../parts/Kailh Hotswap MX v22.stl"))) 
+       ;(-# MxLEDBitPCB)
+       single-key-pcb-holder
+       (->> (cube mount-width 3 (+  plate-thickness 0.5))
+            (translate [0 (+ 1.25 (/ mount-width  2) ) (/ (- plate-thickness 0.5) 2)]))
+       (->> (cube mount-width 3 (+  plate-thickness 0.5))
+            (translate [0 (- (+ 1.25 (/ mount-width  2))) (/ (- plate-thickness 0.5) 2)]))
        )))
 
 

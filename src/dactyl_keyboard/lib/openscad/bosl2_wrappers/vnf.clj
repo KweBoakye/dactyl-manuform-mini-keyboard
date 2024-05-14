@@ -25,6 +25,9 @@
   )
 (def default-vnf-vertex-array-args {:caps true :cap1 false :cap2 false :col-wrap true :row-wrap false :reverse false :style :default})
 
+(defn vnf-vertex-array-args [&{:keys [caps  cap1  cap2 col-wrap  row-wrap  reverse  style ] :or {caps true cap1 false cap2 false col-wrap true row-wrap false reverse false style :default}}]
+  {:caps caps :cap1 cap1 :cap2 cap2 :col-wrap col-wrap :row-wrap row-wrap :reverse reverse :style style})
+
 (defn get-vnf-vertex-array-style-from-keyword [style-keyword]
    (case style-keyword
                  :default "default"
@@ -119,8 +122,8 @@
 
 
 
-(defn vnf-polyhedron [vnf & {:keys [convexity  extent  cp  anchor  spin orient atype multiple-vnf]
-                             :or {convexity 2 extent true cp  "centroid" anchor  "origin" spin 0 orient "UP" atype  "hull" multiple-vnf false}}]
+(defn vnf-polyhedron [vnf & {:keys [convexity  cp  anchor  spin orient atype multiple-vnf]
+                             :or {convexity 2 cp  "centroid" anchor  "origin" spin 0 orient "UP" atype  "hull" multiple-vnf false}}]
 
   (let [vnf-string  (if multiple-vnf   (mapv #(string/replace (write-scad %) #";" "") vnf) (string/replace (write-scad vnf) #";" "")) 
         vnf-format (if multiple-vnf
@@ -129,7 +132,7 @@
                      (format "vnf = %s" vnf-string))]
     ;(println "vnf-string" vnf-string)
     ;(println "vnf-format" vnf-format)
-    (call-module :vnf_polyhedron vnf-format (format "convexity = %d" convexity) (format "extent = %b" extent) (format "cp = \"%s\"" cp)
+    (call-module :vnf_polyhedron vnf-format (format "convexity = %d" convexity)  (format "cp = \"%s\"" cp)
                  (format "anchor = \"%s\"" anchor) (format "spin = %d" spin) (format "orient = %s" orient)
                  (format "atype = \"%s\"" atype))))
 

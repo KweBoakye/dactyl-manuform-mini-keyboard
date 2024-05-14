@@ -234,10 +234,10 @@
  (def tps-65-mount-main-cutout 
    (->>
     (hull
-    tps-65-cutout-corner-cylinder-top-left
-    tps-65-cutout-corner-cylinder-top-right
-    tps-65-cutout-corner-cylinder-bottom-left
-    tps-65-cutout-corner-cylinder-bottom-right
+    tps-65-corner-cylinder-top-left
+    tps-65-corner-cylinder-top-right
+    tps-65-corner-cylinder-bottom-left
+    tps-65-corner-cylinder-bottom-right
     )
     (translate [0 0 (/ (+ tps-65-trackpad-only-thickness tps-65-depth-tolerance tps-65-overlay-thickness) -2)])
     ) 
@@ -252,6 +252,20 @@
     tps-65-corner-cylinder-bottom-right)
    (translate [0 0 (/ (+ tps-65-trackpad-only-thickness tps-65-depth-tolerance tps-65-overlay-thickness) -2)])))
 
+ (spit "things-low/tps-65-mount-fix-adapter.scad"
+       (write-scad
+        (difference
+         (hull
+          tps-65-cutout-corner-cylinder-top-left
+          tps-65-cutout-corner-cylinder-top-right
+          tps-65-cutout-corner-cylinder-bottom-left
+          tps-65-cutout-corner-cylinder-bottom-right)
+         (hull
+          tps-65-corner-cylinder-top-left
+          tps-65-corner-cylinder-top-right
+          tps-65-corner-cylinder-bottom-left
+          tps-65-corner-cylinder-bottom-right))
+        ))
 (def tps-65-component-cutout
   (->>
    (cube tps-65-component-cutout-area-width tps-65-component-cutout-area-length tps-65-component-cutout-area-depth)

@@ -38,13 +38,20 @@
 (defn skin [profiles &{:keys [slices refine sampling closed caps method z convexity anchor spin orient atype cp style]
                        :or {slices 10 refine 1 sampling :length  closed false  method :direct convexity 10 anchor CENTER spin 0  atype :hull cp :centroid style :min-edge}} ](println "caps "(if caps caps (false? closed)))
   (let [caps-value (if caps caps (false? closed))
-        style-string (get-vnf-vertex-array-style-from-keyword style)]
-    (call-module :skin  (cond (vector? (peek profiles)) (cl-format nil "profiles = ~A" (matrix-to-scad profiles)) 
-                              :else (mapv (fn [profile]  (string/replace (write-scad profile) #";" ""))profiles))
-                 (format-arg "slices" slices) (format-arg "refine" refine) (format-escaped-string  "sampling" (get-sampling-string-from-keyword sampling))
-                 (format-arg "caps" caps-value) (format-escaped-string "method" (format-keyword method)) (cond z (format-arg "z" z)) (format-arg "convexity" convexity)
-                 (cl-format nil "anchor = ~A" (vec-to-scad-vec anchor) ) (format-arg "spin" spin)
-                 (cond orient (format-arg "orient" orient)) (format-escaped-string "atype" (format-keyword atype)) (format-escaped-string "cp" (format-keyword cp))  (format-escaped-string "style" style-string))))
+        style-string (get-vnf-vertex-array-style-from-keyword style)
+        parameter-list-1 (cond (vector? (peek profiles)) (cl-format nil "profiles = ~A" (matrix-to-scad profiles))
+                               :else (mapv (fn [profile]  (string/replace (write-scad profile) #";" "")) profiles))
+        parameter-list-2 (cond->  [(format-arg "slices" slices) (format-arg "refine" refine) (format-escaped-string  "sampling" (get-sampling-string-from-keyword sampling))
+                                     (format-arg "caps" caps-value) (format-escaped-string "method" (format-keyword method))] 
+                           z (into  (format-arg "z" z)))
+        parameter-list-3 (cond-> [(format-arg "convexity" convexity)
+        (cl-format nil "anchor = ~A" (vec-to-scad-vec anchor)) (format-arg "spin" spin)
+         (format-escaped-string "atype" (format-keyword atype)) (format-escaped-string "cp" (format-keyword cp))  (format-escaped-string "style" style-string)] orient (format-arg "orient" orient)) 
+        parameters (apply conj [:skin] parameter-list-1 (concat  parameter-list-2 parameter-list-3))
+        ]
+    
+    (apply call-module parameters   
+           )))
 
 (defn linear-sweep [region &{:keys [module-or-function height center twist scale shift slices maxseg
                                     texture tex-size tex-counts tex-inset 

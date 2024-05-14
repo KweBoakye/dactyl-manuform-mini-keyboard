@@ -35,6 +35,18 @@
   (vec (drop-last (project-coordinate coordinate)))
   )
 
+(defn project-coordinate-and-split-weight [coordinate]
+  {:point (vec (drop-last (project-coordinate coordinate)))
+   :weight (last coordinate)})
+
+(defn project-coordinates-and-split-weights [coordinates]
+  (let [points (do (println "coordinates" coordinates)
+                 (mapv #(drop-last (project-coordinate %)) coordinates))
+        weights (mapv #(last %) coordinates)]
+    (println points) 
+    {:points points
+     :weights weights}))
+
 (defn homogenize-single-point [vector weight]
   (conj (mapv (partial * weight) vector) weight)
   )

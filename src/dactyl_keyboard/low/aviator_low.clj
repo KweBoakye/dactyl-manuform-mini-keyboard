@@ -42,8 +42,8 @@
 (def aviator-neck-support-height (+ metal-tactile-button-distance-from-top-of-ball-to-top-of-neck metal-tactile-button-neck-height))
 (def aviator-neck-bezier-width aviator-neck-width)
 (def aviator-assembly-left-or-right-translation (- (/ aviator-diameter 2) 5))
-(def font-name "Microgramma")
-(def font-size 1.2)
+(def font-name "Eurostile Extended Black")
+(def font-size 1.8)
 (def text-depth 1)
 
 (def aviator-neck-height 4)
@@ -790,25 +790,34 @@ aviator-neck-support-right
    )
   )
 
-(def aviator-assembly-polyhedron 
-  (union
+(defn aviator-assembly-polyhedron [&{:keys [side] :or {side :right}}]
+  (let [mirror-fn #(if (= side :left) (mirror [1 0 0] %) %)](difference
+   aviator-neck-poly
    (->>
-    (text "RESET" :font font-name :size font-size :halign "center") 
-    (extrude-linear {:height 0.5 :center false})
-    (translate [0 (+ metal-tactile-button-hole-radius font-size 1) (+ aviator-neck-height 1)])
+    (text "RESET" :font font-name :size font-size :halign "center")
+    (mirror-fn)
+    (extrude-linear {:height 1 :center false})
+    (translate [0 (+ metal-tactile-button-hole-radius font-size 0.5) (+ aviator-neck-height 0.5)])
     (aviator-neck-support-place aviator-assembly-left-or-right-translation)
     )
    (->>
     (text "BOOT" :font font-name :size font-size :halign "center")
-    (extrude-linear {:height 0.5 :center false})
-    (translate [0 (-(+ metal-tactile-button-hole-radius font-size 2)) (+ aviator-neck-height 1)])
+    (mirror-fn)
+    (extrude-linear {:height 1 :center false})
+    (translate [0 (-(+ metal-tactile-button-hole-radius font-size 1.5)) (+ aviator-neck-height 0.5)])
     (aviator-neck-support-place (- aviator-assembly-left-or-right-translation)))
-   aviator-neck-poly 
+    
    ;aviator-assembly-back
    )
-  
+  )
    
   )
+
+(spit "things-low/aviator-assembly-polyhedron-test.scad"
+      (write-scad
+       (difference (aviator-assembly-polyhedron)
+                   aviator-assembly-diffs)
+       ))
 
 (def resetswitch-start (map + [0 -3  20] (key-position 0 0 (map + (wall-locate3 0 1) [0 (/ mount-height  2) 0]))))
 (def resetswitch-position [(first resetswitch-start) (second resetswitch-start) 12])

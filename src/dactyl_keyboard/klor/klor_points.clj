@@ -92,7 +92,7 @@
  (def shorter-mounting-holes
    [middle-hole])
 (def bottom-plate-mounting-holes
-  (conj tall-mounting-holes (vec (apply concat shorter-mounting-holes))))
+  tall-mounting-holes)
 
 (def pcb-only-mounting-holes
   [pinky-mounting-hole])
